@@ -2,7 +2,7 @@
 Python Hydro-MEM code
 
 ## Python Version
-This code is being developed using Python 3.7.5.
+This code is being developed using Python 3.7.5
 
 ## Getting Started
 
@@ -12,9 +12,9 @@ This code is being developed using Python 3.7.5.
 
 ```--rasterize``` will only create the raster files from ADCIRC inputs
 
-```--td``` will only rud the tidal datums calculation
+```--td``` will only run the tidal datums calculation
 
-```--mem``` will only run mem.
+```--mem``` will only run mem
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ What things you need to install the software and how to install them
 * See requirements.txt
 
 ## Docker Image
-To enhance the east of use, a docker image for all pre-requisites is available.
+To enhance the east of use, a docker image for all pre-requisites is available
 https://hub.docker.com/repository/docker/mbilskie/pyhydromem/
 
 ## Contributors

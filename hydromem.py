@@ -212,9 +212,9 @@ def main(argv):
         
         src.basics.fileexists('tbathy.tif')
         src.basics.fileexists('hyconn.tif')
-        src.basics.fileexists('Tidaldatums_IDW.tif')
+        src.basics.fileexists('TidalDatums_IDW.tif')
         
-        src.mem('hyconn.tif','tbathy.tif','Tidaldatums_IDW.tif',outputMEMRasterFile+'.tif')
+        src.mem('hyconn.tif','tbathy.tif','TidalDatums_IDW.tif',outputMEMRasterFile+'.tif')
     
     if dofinal:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)

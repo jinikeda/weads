@@ -38,7 +38,7 @@ def main(argv):
     inEPSG = ''
     outEPSG = ''
     gridSize = ''
-    slr = ''
+    slr = '0.0'
     dorasterize = False
     dohyconn = False
     dotd = False
@@ -212,9 +212,9 @@ def main(argv):
         
         src.basics.fileexists('tbathy.tif')
         src.basics.fileexists('hyconn.tif')
-        src.basics.fileexists('tidaldatums_IDW.tif')
+        src.basics.fileexists('Tidaldatums_IDW.tif')
         
-        src.mem('hyconn.tif','tbathy.tif','tidaldatums_IDW.tif',outputMEMRasterFile+'.tif')
+        src.mem('hyconn.tif','tbathy.tif','Tidaldatums_IDW.tif',outputMEMRasterFile+'.tif')
     
     if dofinal:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)

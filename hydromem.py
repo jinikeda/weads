@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # File: hydromem.py
-# Date: January 30, 2023
+# Date: Aug 11, 2023
 
 #----------------------------------------------------------
 # M O D U L E S                                   
@@ -38,7 +38,7 @@ def main(argv):
     inEPSG = ''
     outEPSG = ''
     gridSize = ''
-    slr = '0.0'
+    slr = ''
     dorasterize = False
     dohyconn = False
     dotd = False
@@ -218,9 +218,11 @@ def main(argv):
     
     if dofinal:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)
+        print(Finished new fort.14)
         src.update_nodal_attributes(inputMeshFile,outputMEMRasterFile+'.tif',
                            inputAttrFile,outputAttrFile,
                            inEPSG,slr,6)
+        print(Finished new fort.13)
 
     print('\n' + '#################################################')
     print('pyHydro-MEM Complete!')

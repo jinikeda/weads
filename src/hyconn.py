@@ -35,7 +35,7 @@ def hyconn(inputElevation,inputRaster,outputRaster,DEBUG=False):
    # print ("")
    # print ("Reading raster")
     
-    rasterED = gdal.Open(inputRaster)
+    rasterED = gdal.Open(inputRaster) #everdried
     rasterTB = gdal.Open(inputElevation)
 
    # print ("  Raster of everdried (ED) read successfully")
@@ -69,23 +69,40 @@ def hyconn(inputElevation,inputRaster,outputRaster,DEBUG=False):
         plt.savefig('terminal_tbathy.png')
 
     #compare everdried and tbathy
-    for i in range(0, EDBN.shape[0]):
-        for j in range(0, EDBN.shape[1]):
-            #clean up values to only have 1 and -99999
-            if (EDBN[i][j] > 0.8) and (EDBN[i][j] < 1.2):
-                EDBN[i][j] == 1.0   
+    # for i in range(0, EDBN.shape[0]):
+    #     for j in range(0, EDBN.shape[1]):
+    #         #clean up values to only have 1 and -99999
+    #         if (EDBN[i][j] > 0.8) and (EDBN[i][j] < 1.2):
+    #             EDBN[i][j] == 1.0   
                 
-            if (EDBN[i][j] < 0):
-                EDBN[i][j] = -99999.0
+    #         if (EDBN[i][j] < 0):
+    #             EDBN[i][j] = -99999.0
 
-            #all nodes considered wet by elevation set to 1
-            #if (TBBN[i][j] < 0) and (EDBN[i][j] == -99999.0):
-                #EDBN[i][j] = 1.0
+    #         #all nodes considered wet by elevation set to 1
+    #         #if (TBBN[i][j] < 0) and (EDBN[i][j] == -99999.0):
+    #             #EDBN[i][j] = 1.0
 
-            if (TBBN[i][j] == -99999.0):
-                EDBN[i][j] = -99999.0
+    #         if (TBBN[i][j] == -99999.0):
+    #             EDBN[i][j] = -99999.0
 
+    ##########################################################
+    
+    Here, we can significantly speed up (Jin 2023 Aug 11)
+    # Clean up values to only have 1 and -99999
+    mask = (EDBN > 0.8) & (EDBN < 1.2)
+    EDBN[mask] = 1.0
+
+    EDBN[EDBN < 0] = -99999.0
+
+    # Set all nodes considered wet by elevation to 1
+    # EDBN[(TBBN < 0) & (EDBN == -99999.0)] = 1.0
+
+    EDBN[TBBN == -99999.0] = -99999.0
+
+    ##########################################################
+    
     labeled, num_objects = ndimage.label(EDBN > 0.5)
+   
     if DEBUG:
 
         print('----- Raster from everdried and tbathy -----')

@@ -12,7 +12,7 @@ Interactive job on SuperMike3
 3. Copy ADCIRCModules folder on your work directory (e.g., /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules)
 4. cd /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules/testing/python_tests
 5. Copy fort.13, fort.14, fort.53, everdried.63, domain shapfile(aaa.shp etc)
-6. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26914 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all
+6. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26914 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all"
 
 Example of command
 inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile PIE_bbox.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --all```
@@ -33,6 +33,9 @@ What things you need to install the software and how to install them
 * See requirements.txt
 
 ## Contributors
+Christopher E Kees
+Peter Bacopoulos
+Jin Ikeda
 
 ## Acknolwedgements
 * [Karim Alizad (USGS)](https://www.usgs.gov/centers/spcmsc)

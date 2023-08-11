@@ -134,7 +134,7 @@ def hyconn(inputElevation,inputRaster,outputRaster,DEBUG=False):
 
     OCEAN = max_feature
     LAND = min_feature - (TBBN == -99999.0)
-    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0)
+    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0) # not sure the classifications. Need to check again: Jin Aug 11th
     if DEBUG:
         print('----- Ocean raster -----')
         plt.imshow(OCEAN)

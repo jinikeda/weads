@@ -134,6 +134,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     # --- PRODUCTIVITY CALCULATIONS ---
     X=rasterHC.RasterXSize
     Y=rasterHC.RasterYSize
+    --------------------------------------Easyly speed up (Jin) ----------------------------------            
     for k in range(0, Y):
         for l in range(0, X):
             if (B[k][l]<=1000 and B[k][l]>1):
@@ -145,6 +146,25 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
             else:
                 P[k][l] = ndv
     P[B<1]=ndv
+
+        # # Create a mask for different conditions
+        # mask1 = (B > 1) & (B <= 1000)
+        # mask2 = (B > PL) & (B < 1800)
+        # mask3 = (B >= 1800)
+        
+        # # Create an array of default values (ndv)
+        # P = np.full((Y, X), ndv)
+        
+        # # Assign values based on conditions
+        # P[mask1] = 16
+        # P[mask2] = 23
+        # P[mask3] = 32
+        
+        # # Update values where B < 1
+        # P[B < 1] = ndv
+
+
+                
     
     # --- MARSH TYPE CALCULATIONS ---
     #print ("High-Low Marsh Calculations")

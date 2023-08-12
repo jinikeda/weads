@@ -4,18 +4,19 @@
 # Date: August 10, 2023
 
 #--- Load modules ---
-import shapefile
-from pyproj import Transformer
 import numpy as np
+import math
+import sys
+
+#--- Coordinate conversions (GEO-CPP) ---
+print("\n"); print("Processing coordinate conversion...\n");
+re=6378206.4; lat=30.0;
+kx=math.pi*re*math.cos(lat*math.pi/180.0)/180.0; kx=kx**1.0;
+ky=math.pi*re/180.0; ky=ky**1.0;
 
 #--- Read bounding box ---
-print("\n"); print("Processing bounding box...\n");
-inEPSG=4269; outEPSG=26919;
-transformer=Transformer.from_crs(inEPSG,outEPSG)
-sf=shapefile.Reader("GEO_bbox.shp")
-bboxGeo=sf.shape(0).bbox; bbox=[None]*4;
-bbox[0],bbox[1]=transformer.transform(bboxGeo[1],bboxGeo[0])
-bbox[2],bbox[3]=transformer.transform(bboxGeo[3],bboxGeo[2])
+print("Processing bounding box...\n")
+bbox=[None]*4; bbox[0]=-97.7; bbox[1]=27.3; bbox[2]=-96.8; bbox[3]=28.4;
 
 #--- Read mesh ---
 print("Processing mesh...\n")
@@ -26,10 +27,13 @@ nn=np.ones((numNodes,1),dtype=int);
 nx=np.ones((numNodes,1),dtype=float);
 ny=np.ones((numNodes,1),dtype=float);
 nz=np.ones((numNodes,1),dtype=float);
+nxcpp=np.ones((numNodes,1),dtype=float);
+nycpp=np.ones((numNodes,1),dtype=float);
 for j in range(numNodes):
     myLine=myFile.readline(); myRow=myLine.split();
     N=int(myRow[0]); X=float(myRow[1]); Y=float(myRow[2]); Z=-float(myRow[3]);
-    X,Y=transformer.transform(Y,X); nn[j][0]=N; nx[j][0]=X; ny[j][0]=Y; nz[j][0]=Z;
+    nn[j][0]=N; nx[j][0]=X; ny[j][0]=Y; nz[j][0]=Z;
+    nxcpp[j][0]=X*kx; nycpp[j][0]=Y*ky;
 myFile.close()
 
 #--- Read attributes ---
@@ -74,11 +78,11 @@ myFile.close()
 
 # --- Read harmonics ---
 print("Processing harmonics...\n")
-myFile=open("fort.53","r")
+myFile=open("fort.53","r"); myOut=open("harmonics.freq","w");
 myLine=myFile.readline(); myRow=myLine.split(); numHarm=int(myRow[0]);
 harmAMP=np.ones((numNodes,numHarm),dtype=float); harmPHA=np.ones((numNodes,numHarm),dtype=float);
 for j in range(numHarm):
-    myLine=myFile.readline()
+    myLine=myFile.readline(); myRow=myLine.split(); myOut.write(str(myRow[0])+"\n");
 myLine=myFile.readline()
 for j in range(numNodes):
     myLine=myFile.readline()
@@ -98,11 +102,16 @@ for j in range(numNodes):
             cnt=cnt+1
             myOut1.write(str(cnt)+" "); myOut1.write(str(j)+" ");
             myOut1.write(str(nx[j][0])+" "); myOut1.write(str(ny[j][0])+" ");
+            myOut1.write(str(nxcpp[j][0])+" "); myOut1.write(str(nycpp[j][0])+" ");
             myOut1.write(str(nz[j][0])+" "); myOut1.write(str(mann[j][0])+" ");
             myOut1.write(str(ed[j][0])+"\n");
             for jj in range(numHarm-1):
                 myOut2.write(str(harmAMP[j][jj])+" "); myOut3.write(str(harmPHA[j][jj])+" ");
             myOut2.write(str(harmAMP[j][jj+1])+"\n"); myOut3.write(str(harmPHA[j][jj+1])+"\n");
 myOut1.close(); myOut2.close(); myOut3.close();
+
+#--- Exit script ---
+print("Exiting script...\n")
+sys.exit()
 
 

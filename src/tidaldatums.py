@@ -148,7 +148,9 @@ def tidaldatums(inputHarmonicsReadMe,inputRasterHarmonics,\
     mlw = np.ones((rasterHC.RasterYSize, rasterHC.RasterXSize), dtype=float) * ndv
     msl = np.ones((rasterHC.RasterYSize, rasterHC.RasterXSize), dtype=float) * ndv
     mhw = np.ones((rasterHC.RasterYSize, rasterHC.RasterXSize), dtype=float) * ndv
-     
+
+###########################################################################################################
+# This part has to speed up (Jin -> Pete)
     for k in range(0, rasterHC.RasterXSize - 1):
         for kk in range(0, rasterHC.RasterYSize - 1):
             # Check if hc value is within a certain range
@@ -159,6 +161,25 @@ def tidaldatums(inputHarmonicsReadMe,inputRasterHarmonics,\
                 mlw[kk][k] = mean_low_water(wl)
                 msl[kk][k] = np.average(wl)
                 mhw[kk][k] = mean_high_water(wl)
+
+#######################################################################################
+# ######here is the chatGPT suggestion (Please confirm it)
+
+# # Create a mask based on the condition on hc values
+# mask = (hc < 0.5) & (hc > -0.5)
+
+# # Calculate wl for the entire array
+# ## wl need background? If so, make an array list with 0 or np.nan (Jin's comment)
+# wl = astronomic_tide_resynthesis(t, omega, pha[mask], amp[mask])
+
+# ##############################################################
+# # Especially please check this part (Jin's comments) #
+
+# # Assign calculated values to mlw and mhw arrays using the mask
+# mlw[mask] = mean_low_water(wl)
+# mhw[mask]  = mean_high_water(wl)
+        
+###########################################################################################################                
                 
         # Check for bogus values and replace with NoData
         # This can happen on the edges based on the raster resolution

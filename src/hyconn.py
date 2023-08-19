@@ -92,7 +92,7 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
     sizes = ndimage.sum(mask, labeled, range(num_objects+1)) # calculate the size of each regions
     print('size ',sizes.max(),sizes.min(), 'number of areas', num_objects)
 
-    # maximum is tuple where first element is index of largest object in the labeled image array # this approach may not work where ocean is not a largest size 
+    # maximum is tuple where first element is index of largest object in the labeled image array # This approach may not work where ocean is not a largest size 
     maximum = np.where(sizes == sizes.max())[0]
     # create 1D mask arrays where each index that has max in corresponding labeled image is set to 1
     # max feature is 2D image array where  only the largest labels are highlighted
@@ -101,9 +101,9 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
     max_feature = max_index[labeled]
 
     ############################################################################################################
-    # This command eliminate small regions and replace as land 
+    # This command eliminates small regions and replace as land 
 
-    mask_size = sizes < 10 # user define
+    mask_size = sizes < 10 # user defined
     remove_pixel = mask_size[labeled]
     remove_pixel.shape
     labeled[remove_pixel]=np.argmin(sizes)
@@ -120,7 +120,7 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
     # print('maxf: ', max_feature,'minf: ', min_feature)
     OCEAN = max_feature
     LAND = min_feature - (TBBN == -99999.0) # binary 1: True, 0: False 
-    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0) # not sure the classifications. Need to check again: Jin Aug 11th
+    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0) # Need to check again: Jin Aug 19th
     if DEBUG:
         print('----- Ocean raster -----')
         plt.imshow(OCEAN)

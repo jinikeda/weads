@@ -93,6 +93,17 @@ for j in range(numNodes):
     myLine=myFile.readline(); myRow=myLine.split(); it[j][0]=float(myRow[1]);
 myFile.close()
 
+#--- Read maxinundepth ---
+print("   Processing maxinundepth...\n")
+myFile=open("maxinundepth.63","r")
+myLine=myFile.readline()
+myLine=myFile.readline()
+myLine=myFile.readline()
+mi=np.ones((numNodes,1),dtype=float)
+for j in range(numNodes):
+    myLine=myFile.readline(); myRow=myLine.split(); mi[j][0]=float(myRow[1]);
+myFile.close()
+
 # --- Read harmonics ---
 print("   Processing harmonics...\n")
 myFile=open("fort.53","r"); myOut=open("harmonics.freq","w");
@@ -117,18 +128,19 @@ for j in tqdm(range(numNodes)):
     if nx[j][0]>bbox[0] and nx[j][0]<bbox[2]:
         if ny[j][0]>bbox[1] and ny[j][0]<bbox[3]:
             cnt=cnt+1
-            myOut1.write(str(cnt)+" "); myOut1.write(str(j)+" ");
+            myOut1.write(str(cnt)+" "); myOut1.write(str(j+1)+" ");
             myOut1.write(str(nx[j][0])+" "); myOut1.write(str(ny[j][0])+" ");
             myOut1.write(str(nxcpp[j][0])+" "); myOut1.write(str(nycpp[j][0])+" ");
             myOut1.write(str(nz[j][0])+" "); myOut1.write(str(mann[j][0])+" ");
-            myOut1.write(str(ed[j][0])+" "); myOut1.write(str(it[j][0])+"\n");
+            myOut1.write(str(ed[j][0])+" "); myOut1.write(str(it[j][0])+" ");
+            myOut1.write(str(mi[j][0])+"\n")
             for jj in range(numHarm-1):
                 myOut2.write(str(harmAMP[j][jj])+" "); myOut3.write(str(harmPHA[j][jj])+" ");
             myOut2.write(str(harmAMP[j][jj+1])+"\n"); myOut3.write(str(harmPHA[j][jj+1])+"\n");
 myOut1.close(); myOut2.close(); myOut3.close();
 
 #--- Exit script ---
-print("\n"); print("EXIT: Existing script!\n")
+print("\n"); print("EXIT: Existing script!\n");
 end=time.time(); print ("Time elapsed (seconds):",end-start);
 print("\n"); sys.exit();
 

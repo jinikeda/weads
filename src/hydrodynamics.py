@@ -15,10 +15,10 @@ start=time.time()
 print("\n"); print("LAUNCH: Launching script!\n");
 
 #--- Read data as scatter points ---
-print("Processing scatter points...\n")
+print("   Processing scatter points...\n")
 myFile=open("filteredData.pts","r")
 myLines=myFile.readlines(); numPoints=len(myLines);
-pts=np.ones((numPoints,10),dtype=float); myFile.seek(0);
+pts=np.ones((numPoints,11),dtype=float); myFile.seek(0);
 for j in tqdm(range(numPoints)):
     myLine=myFile.readline(); myRow=myLine.split();
     pts[j][0]=int(myRow[0]); pts[j][1]=int(myRow[1]);
@@ -26,10 +26,11 @@ for j in tqdm(range(numPoints)):
     pts[j][4]=float(myRow[4]); pts[j][5]=float(myRow[5]);
     pts[j][6]=float(myRow[6]); pts[j][7]=float(myRow[7]);
     pts[j][8]=float(myRow[8]); pts[j][9]=float(myRow[9]);
+    pts[j][10]=float(myRow[10])
 myFile.close()
 
 #--- Read harmomics correspondent with scatter ---
-print("\n"); print("Processing harmonics...\n");
+print("\n"); print("   Processing harmonics...\n");
 myFile1=open("filteredHarmAmp.pts","r")
 myFile2=open("filteredHarmPha.pts","r")
 myFile3=open("harmonics.freq","r")
@@ -46,7 +47,7 @@ for j in tqdm(range(numPoints)):
 myFile1.close(); myFile2.close(); myFile3.close();
 
 #--- Calculate tidal datums for fully wetted zones ---
-print("\n"); print("Calculating tidal datums for fully wetted zones...\n");
+print("\n"); print("   Calculating tidal datums for fully wetted zones...\n");
 T=30.0; dt=3600.0; N=int((86400*T/dt)+1); t=dt*np.ones((N,1),dtype=float); t=np.cumsum(t,axis=0);
 T2=2.0*T; D=24.0*3600.0/dt; D2=D/2.0; wl2=np.ones((int(D2),1),dtype=float); wl2L=np.ones((int(T2),1),dtype=float); wl2H=np.ones((int(T2),1),dtype=float);
 mlw=np.ones((numPoints,1),dtype=float); mhw=np.ones((numPoints,1),dtype=float); msl=np.ones((numPoints,1),dtype=float);
@@ -72,12 +73,12 @@ for j in range(numPoints):
     myOut.write(str(pts[j][4])+" "); myOut.write(str(pts[j][5])+" ");
     myOut.write(str(pts[j][6])+" "); myOut.write(str(pts[j][7])+" ");
     myOut.write(str(pts[j][8])+" "); myOut.write(str(pts[j][9])+" ");
-    myOut.write(str(mlw[j][0])+" "); myOut.write(str(msl[j][0])+" ");
-    myOut.write(str(mhw[j][0])+"\n")
+    myOut.write(str(pts[j][10])+" "); myOut.write(str(mlw[j][0])+" ");
+    myOut.write(str(msl[j][0])+" "); myOut.write(str(mhw[j][0])+"\n");
 myOut.close()
 
 #--- Exit script ---
-print("\n"); print("EXIT: Existing script!\n")
+print("\n"); print("EXIT: Existing script!\n");
 end=time.time(); print ("Time elapsed (seconds):",end-start);
 print("\n"); sys.exit();
 

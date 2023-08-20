@@ -44,6 +44,7 @@ def main(argv):
     dotd = False
     domem = False
     dofinal = False
+    inundationFile = ''
     
     rts = 900
     #rts = 3600
@@ -82,7 +83,8 @@ def main(argv):
                  'inEPSG=',
                  'outEPSG=',
                  'gridSize=',
-                 'slr='])
+                 'slr=',
+                 'inundationFile='])
     except getopt.GetoptError as e:
         print(e)
         quit()
@@ -99,6 +101,7 @@ def main(argv):
               '--outEPSG <outEPSGCode>',
               '--gridSize <outputRasterResolution>',
               '--slr <sea level rise>',
+              '--inundationFile <maxele.63>',
               '--<all; rasterize; hyconn; td; mem>\n')
         sys.exit(2)
     for opt, arg in opts:
@@ -115,6 +118,7 @@ def main(argv):
                     '--outEPSG <outEPSGCode>',
                     '--gridSize <outputRasterResolution>',
                     '--slr',
+                    '--inundationFile <maxele.63>.',
                     '--<all; rasterize; hyconn; td; mem>\n')
             sys.exit(2)
         elif opt in ('--all'):
@@ -157,6 +161,8 @@ def main(argv):
             gridSize = arg
         elif opt in ('--slr'):
             slr = arg
+        elif opt in ('--inundationFile'):
+            inundationDepth = arg
         
     inEPSG = int(inEPSG)
     outEPSG = int(outEPSG)
@@ -207,6 +213,9 @@ def main(argv):
         
         src.tidaldatumsidw('hyconn.tif','TidalDatums.tif','TidalDatums_IDW.tif',numIDWNeighbors)
     
+    if inundationDepth: # Run Inundation calculation
+        print('\n' + '\tCalculating maximum inundation depth...')
+
     if domem: # Run MEM
         print('\n' + '\tRunning MEM...')
         
@@ -218,11 +227,11 @@ def main(argv):
     
     if dofinal:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)
-        print(Finished new fort.14)
+        print('Finished new fort.14')
         src.update_nodal_attributes(inputMeshFile,outputMEMRasterFile+'.tif',
                            inputAttrFile,outputAttrFile,
                            inEPSG,slr,6)
-        print(Finished new fort.13)
+        print('Finished new fort.13')
 
     print('\n' + '#################################################')
     print('pyHydro-MEM Complete!')

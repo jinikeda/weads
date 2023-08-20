@@ -90,7 +90,7 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
 
     # sizes is array containing sizes of all the labeled objects
     sizes = ndimage.sum(mask, labeled, range(num_objects+1)) # calculate the size of each regions
-    print('size ',sizes.max(),sizes.min(), 'number of areas', num_objects)
+    print('size max and min',sizes.max(),sizes.min(), ',number of areas', num_objects) #max size should be ocean and min size should be land
 
     # maximum is tuple where first element is index of largest object in the labeled image array # This approach may not work where ocean is not a largest size 
     maximum = np.where(sizes == sizes.max())[0]

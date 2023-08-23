@@ -15,15 +15,15 @@
 
 ## Development (desirable)
 - Replace private module: pyadcircmodules
-- Read maxele.63 and create max inundation map (Pete create a Python file). Jin modify hydromem.py (ongoing)
+- Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
 
 ## Modifications (desirable)
-~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification, Jin slightly modified the code Aug 19)~~
+~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
-- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which need to be considered, pending Jin Aug 22)
+- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which needs to be considered, pending Jin Aug 22)
 
 # NOTE
 ## Input/Output storage 
@@ -44,8 +44,8 @@ WATTE classification
 
 1. Read current wetland marsh/mangrove distributions
 2. Inundation level part (hydromem.py)
-3. Cython and parallelization
-4. WATTE modification + Evaluate productivity and Inundation level map
+3. WATTE modification + Evaluate productivity and Inundation level map
+4. Cython and parallelization
 5. Check fort.13
 
 **Jin’s request order**

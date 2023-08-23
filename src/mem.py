@@ -99,7 +99,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     band=rasterTDIDW.GetRasterBand(2); mslIDW=band.ReadAsArray();
     band=rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
     B=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
-    marsh=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     A=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     tbA=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     D=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
@@ -109,7 +108,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     qstar2=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     Bl=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     Br=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
-    P=np.full((rasterHC.RasterYSize,rasterHC.RasterXSize), ndv) # Create an array of default values (ndv)
+    P = np.full((rasterHC.RasterYSize,rasterHC.RasterXSize), ndv) # Create an array of default values (ndv)
+    marsh = np.full((rasterHC.RasterYSize,rasterHC.RasterXSize), ndv)
     
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
     #print ("")
@@ -168,17 +168,16 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     DRange = abs(Dzero2-Dzero1);
     DHigh = Dmax + DRange*0.1;
     DLow = Dmax - DRange*0.1;
-    for i in range(0, Y):
-        for j in range(0, X):
-            if (Dzero1<D[i][j] and D[i][j]<=DLow):
-                marsh[i][j] = 30
-            elif (DLow<D[i][j] and D[i][j]<DHigh):
-                marsh[i][j] = 20
-            elif (DHigh<=D[i][j] and D[i][j]<Dzero2):
-                marsh[i][j] = 10
-            else:
-                marsh[i][j] = ndv
-    marsh[B<1]=ndv
+
+    condition_1 = (Dzero1 < D) & (D <= DLow)
+    condition_2 = (DLow < D) & (D < DHigh)
+    condition_3 = (DHigh <= D) & (D < Dzero2)
+
+    marsh[condition_1] = 30
+    marsh[condition_2] = 20
+    marsh[condition_3] = 10
+    #marsh[B < 1] = ndv
+
     #print ("  DONE!")
     
     # --- WRITE OUTPUTS ---

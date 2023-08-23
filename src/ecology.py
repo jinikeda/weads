@@ -1,3 +1,6 @@
+# This file is not clear to Jin.
+# Jin will delete this file in future development (leave until mem.py will be modified by Jin) 
+
 #!/usr/bin/python3
 # File: ecology.py
 # Name: Peter Bacopoulos

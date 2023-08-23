@@ -22,7 +22,11 @@ ky=math.pi*re/180.0; ky=ky**1.0;
 
 #--- Read bounding box ---
 print("   Processing bounding box...\n")
-bbox=[None]*4; bbox[0]=-97.7; bbox[1]=27.3; bbox[2]=-96.8; bbox[3]=28.4;
+bbox=[None]*4
+myFile=open("ROI.pts","r")
+myLine=myFile.readline(); myRow=myLine.split(); bbox[0]=float(myRow[0]); bbox[1]=float(myRow[1]);
+myLine=myFile.readline(); myRow=myLine.split(); bbox[2]=float(myRow[0]); bbox[3]=float(myRow[1]);
+myFile.close()
 
 #--- Read mesh ---
 print("   Processing mesh...\n")

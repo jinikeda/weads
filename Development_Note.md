@@ -1,6 +1,50 @@
-# Development note (Aug 22 version)
+# Development Note (Aug 22 version)
 
-## Variables, listed in pythonic order
+---
+# Development, in no particular order
+
+- Adjustment of Manning’s n for open-water conversion – TBD
+- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
+# To-do-list
+
+## Development (mandatory)
+**src/mem.py**
+- Read current wetland marsh/mangrove distributions (Jin).
+- Examine and calculate each ecological response (Pete).
+
+## Development (desirable)
+- Replace private module: pyadcircmodules
+- Read maxele.63 and create max inundation map (Pete create a python file), Jin modify hydromem.py (ongoing)
+~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
+- Pete modify src/tidaldatums.py (avoid double for loops) -> Jin and Chris work on cython with parallelization.
+
+## Modifications (desirable)
+~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification, Jin slightly modified the code Aug 19)~~
+
+## Modifications (optional)
+- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, need to be consider, pending Jin Aug 22)
+
+**NOTE**
+
+NWI classification
+- 8 = salt marsh (regularly flooded)
+- 9 = mangrove
+- 20 = irregularly flooded marsh
+
+WATTE classification
+- Input_Water_Class = "40" #Don't use 0 (no data)
+- Input_Other_Class= "55" land
+- Input_Marsh_Class = "16,23,32" #Classification(s), Marsh, String
+
+**Jin’s priority list**
+
+1. Read current wetland marsh/mangrove distributions
+2. Inundation level part (hydromem.py)
+3. Cython and parallelization
+4. WATTE modification + Evaluate productivity and Inundation level map
+5. Check fort.13
+
+## Variables, listed in Pythonic order
 0. idx, local (local index)
 1. idx, global (global index)
 2. x, geo (longitude)
@@ -47,7 +91,7 @@ d Accounts for multi-type calculation of biomass and accretion with updating of 
 - fort.53
 - everdried.63
 - inundationtime.63
-- maxinundepth.63 -> 
+- maxinundepth.63 -> need this file output (Jin needs to confirm.)
 
 ### Input (1, assigns bounding box for ROI—region of interest)
 - ROI.pts
@@ -64,48 +108,4 @@ d Accounts for multi-type calculation of biomass and accretion with updating of 
 - fort.dt.14
 - fort.dt.13
 
-# Development, in no particular order
 
-- Adjustment of Manning’s n for open-water conversion – TBD
-- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
-
----
-
-# To-do-list
-
-## Development (mandatory)
-**src/mem.py**
-- Read current wetland marsh/mangrove distributions (Jin).
-- Examine and calculate each ecological response (Pete).
-
-## Development (desirable)
-- Replace private module: pyadcircmodules
-- Read maxele.63 and create max inundation map (Pete create a python file), Jin modify hydromem.py (ongoing)
-~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
-- Pete modify src/tidaldatums.py (avoid double for loops) -> Jin and Chris work on cython with parallelization.
-
-## Modifications (desirable)
-~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification, Jin slightly modified the code Aug 19)~~
-
-## Modifications (optional)
-- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, need to be consider, pending Jin Aug 22)
-
-**NOTE**
-
-NWI classification
-- 8 = salt marsh (regularly flooded)
-- 9 = mangrove
-- 20 = irregularly flooded marsh
-
-WATTE classification
-- Input_Water_Class = "40" #Don't use 0 (no data)
-- Input_Other_Class= "55" land
-- Input_Marsh_Class = "16,23,32" #Classification(s), Marsh, String
-
-**Jin’s priority list**
-
-1. Read current wetland marsh/mangrove distributions
-2. Inundation level part (hydromem.py)
-3. Cython and parallelization
-4. WATTE modification + Evaluate productivity and Inundation level map
-5. Check fort.13

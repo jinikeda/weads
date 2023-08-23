@@ -26,8 +26,8 @@
 - src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which needs to be considered, pending Jin Aug 22)
 
 # NOTE
-## Input/Output storage 
-### xxx
+## Input/Output data storage 
+chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO
 ---
 
 NWI classification

@@ -25,7 +25,7 @@
 ## Modifications (optional)
 - src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which need to be considered, pending Jin Aug 22)
 
-**NOTE**
+# NOTE
 ## Input/Output storage 
 ### xxx
 ---

@@ -5,6 +5,7 @@
 
 - Adjustment of Manning’s n for open-water conversion – TBD
 - NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
+  
 # To-do-list
 
 ## Development (mandatory)
@@ -14,17 +15,20 @@
 
 ## Development (desirable)
 - Replace private module: pyadcircmodules
-- Read maxele.63 and create max inundation map (Pete create a python file), Jin modify hydromem.py (ongoing)
+- Read maxele.63 and create max inundation map (Pete create a Python file). Jin modify hydromem.py (ongoing)
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
-- Pete modify src/tidaldatums.py (avoid double for loops) -> Jin and Chris work on cython with parallelization.
+- Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
 
 ## Modifications (desirable)
 ~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification, Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
-- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, need to be consider, pending Jin Aug 22)
+- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which need to be considered, pending Jin Aug 22)
 
 **NOTE**
+## Input/Output storage 
+### xxx
+---
 
 NWI classification
 - 8 = salt marsh (regularly flooded)
@@ -43,6 +47,11 @@ WATTE classification
 3. Cython and parallelization
 4. WATTE modification + Evaluate productivity and Inundation level map
 5. Check fort.13
+
+**Jin’s request order**
+
+1. maxinundepth.63
+2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
 
 ## Variables, listed in Pythonic order
 0. idx, local (local index)
@@ -91,7 +100,7 @@ d Accounts for multi-type calculation of biomass and accretion with updating of 
 - fort.53
 - everdried.63
 - inundationtime.63
-- maxinundepth.63 -> need this file output (Jin needs to confirm.)
+- maxinundepth.63 -> Need this file output (Jin needs to confirm.)
 
 ### Input (1, assigns bounding box for ROI—region of interest)
 - ROI.pts

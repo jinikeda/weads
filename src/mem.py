@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydroMEM.py
-# Name: Peter Bacopoulos
-# Date: August 24, 2021
+# Name: Peter Bacopoulos, Jin Ikeda
+# Date: August 22, 2023
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
@@ -85,7 +85,15 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     '''
     
     # --- INITIALIZE ARRAYS ---
-    band=rasterHC.GetRasterBand(1); hc=band.ReadAsArray(); w=hc; w[w<0.5]=0.0;
+    band = rasterHC.GetRasterBand(1); hc=band.ReadAsArray();
+    prj =   rasterHC.GetProjection()  # Read projection
+    print("Projection:", prj)
+
+    #print (np.max(hc), np.min(hc))
+    # For Wave Attenuation Tool, we need water and land rasters
+    water_mask = ((-0.5 < hc) & (hc < 0.5)) | (1.5 < hc) # water regions (water and pond in hyconn.tiff)
+    land_mask = (hc >= 0.5) & (hc <= 1.5) # land regions in hy conn.tiff
+    
     band=rasterTB.GetRasterBand(1); tb=band.ReadAsArray(); #tb=-1.0*tb;
     band=rasterTDIDW.GetRasterBand(1); mlwIDW=band.ReadAsArray();
     band=rasterTDIDW.GetRasterBand(2); mslIDW=band.ReadAsArray();
@@ -101,7 +109,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     qstar2=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     Bl=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
     Br=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
-    P=np.zeros((rasterHC.RasterYSize,rasterHC.RasterXSize),dtype=float)
+    P=np.full((rasterHC.RasterYSize,rasterHC.RasterXSize), ndv) # Create an array of default values (ndv)
     
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
     #print ("")
@@ -122,6 +130,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     #print ("Accretion calculations")
     DNonNeg=D; DNonNeg[D<0.0]=0.0; Dt=100.0*(mhwIDW-mlwIDW);Dt[Dt==0]=0.0001;
     qstar = q*(DNonNeg/Dt); qstar2= qstar; qstar2[qstar>=1.0] = 1.0;
+    w = hc.copy();
+    w[w < 0.5] = 0.0;
     A= m_const*qstar2*DNonNeg/(BDi*2)+ Kr*B/(BDo*10000); A[D<=0.0]=0.0; A=A*w; A=A/100; A[A<=0]=0; tbA=tb+A*dt; tbA=-1.0*tbA;
     D[hc<0.5]=ndv; D[tb==np.nan]=ndv;
     B[hc<0.5]=ndv; B[tb==np.nan]=ndv;
@@ -134,38 +144,22 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     # --- PRODUCTIVITY CALCULATIONS ---
     X=rasterHC.RasterXSize
     Y=rasterHC.RasterYSize
-    --------------------------------------Easyly speed up (Jin) ----------------------------------            
-    for k in range(0, Y):
-        for l in range(0, X):
-            if (B[k][l]<=1000 and B[k][l]>1):
-                P[k][l] = 16
-            elif (PL<B[k][l] and B[k][l]<1800):
-                P[k][l] = 23
-            elif (1800<=B[k][l]):
-                P[k][l] = 32
-            else:
-                P[k][l] = ndv
-    P[B<1]=ndv
 
-        # # Create a mask for different conditions
-        # mask1 = (B > 1) & (B <= 1000)
-        # mask2 = (B > PL) & (B < 1800)
-        # mask3 = (B >= 1800)
-        
-        # # Create an array of default values (ndv)
-        # P = np.full((Y, X), ndv)
-        
-        # # Assign values based on conditions
-        # P[mask1] = 16
-        # P[mask2] = 23
-        # P[mask3] = 32
-        
-        # # Update values where B < 1
-        # P[B < 1] = ndv
+    # Create a mask for different conditions
+    mask1 = (B > 1) & (B <= 1000)
+    mask2 = (B > PL) & (B < 1800)
+    mask3 = (B >= 1800)
 
+    # Assign values based on conditions
+    # background raster
+    P[land_mask] = 55
+    P[water_mask] = 40
 
-                
-    
+    # Marsh productivity
+    P[mask1] = 16 # low productivity
+    P[mask2] = 23 # midum productivity
+    P[mask3] = 32 # high productivity
+          
     # --- MARSH TYPE CALCULATIONS ---
     #print ("High-Low Marsh Calculations")
     Dmax = -(al/(2*bl));
@@ -201,7 +195,22 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,\
     dst_ds.GetRasterBand(5).SetNoDataValue(ndv); dst_ds.GetRasterBand(5).WriteArray(marsh);
     dst_ds.GetRasterBand(6).SetNoDataValue(ndv); dst_ds.GetRasterBand(6).WriteArray(P);
     dst_ds = None
-    
+
+    ###### Here Jin will create raster file for WATTE
+
+    gtiff_driver = gdal.GetDriverByName('GTiff')  # Use GeoTIFF driver
+    out_ds = gtiff_driver.Create('Productivity.tif',  # Create a output file
+                                 rasterHC.RasterXSize, rasterHC.RasterYSize, rasterHC.RasterCount, gdal.GDT_Int32)
+    out_ds.SetProjection(prj)
+    out_ds.SetGeoTransform(dst_geot)
+
+    dst_band = out_ds.GetRasterBand(1)
+    dst_band.WriteArray(P)
+    dst_band = out_ds.GetRasterBand(1).SetNoDataValue(int(ndv))  # Exclude nodata value
+    dst_band = out_ds.GetRasterBand(1).ComputeStatistics(0)
+    out_ds = None
+
+    ############################################################################################################
     '''
     print ("Output raster written successfully")
     print ("")

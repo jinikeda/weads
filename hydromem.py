@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # File: hydromem.py
-# Date: Aug 11, 2023
+# Date: Aug 15, 2023
 
 #----------------------------------------------------------
 # M O D U L E S                                   
@@ -44,7 +44,8 @@ def main(argv):
     dotd = False
     domem = False
     dofinal = False
-    inundationFile = ''
+    inundationFile = False
+    vegetationFile = None
     
     rts = 900
     #rts = 3600
@@ -84,7 +85,8 @@ def main(argv):
                  'outEPSG=',
                  'gridSize=',
                  'slr=',
-                 'inundationFile='])
+                 'inundationFile=',
+                 'vegetationFile='])
     except getopt.GetoptError as e:
         print(e)
         quit()
@@ -102,6 +104,7 @@ def main(argv):
               '--gridSize <outputRasterResolution>',
               '--slr <sea level rise>',
               '--inundationFile <maxele.63>',
+              '--vegetationFile <x.tif>',
               '--<all; rasterize; hyconn; td; mem>\n')
         sys.exit(2)
     for opt, arg in opts:
@@ -119,6 +122,7 @@ def main(argv):
                     '--gridSize <outputRasterResolution>',
                     '--slr',
                     '--inundationFile <maxele.63>.',
+                    '--vegetationFile <x.tif>',
                     '--<all; rasterize; hyconn; td; mem>\n')
             sys.exit(2)
         elif opt in ('--all'):
@@ -163,6 +167,8 @@ def main(argv):
             slr = arg
         elif opt in ('--inundationFile'):
             inundationDepth = arg
+        elif opt in ('--vegetationFile'):
+            vegetationFile = arg
         
     inEPSG = int(inEPSG)
     outEPSG = int(outEPSG)
@@ -218,13 +224,18 @@ def main(argv):
 
     if domem: # Run MEM
         print('\n' + '\tRunning MEM...')
-        
+
         src.basics.fileexists('tbathy.tif')
         src.basics.fileexists('hyconn.tif')
         src.basics.fileexists('TidalDatums_IDW.tif')
-        
-        src.mem('hyconn.tif','tbathy.tif','TidalDatums_IDW.tif',outputMEMRasterFile+'.tif')
-    
+
+        if vegetationFile is None: # Run MEM without vegetation
+            print('\n' + '\tNo vegetation mapping references...')
+        else:
+            print('\n' + '\tUse vegetation mapping...')
+
+        src.mem('hyconn.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif')
+
     if dofinal:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)
         print('Finished new fort.14')

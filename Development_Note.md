@@ -1,4 +1,4 @@
-# Development Note (Aug 22 version)
+# Development Note (Aug 28 version)
 
 ---
 # Development, in no particular order
@@ -11,6 +11,9 @@
 ## Development (mandatory)
 **src/mem.py**
 - Read current wetland marsh/mangrove distributions (Jin).
+  - Jin made a distribution using read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/outputs/Domain_classification_distribution_resample100.tif
+  - Jin added a multi-species option in hydromem.py. src/mem.py needs to be modified (ongoing)
+  
 - Examine and calculate each ecological response (Pete).
 
 ## Development (desirable)
@@ -31,18 +34,18 @@ chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO
 ---
 
 NWI classification
-- 8 = salt marsh (regularly flooded)
+- 8 = salt marsh (regularly flooded) -> follow with tidal cycle
 - 9 = mangrove
 - 20 = irregularly flooded marsh
 
-WATTE classification
+WATTE classification (hydroMEM also incorporate with WATTE)
 - Input_Water_Class = "40" #Don't use 0 (no data)
 - Input_Other_Class= "55" land
 - Input_Marsh_Class = "16,23,32" #Classification(s), Marsh, String
 
 **Jin’s priority list**
 
-1. Read current wetland marsh/mangrove distributions
+1. Read current wetland marsh/mangrove distributions in src/mem.py
 2. Inundation level part (hydromem.py)
 3. WATTE modification + Evaluate productivity and Inundation level map
 4. Cython and parallelization
@@ -53,6 +56,8 @@ WATTE classification
 1. maxinundepth.63
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
 
+
+## Pete's note for ecology.py (this code will be delete later)
 ## Variables, listed in Pythonic order
 0. idx, local (local index)
 1. idx, global (global index)

@@ -7,7 +7,7 @@
 ## Development (mandatory)
 **src/mem.py**
 - Read current wetland marsh/mangrove distributions (Jin).
-  - Jin made a distribution using read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/outputs/Domain_classification_distribution_resample100.tif
+  - Jin made a distribution mapping using read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/outputs/Domain_classification_distribution_resample100.tif
   - Jin added a multi-species option in hydromem.py. src/mem.py needs to be modified (ongoing)
   
 - Examine and calculate each ecological response (Pete).

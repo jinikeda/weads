@@ -1,11 +1,7 @@
 # Development Note (Aug 28 version)
 
 ---
-# Development, in no particular order
 
-- Adjustment of Manning’s n for open-water conversion – TBD
-- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
-  
 # To-do-list
 
 ## Development (mandatory)
@@ -57,7 +53,12 @@ WATTE classification (hydroMEM also incorporate with WATTE)
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
 
 
-## Pete's note for ecology.py (this code will be delete later)
+## Pete's note for ecology.py (this code will be deleted later)
+## Development, in no particular order
+
+- Adjustment of Manning’s n for open-water conversion – TBD
+- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
+
 ## Variables, listed in Pythonic order
 0. idx, local (local index)
 1. idx, global (global index)

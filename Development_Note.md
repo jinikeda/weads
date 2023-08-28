@@ -13,7 +13,7 @@
 - Examine and calculate each species' (ecological) response (Pete).
 
 ## Development (desirable)
-- Replace private module: pyadcircmodules
+- Replace private module: **pyadcircmodules**
 - Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.

@@ -1,25 +1,24 @@
-# Development Note (Aug 28 version)
+# Development Note (Aug 29 version)
 
 ---
 
 ## Running file
-- hydromem.py (Argument file for running WEAD)
+- hydromem.py (Argument file to run WEAD)
   
-## main Python module/function files (src folders)
+## Main Python module/function files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
 - hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
 - tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is computationally expensive now**)
 - tidaldatumsidw.py (Interpolate the tidal datum on land regions)
 - <span style="color:blue"> **mem.py** </span> (Calculate vegetation productivities)
   - read_NWI_file.py (provide multi-species domain: haven't incorporated with the main code)
-- rast2adc.py (renew a mesh file: fort.14 based on mem simulation)
-- update_nodal_attributes.py (renew nodal attribute file: fort.13 based on mem simulation)
+- rast2adc.py (renew an ADCIRC mesh file: fort.14 based on mem simulation)
+- update_nodal_attributes.py (renew an ADCIRC nodal attribute file: fort.13 based on mem simulation)
   - manning.py (Specify Manning's roughnesses based on biomass productivities but probably doesn't use this file)
   
 ## Supplemental files 
 - raster.py (rasterization functions)
 - basics.py (check existing a file)
-
 
 # To-do-list
 
@@ -70,7 +69,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 1. maxinundepth.63
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
-3. Refer to chunk of code in preprocessing.py script to read maxinundepth.63 into internal memory
+3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
 ## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted later)

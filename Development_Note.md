@@ -2,8 +2,12 @@
 
 ---
 
-# Running file
+## Running file
 - hydromem.py
+## procedure files (src folders)
+- hyconn.py (calculate hydro connectivity and classify ocean, land, and pond)
+
+
 
 # To-do-list
 

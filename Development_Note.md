@@ -3,7 +3,7 @@
 ---
 
 ## Running file
-- hydromem.py (Argument file for running WAED)
+- hydromem.py (Argument file for running WEAD)
   
 ## Procedure files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)

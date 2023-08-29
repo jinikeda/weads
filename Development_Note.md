@@ -9,8 +9,8 @@
 - hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
 - tidaldatums.py (Calculate tidal datums in each pixel on water region **this part is computationally expensive)
 - tidaldatumsidw.py (Interpolate the tidal datum on land regions)
-
-- update_nodal_attributes.py (reflect into nodal attribute file: fort.13)
+- rast2adc.py (renew a mesh file: fort.14 based on mem simulation)
+- update_nodal_attributes.py (renew nodal attribute file: fort.13 based on mem simulation)
   - manning.py (Specify Manning's roughnesses based on biomass productivities but probably doesn't use this file)
   
 ## Supplemental file 

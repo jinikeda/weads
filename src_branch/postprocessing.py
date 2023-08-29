@@ -71,7 +71,7 @@ for j in range(numNodes):
     myLine=myFile.readline(); myRow=myLine.split(); ed[j][0]=float(myRow[1]);
 myFile.close()
 
-#--- Read attributes ---
+#--- Read and write attributes ---
 print("   Processing attributes...\n")
 nOW=0.022; # Manning's roughness for open-water conversion
 myFile=open("fort.13","r"); myOut=open("fort.dt.13","w");

@@ -70,14 +70,13 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 1. maxinundepth.63
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
+3. Refer to chunk of code in preprocessing.py script to read maxinundepth.63 into internal memory
 
+## Pete's development
+## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted later)
 
-## Pete's note 
-## try to exclude **pyadcircmodule** (src_branch folders:this folder will be deleted later)
-**src_branch/ecology.py** 
 ## Development, in no particular order
-
-- Adjustment of Manning’s n for open-water conversion – TBD
+- Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)
 - NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
 
 ## Variables, listed in Pythonic order
@@ -88,7 +87,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 4. x, cpp (easting)
 5. y, cpp (northing)
 6. z (elevation)
-7. n (manning)
+7. n (Manning)
 8. ed (everdried)
 9. it (inundation time)
 10. mi (maximum inundation depth)
@@ -111,26 +110,30 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 2. hydrodynamics.py (agnostic—points) - 09:56
 3. interpdatums.py (agnostic—points) - 35:42
 4. ecology.py(d) (agnostic—points) - 00:19
-5. postprocessing.py (ADCIRC or another model) - XX:XX
-   Total runtime: 50 minutes, 23 seconds + XX:XX (postprocessing)
+5. postprocessing.py (ADCIRC or another model) - 01:25
 
-a TCB: 3,527,549 mesh nodes; 8 attributes; 23 tidal constituents; 3 static global outputs
-b Bounding box set externally via lower-left corner (lon/lat) and upper-right corner (lon/lat)
-c Three wetland types: salt marsh (regularly flooded); mangrove; irregularly flooded marsh
-d Accounts for multi-type calculation of biomass and accretion with updating of elevation and Manning’s n
+Total runtime: 51 minutes, 58 seconds
+
+TCB: 3,527,549 mesh nodes; 8 attributes; 23 tidal constituents; 3 static global outputs
+
+Bounding box set externally via lower-left corner (lon/lat) and upper-right corner (lon/lat)
+
+Three wetland types: salt marsh (regularly flooded); mangrove; irregularly flooded marsh
+
+Accounts for multi-type calculation of biomass and accretion with updating of elevation and Manning’s n
 
 ## Files, listed according to type
 ### Input (6, derived from present simulation)
 - fort.14
-- fort.NWI.14
 - fort.13
 - fort.53
 - everdried.63
 - inundationtime.63
-- maxinundepth.63 -> Need this file output (Jin needs to confirm.)
+- maxinundepth.63
 
-### Input (1, assigns bounding box for ROI—region of interest)
-- ROI.pts
+### Input (2)
+- fort.NWI.14 (initializes wetland type distribution)
+- ROI.pts (assigns bounding box for ROI—region of interest)
 
 ### Intermediate (6)
 - filteredData.pts (clipped to bounding box)

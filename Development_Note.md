@@ -5,9 +5,10 @@
 ## Running file
 - hydromem.py (Argument file for running WAED)
 ## Procedure files (src folders)
-- grd2dem.py (Convert ADCIRC unstructured mesh to tiff file)
+- grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
 - hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
-- 
+- tidaldatums.py (Calculate tidal datums in each pixel on water region **this part is computationally expensive)
+- tidaldatumsidw.py (Interpolate the tidal datum on land regions)
 
 
 # To-do-list

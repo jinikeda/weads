@@ -5,12 +5,13 @@
 ## Running file
 - hydromem.py (Argument file for running WEAD)
   
-## Procedure files (src folders)
+## main Python module/function files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
 - hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
 - tidaldatums.py (Calculate tidal datums in each pixel on water region **this part is computationally expensive)
 - tidaldatumsidw.py (Interpolate the tidal datum on land regions)
 - mem.py (Calculate vegetation productivities)
+  - read_NWI_file.py (provide multi-species domain: haven't incorporated with the main code)
 - rast2adc.py (renew a mesh file: fort.14 based on mem simulation)
 - update_nodal_attributes.py (renew nodal attribute file: fort.13 based on mem simulation)
   - manning.py (Specify Manning's roughnesses based on biomass productivities but probably doesn't use this file)
@@ -25,7 +26,7 @@
 ## Development (mandatory)
 **src/mem.py**
 - Read current wetland marsh/mangrove distributions (Jin).
-  - Jin made a distribution mapping using read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/outputs/Domain_classification_distribution_resample100.tif
+  - Jin made a distribution mapping using src/read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO/outputs/Domain_classification_distribution_resample100.tif
   - Jin added a multi-species option in hydromem.py. src/mem.py needs to be modified (ongoing)
   
 - Examine and calculate each species' (ecological) response (Pete).
@@ -52,15 +53,15 @@ NWI classification
 - 9 = mangrove
 - 20 = irregularly flooded marsh
 
-WATTE classification (hydroMEM also incorporate with WATTE)
+WATTE classification (hydroMEM will also incorporate with WATTE)
 - Input_Water_Class = "40" #Don't use 0 (no data)
 - Input_Other_Class= "55" land
-- Input_Marsh_Class = "16,23,32" #Classification(s), Marsh, String
+- Input_Marsh_Class = "16,23,32" #Classification(s), Marsh, low, medium, high productivity
 
 **Jin’s priority list**
 
 1. Read current wetland marsh/mangrove distributions in src/mem.py
-2. Inundation level part (hydromem.py)
+2. Modify the inundation level part (hydromem.py)
 3. WATTE modification + Evaluate productivity and Inundation level map
 4. Cython and parallelization
 5. Check fort.13
@@ -71,7 +72,9 @@ WATTE classification (hydroMEM also incorporate with WATTE)
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
 
 
-## Pete's note for ecology.py (this code will be deleted later)
+## Pete's note 
+## try to exclude **pyadcircmodule** (src_branch folders:this folder will be deleted later)
+**src_branch/ecology.py** 
 ## Development, in no particular order
 
 - Adjustment of Manning’s n for open-water conversion – TBD

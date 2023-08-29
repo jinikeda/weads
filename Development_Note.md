@@ -5,10 +5,6 @@
 # Running file
 - hydromem.py
 
-  
-
-
-
 # To-do-list
 
 ## Development (mandatory)

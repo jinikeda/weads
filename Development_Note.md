@@ -72,7 +72,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
-## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted later)
+## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted/merged later)
 
 ## Development, in no particular order
 - Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)

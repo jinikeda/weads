@@ -5,7 +5,6 @@
 
 #--- Load modules ---
 import numpy as np
-import sys
 from tqdm import tqdm
 import time
 
@@ -45,10 +44,10 @@ nz=np.ones((numNodes,1),dtype=float);
 print("      Reading mesh...\n")
 for j in tqdm(range(numNodes)):
     myLine=myFile.readline(); myRow=myLine.split();
-    N=int(myRow[0]); X=float(myRow[1]); Y=float(myRow[2]); Z=-float(myRow[3]);
+    N=int(myRow[0]); X=float(myRow[1]); Y=float(myRow[2]); Z=float(myRow[3]);
     nn[j][0]=N; nx[j][0]=X; ny[j][0]=Y; nz[j][0]=Z;
 for j in range(numPoints):
-    idx=int(pts[j][1]); nz[idx-1][0]=pts[j][19];
+    idx=int(pts[j][1]); nz[idx-1][0]=-pts[j][19];
 print("\n"); print("      Writing mesh: Nodal table...\n");
 for j in tqdm(range(numNodes)):
     myOut.write(str(nn[j][0])+" "); myOut.write(str(nx[j][0])+" ");
@@ -116,6 +115,5 @@ myFile.close(); myOut.close();
 #--- Exit script ---
 print("\n"); print("EXIT: Existing script!\n");
 end=time.time(); print ("Time elapsed (seconds):",end-start);
-print("\n"); sys.exit();
 
 

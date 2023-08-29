@@ -10,6 +10,12 @@
 - tidaldatums.py (Calculate tidal datums in each pixel on water region **this part is computationally expensive)
 - tidaldatumsidw.py (Interpolate the tidal datum on land regions)
 
+- update_nodal_attributes.py (reflect into nodal attribute file: fort.13)
+  -- manning.py (Specify Manning's roughnesses based on biomass productivities but probably doesn't use this file)
+  
+## Supplemental file 
+- raster.py (rasterization functions)
+
 
 # To-do-list
 

@@ -6,7 +6,6 @@
 #--- Load modules ---
 import numpy as np
 import math
-import sys
 from tqdm import tqdm
 import time
 
@@ -146,6 +145,5 @@ myOut1.close(); myOut2.close(); myOut3.close();
 #--- Exit script ---
 print("\n"); print("EXIT: Existing script!\n");
 end=time.time(); print ("Time elapsed (seconds):",end-start);
-print("\n"); sys.exit();
 
 

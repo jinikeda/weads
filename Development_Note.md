@@ -3,10 +3,11 @@
 ---
 
 ## Running file
-- hydromem.py
-## procedure files (src folders)
-- hyconn.py (calculate hydro connectivity and classify ocean, land, and pond)
-
+- hydromem.py (Argument file for running WAED)
+## Procedure files (src folders)
+- grd2dem.py (Convert ADCIRC unstructured mesh to tiff file)
+- hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
+- 
 
 
 # To-do-list

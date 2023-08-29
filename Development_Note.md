@@ -71,7 +71,9 @@ WATTE classification (hydroMEM also incorporate with WATTE)
 2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
 
 
-## Pete's note for ecology.py (this code will be deleted later)
+## Pete's note 
+## try to exclude **pyadcircmodule** (src_branch folders:this folder will be deleted later)
+**src_branch/ecology.py** 
 ## Development, in no particular order
 
 - Adjustment of Manning’s n for open-water conversion – TBD

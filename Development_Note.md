@@ -1,6 +1,9 @@
 # Development Note (Aug 29 version)
 
 ---
+## Input/Output data storage 
+chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO
+---
 
 ## Running file
 - hydromem.py (Argument file to run WEAD)
@@ -43,9 +46,6 @@
 - src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which needs to be considered, pending Jin Aug 22)
 
 # NOTE
-## Input/Output data storage 
-chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO
----
 
 NWI classification
 - 8 = salt marsh (regularly flooded) -> follow with tidal cycle

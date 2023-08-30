@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydroMEM.py
 # Name: Peter Bacopoulos, Jin Ikeda
-# Date: August 28, 2023
+# Date: August 30, 2023
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
@@ -11,7 +11,7 @@ import math
 ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 
 #----------------------------------------------------------
-# F U N C T I O N	M E M	   
+# MEM: Marsh Equilibrium Model and Mangrove Development
 #----------------------------------------------------------
 #
 # Uses Inverse Distance Weighting to interpolate/extrapolote 
@@ -19,10 +19,45 @@ ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 # result = function(inputRasterHyControl,inputRasterTopoBathy,\
 #                   inputRasterTidalDatumsIDW,outputRaster)
 #----------------------------------------------------------
+
+#----------------------------------------------------------
+# GLOSSARY
+#----------------------------------------------------------
+#
+# A Accretion [cm]?
+# B Biomass density [g m-2 yr -1]
+# Bl Biomass density left side
+# Br Biomass density right side
+# tbA modified topo-bathy
+# qstar q might vary with each species and location, moved to if conditions
+# qstar2  q might vary with each species and location, moved to if conditions
+# P Productivity
+# marsh marsh classification
+
+#----------------------------------------------------------
+# DATASETS
+#----------------------------------------------------------
+#
+# al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet
+# ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet
+#
+# al=1.975; bl=-0.987; cl=1999;   # Biomass curve coefficients LHS-Apalachicola
+# ar=3.265; br=-1.633; cr=1998;   # Biomass curve coefficients RHS-Apalachicola
+#
+# al=73.8; bl=-1.14; cl=1587.1;   # Biomass curve coefficients LHS-Weeks Bay
+# ar=73.8; br=-1.14; cr=1587.1;   # Biomass curve coefficients RHS-Weeks Bay
+#
+# al=32; bl=-3.2; cl=1920;        # Biomass curve coefficients LHS-Grand Bay  Alizad et al. (2018)
+# ar=6.61; br=-0.661; cr=1983;    # Biomass curve coefficients RHS-Grand Bay
+#
+# al=24.96; bl=-0.193; cl=592.7;  # Biomass curve coefficients LHS-Plum Island
+# ar=24.96; br=-0.193; cr=592.7;  # Biomass curve coefficients RHS-Plum Island
+#----------------------------------------------------------
+# F U N C T I O N
+#----------------------------------------------------------
 def calculate_biomass_parabola(D, DNonNeg, al, bl, cl, ar, br, cr):
 
     # --- BIOMASS CALCULATIONS ---
-    # print ("Biomass Calculations")
     Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
     Bl[Bl < 0.0] = 0.0
     Bl[D >= 0.0] = 0.0
@@ -41,6 +76,20 @@ def calculate_biomass_parabola(D, DNonNeg, al, bl, cl, ar, br, cr):
 
     return B, PL, PH
 
+def create_raster(file,rasterHC, zarray):
+    # Create the output raster dataset
+    gtiff_driver = gdal.GetDriverByName('GTiff')
+    out_ds = gtiff_driver.Create(file, rasterHC.RasterXSize, rasterHC.RasterYSize, rasterHC.RasterCount, gdal.GDT_Int32)
+    out_ds.SetProjection(rasterHC.GetProjection())
+    out_ds.SetGeoTransform(rasterHC.GetGeoTransform())
+    dst_band = out_ds.GetRasterBand(1)
+    dst_band.WriteArray(zarray)
+    dst_band.SetNoDataValue(ndv)  # Exclude nodata value
+    dst_band.ComputeStatistics(0)
+    out_ds = None
+    print('Made a raster file')
+    return
+
 def mem(inputRasterHyControl, inputRasterTopoBathy, \
         inputRasterTidalDatumsIDW,vegetationFile, outputRaster):
 
@@ -52,38 +101,27 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
     print ("-------------------------------------------------")
     print ("")
     '''
-    
+
+    # ----------------------------------------------------------
+    # Read biomass calculation parameters
+    # ----------------------------------------------------------
+
     if vegetationFile==None:
-        print('\nA monotypic species with no vegetation mapping\n')
+        print('\nA monoty085;pic species with no vegetation mapping\n')
         #subscript:sub-optimal(left) and super-optimal(right) branches that met at the parabola apex
-
-        #al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet
-        #ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet
-
-        #al=1.975; bl=-0.987; cl=1999;   # Biomass curve coefficients LHS-Apalachicola
-        #ar=3.265; br=-1.633; cr=1998;   # Biomass curve coefficients RHS-Apalachicola
-
-        #al=73.8; bl=-1.14; cl=1587.1;   # Biomass curve coefficients LHS-Weeks Bay
-        #ar=73.8; br=-1.14; cr=1587.1;   # Biomass curve coefficients RHS-Weeks Bay
 
         al=32; bl=-3.2; cl=1920;        # Biomass curve coefficients LHS-Grand Bay  Alizad et al. (2018)
         ar=6.61; br=-0.661; cr=1983;    # Biomass curve coefficients RHS-Grand Bay
 
-        #al=24.96; bl=-0.193; cl=592.7;  # Biomass curve coefficients LHS-Plum Island
-        #ar=24.96; br=-0.193; cr=592.7;  # Biomass curve coefficients RHS-Plum Island
-
-        # Accretion coefficients  Pete will provide sources
-        q=2.8;
-        BDi=1.99;
-        BDo=0.085;
-        Kr=0.2;
-        m_const=0.0001;
+        # Accretion coefficients
+        # Morris et al. (2016) Contributions of organic and inorganic matter to sedimentvolume and accretion in tidal wetlands at steady state
+        BDi=1.99; BDo=0.085; Kr=0.2; m_const=0.0001;
         dt=5.0
 
     else:
         print('\nMulti species vegetation mapping\n')
 
-        print ("Reading vegetation rasters")
+        print ("Read a vegetation raster")
         rasterVG = gdal.Open(vegetationFile)
         transformVG = rasterVG.GetGeoTransform()
         prjVG = rasterVG.GetProjection()  # Read projection
@@ -94,7 +132,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         unique_values, counts = np.unique(RV_VG, return_counts=True)
         print('Original unique_value is : ', unique_values)
-        print('Thier count is : ', counts)
+        print('Their count is : ', counts)
 
         #### here is the example ####
         # 8 = salt marsh(regularly flooded) follow with tidal cycle
@@ -126,7 +164,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         # Accretion coefficients
         q=2.8; # inorganic sediment load
-        #organic and inorganic accumulation generated by decomposing vegetation
+        # organic and inorganic accumulation generated by decomposing vegetation
         BDi=1.99; BDo=0.085; Kr=0.2; m_const=0.0001;
 
         print('The biomass parameters for mangrove')
@@ -138,7 +176,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         ################# Jin -> Pete #######################################################################
     
-    # --- READ INPUTS ---
+    # ----------------------------------------------------------
+    # Read raster files
+    # ----------------------------------------------------------
     #print ("")
     #print ("Reading rasters")
       
@@ -164,6 +204,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
     
     '''
 
+    # ----------------------------------------------------------
+    # Check projection and raster shape between provided vegetation and calculated raster files
+    # ----------------------------------------------------------
     if vegetationFile==None:
         print("Projection:", prj)
 
@@ -182,40 +225,31 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
             print("Projections and Raster shape match!")
             print("Projection:", prj)
 
-    #print (np.max(hc), np.min(hc))
-    # For Wave Attenuation Tool, we need water and land rasters
+    # --- Make masks for fully wet and dried regions ---
     water_mask = ((-0.5 < hc) & (hc < 0.5)) | (1.5 < hc) # water regions (water and pond in hyconn.tiff)
     land_mask = (hc >= 0.5) & (hc <= 1.5) # land regions in hy conn.tiff
-    
+
+    # --- Read topo-bathymetry and water surface elevation ---
     band=rasterTB.GetRasterBand(1); tb=band.ReadAsArray(); #tb=-1.0*tb;
     band=rasterTDIDW.GetRasterBand(1); mlwIDW=band.ReadAsArray();
     # band=rasterTDIDW.GetRasterBand(2); mslIDW=band.ReadAsArray();
     band=rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
 
+    # --- DEPTH CALCULATIONS ---")
+    D = 100.0 * (mhwIDW - tb); D[tb < 0] = ndv; # Relative depth [cm]
+    DNonNeg = D.copy()
+    DNonNeg[D < 0.0] = 0.0;
+    Dt = 100.0 * (mhwIDW - mlwIDW); # Tidal range [cm]
+    Dt[Dt == 0] = 0.0001;
+
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
     #print ("")
     #print ("Starting Hydro-MEM Calculations")
 
-    # --- DEPTH CALCULATIONS ---")
-    D = 100.0 * (mhwIDW - tb); D[tb < 0] = ndv; # relative depth [cm]
-    DNonNeg = D.copy()
-    DNonNeg[D < 0.0] = 0.0;
-    Dt = 100.0 * (mhwIDW - mlwIDW); #tidal range [cm]
-    Dt[Dt == 0] = 0.0001;
-
     if vegetationFile==None:
 
-        # Note
-        # B Biomass density [g m-2 yr -1]
-        # A Accretion [cm]?
-        # tbA # modified topo-bathy
-        # Bl # Biomass density left side
-        # Br # Biomass density right side
-        P = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv,
-                    dtype=float)  # Create an array of default values (ndv)
+        P = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv, dtype=float)  # Create an array of default values (ndv)
         marsh = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv, dtype=float)
-        # qstar q might vary with each species and location, moved to if conditions
-        # qstar2  q might vary with each species and location, moved to if conditions
 
         # --- BIOMASS CALCULATIONS ---
         # print ("Biomass Calculations")
@@ -236,7 +270,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
         #print ("  DONE!")
 
         # --- PRODUCTIVITY CALCULATIONS ---
-        # Create a mask for different conditions
+        # Create masks for different conditions
         mask1 = (B > 1) & (B <= 1000)
         mask2 = (B > PL) & (B < 1800)
         mask3 = (B >= 1800)
@@ -267,7 +301,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
         marsh[condition_1] = 30
         marsh[condition_2] = 20
         marsh[condition_3] = 10
-        #marsh[B < 1] = ndv
 
         #print ("  DONE!")
 
@@ -312,7 +345,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
         P[mask_regular_2] = 23 # medium productivity
         P[mask_regular_3] = 32 # high productivity
         P[mask_irregular] = 100 # irregular_marsh think about later
-        P[mask_mangrove] = 110  # mask_mangrove think about later
+        P[mask_mangrove] = 110 # mask_mangrove think about later
 
         # --- MARSH TYPE CALCULATIONS ---
         #print ("High-Low Marsh Calculations")
@@ -353,20 +386,17 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
     dst_ds.GetRasterBand(6).SetNoDataValue(ndv); dst_ds.GetRasterBand(6).WriteArray(P);
     dst_ds = None
 
+    ###### Renew vegetation map ####################
+    VM = P.copy()
+    VM[(VM == 16) | (VM == 23) | (VM == 32)] = 8 # 8 = salt marsh(regularly flooded) follow with tidal cycle
+    VM[(VM == 110)] = 9 # 9 = mangrove
+    VM[(VM == 100)] = 20. # 20 = irregularly flooded marsh
+
+    create_raster('new_NWI.tif', rasterHC, VM)
+
     ###### Here Jin will create raster file for WATTE
 
-    gtiff_driver = gdal.GetDriverByName('GTiff')  # Use GeoTIFF driver
-    out_ds = gtiff_driver.Create('Productivity.tif',  # Create a output file
-                                 rasterHC.RasterXSize, rasterHC.RasterYSize, rasterHC.RasterCount, gdal.GDT_Int32)
-    out_ds.SetProjection(prj)
-    out_ds.SetGeoTransform(dst_geot)
-
-    dst_band = out_ds.GetRasterBand(1)
-    dst_band.WriteArray(P)
-    dst_band = out_ds.GetRasterBand(1).SetNoDataValue(int(ndv))  # Exclude nodata value
-    dst_band = out_ds.GetRasterBand(1).ComputeStatistics(0)
-    out_ds = None
-
+    create_raster('Productivity.tif', rasterHC, P)
     ############################################################################################################
     '''
     print ("Output raster written successfully")

@@ -29,7 +29,7 @@ inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inp
 
 What things you need to install the software and how to install them
 
-* [ADCIRC Modules](https://github.com/zcobell/ADCIRCModules) -> singularity image. Ask Jin
+* [ADCIRC Modules](https://github.com/zcobell/ADCIRCModules) -> **singularity image. chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/singularity_image_sm3/adcircmodules_docker_updated.sif**
 * See requirements.txt
 
 ## Contributors

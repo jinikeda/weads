@@ -1,5 +1,6 @@
-# Development Note (Aug 29 version)
+# Development Note (Aug 30 version)
 
+**Discuss the development direction on Aug 30th**
 ---
 
 ## Input/Output data storage 
@@ -11,9 +12,9 @@
   
 ## Main Python module/function files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
-- hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond)
+- hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond using ADCIRC output file: everdried.63)
 - tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is computationally expensive now**)
-- tidaldatumsidw.py (Interpolate the tidal datum on land regions)
+- tidaldatumsidw.py (Interpolate the tidal datum on land and partially wet regions)
 - <span style="color:blue"> **mem.py** </span> (Calculate vegetation productivities)
   - read_NWI_file.py (provide multi-species domain: haven't incorporated with the main code)
 - rast2adc.py (renew an ADCIRC mesh file: fort.14 based on mem simulation)
@@ -37,6 +38,8 @@
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
 - Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
+- Develop a based approach see src_branch
+- Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
 
@@ -48,6 +51,11 @@
 
 # NOTE
 
+## Books
+- A Blue carbon primer: the state of coastal wetland carbon science, practice and policy
+- not sure
+
+  
 NWI classification
 - 8 = salt marsh (regularly flooded) -> follow with tidal cycle
 - 9 = mangrove

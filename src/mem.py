@@ -278,14 +278,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         # --- BIOMASS CALCULATIONS ---
         # print ("Biomass Calculations")
-        Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl;  Bl[Bl<0.0]=0.0; Bl[D>=0.0]=0.0;
-        Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr;  Br[Br<0.0]=0.0; Br[D<0.0]=0.0;
-        B=Bl+Br; B[D==0]=ndv; B[B==0]=ndv;
-        Bmax=np.amax(B)
-        PL=Bmax/3; PH=Bmax*2/3;
-
-        # --- BIOMASS CALCULATIONS ---
-        # print ("Biomass Calculations")
         B, PL, PH = calculate_biomass_parabola(D, DNonNeg, al, bl, cl, ar, br, cr)
 
         # --- ACCRETION CALCULATIONS ---

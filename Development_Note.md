@@ -1,6 +1,6 @@
 # Development Note (Aug 30 version)
 
-**Discuss the development direction on Aug 30th**
+-  **Discussed the development direction on Aug 30th**
 ---
 
 ## Input/Output data storage 

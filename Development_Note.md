@@ -30,7 +30,7 @@
 **src/mem.py**
 - Read current wetland marsh/mangrove distributions (Jin).
   - Jin made a distribution mapping using src/read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
-  - Jin added a multi-species option in hydromem.py. src/mem.py needs to be modified (ongoing)
+  - Jin added a multi-species option in hydromem.py. src/mem.py are almost modified (polish up the code)
   
 - Examine and calculate each species' (ecological) response (Pete).
 

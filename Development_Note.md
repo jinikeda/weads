@@ -1,4 +1,4 @@
-# Development Note (Aug 30 version)
+# Development Note (Sep 3 version)
 
 -  **Discussed the development direction on Aug 30th**
 ---
@@ -16,7 +16,7 @@
 - tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is computationally expensive now**)
 - tidaldatumsidw.py (Interpolate the tidal datum on land and partially wet regions)
 - <span style="color:blue"> **mem.py** </span> (Calculate vegetation productivities)
-  - read_NWI_file.py (provide multi-species domain: haven't incorporated with the main code)
+  - read_NWI_file.py (provide a multi-species domain with expansion: Jin completed on Sep 3)
 - rast2adc.py (renew an ADCIRC mesh file: fort.14 based on mem simulation)
 - update_nodal_attributes.py (renew an ADCIRC nodal attribute file: fort.13 based on mem simulation)
   - manning.py (Specify Manning's roughnesses based on biomass productivities but probably doesn't use this file)
@@ -31,7 +31,7 @@
 **src/mem.py**
 - Read current wetland marsh/mangrove distributions (Jin).
   - Jin made a distribution mapping using src/read_NWI_file.py, which still needs to be incorporated into the package sequence (16 cores take 30 mins).<br> input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
-  - Jin added a multi-species option in hydromem.py. src/mem.py are almost modified (polish up the code)
+  - Jin completed a multi-species option on Sep 3
   
 - Examine and calculate each species' (ecological) response (Pete).
 
@@ -68,7 +68,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 **Jin’s priority list**
 
-1. Read current wetland marsh/mangrove distributions in src/mem.py
+~~1. Read current wetland marsh/mangrove distributions in src/mem.py~~
 2. Modify the inundation level part (hydromem.py)
 3. WATTE modification + Evaluate productivity and Inundation level map
 4. Cython and parallelization

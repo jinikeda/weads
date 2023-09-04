@@ -31,7 +31,7 @@
 **src/mem.py**
 ~~- Read current wetland marsh/mangrove distributions (Jin).~~
 ~~- Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
-  The only problem is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
+  - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
   
 - Examine and calculate each species' (ecological) response (Pete).
 

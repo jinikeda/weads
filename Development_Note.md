@@ -30,7 +30,7 @@
 ## Development (mandatory)
 **src/mem.py**
 ~~- Read current wetland marsh/mangrove distributions (Jin).~~
-  - Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.
+~~- Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
   The only problem is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
   
 - Examine and calculate each species' (ecological) response (Pete).
@@ -38,7 +38,7 @@
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
 - Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
-- Develop a based approach see src_branch
+- Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
@@ -85,7 +85,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 ## Development, in no particular order
 - Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)
-- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin will start considering)
+- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)
 
 ## Variables, listed in Pythonic order
 0. idx, local (local index)

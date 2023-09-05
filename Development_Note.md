@@ -37,6 +37,7 @@
 
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
+- Compare Moriss's excel VBA sheet (Pete)
 - Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
 - Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.

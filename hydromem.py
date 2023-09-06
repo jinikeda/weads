@@ -55,7 +55,7 @@ def main(argv):
     parser.add_argument("--outEPSG", type=str, help="Output EPSG code <outEPSGCode>")
     parser.add_argument("--gridSize", type=float, help="Output raster resolution")
     parser.add_argument("--slr", type=float, help="Sea level rise")
-    parser.add_argument("--inundationFile", type=str, help="Use inundation file <maxele.63>")
+    parser.add_argument("--inundationFile", type=str, help="Use inundation file <maxinundepth.63>")
     parser.add_argument("--vegetationFile", type=str, help="Path to vegetation file <*.tif>")
     parser.add_argument("--skipresample", action="store_true", help="Skip reprojection and resample to raster domain")
 
@@ -112,15 +112,20 @@ def main(argv):
     if rasterize_flag: # Create TIF images
         print('\n' + '\tCreating TIF images...')
         
-        src.basics.fileexists(inputMeshFile)
-        src.basics.fileexists(inputShapeFile)
-        src.basics.fileexists(inputEverdriedFile)
-        src.basics.fileexists(inputHarmonicsFile)
-        
-        src.grd2dem(inputMeshFile,inputMeshFile,inputShapeFile,'tbathy',inEPSG,outEPSG,gridSize,-1)
-        src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
-        src.grd2dem(inputMeshFile,inputAttrFile,inputShapeFile,'manning',inEPSG,outEPSG,gridSize,1)
-        src.grd2dem(inputMeshFile,inputHarmonicsFile,inputShapeFile,'harmonics',inEPSG,outEPSG,gridSize,1)
+        # src.basics.fileexists(inputMeshFile)
+        # src.basics.fileexists(inputShapeFile)
+        # src.basics.fileexists(inputEverdriedFile)
+        # src.basics.fileexists(inputHarmonicsFile)
+        #
+        # src.grd2dem(inputMeshFile,inputMeshFile,inputShapeFile,'tbathy',inEPSG,outEPSG,gridSize,-1)
+        # src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
+        # src.grd2dem(inputMeshFile,inputAttrFile,inputShapeFile,'manning',inEPSG,outEPSG,gridSize,1)
+        # src.grd2dem(inputMeshFile,inputHarmonicsFile,inputShapeFile,'harmonics',inEPSG,outEPSG,gridSize,1)
+
+        if inundationFile:  # Run Inundation calculation
+            print('\n' + '\tMake a raster of maximum inundation depth...')
+            src.basics.fileexists(inundationFile)
+            src.grd2dem(inputMeshFile,inundationFile,inputShapeFile, 'maxinundation', inEPSG, outEPSG, gridSize,1,1,False)
     
     if hyconn_flag: # Create TIF of hydraulically connected area
         print('\n' + '\tComputing hydraulic connectivity...')
@@ -143,11 +148,9 @@ def main(argv):
         
         src.tidaldatumsidw('hyconn.tif','TidalDatums.tif','TidalDatums_IDW.tif',numIDWNeighbors)
     
-    if inundationFile: # Run Inundation calculation
-        print('\n' + '\tCalculating maximum inundation depth...')
-
     if vegetationFile: # Organize vegetation file
         print('\n' + '\tOrganizing vegetation file...')
+        src.basics.fileexists(vegetationFile)
         src.nwi.read_tif(vegetationFile, outEPSG, gridSize, skipresample_flag)
 
     if mem_flag: # Run MEM

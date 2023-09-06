@@ -1,4 +1,4 @@
-# Development Note (Sep 3 version)
+# Development Note (Sep 5 version)
 
 -  **Discussed the development direction on Aug 30th**
 ---
@@ -37,8 +37,8 @@
 
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
-- Compare Moriss's excel VBA sheet (Pete)
-- Read maxele.63 and create a max inundation map (Pete creates a Python file). Jin modifies hydromem.py (ongoing)
+- Compare Morris's excel VBA sheet (Pete)
+~~- Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
 - Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
 ~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
@@ -48,13 +48,14 @@
 ~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
+- Read Netcdf outputs
 - src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which needs to be considered, pending Jin Aug 22)
 
 # NOTE
 
 ## Books
 - A Blue carbon primer: the state of coastal wetland carbon science, practice and policy
-- not sure
+- another one is not sure
 
   
 NWI classification
@@ -70,15 +71,15 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 **Jin’s priority list**
 
 ~~1. Read current wetland marsh/mangrove distributions in src/mem.py~~
-2. Modify the inundation level part (hydromem.py)
+~~2. Modify the inundation level part (hydromem.py)~~
 3. WATTE modification + Evaluate productivity and Inundation level map
 4. Cython and parallelization
 5. Check fort.13
 
 **Jin’s request order**
 
-1. maxinundepth.63
-2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)
+~~1. maxinundepth.63~~
+~~2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)~~
 3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
@@ -86,7 +87,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 ## Development, in no particular order
 - Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)
-- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)
+~~- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)~~
 
 ## Variables, listed in Pythonic order
 0. idx, local (local index)

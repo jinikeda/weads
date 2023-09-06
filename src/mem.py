@@ -107,7 +107,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
     # ----------------------------------------------------------
 
     if vegetationFile==None:
-        print('\nA monoty085;pic species with no vegetation mapping\n')
+        print('\nA monotypic species with no vegetation mapping\n')
         #subscript:sub-optimal(left) and super-optimal(right) branches that met at the parabola apex
 
         al=32; bl=-3.2; cl=1920;        # Biomass curve coefficients LHS-Grand Bay  Alizad et al. (2018)
@@ -221,7 +221,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
             print("Projection:", prj,'\n', prjVG)
             print("Projection:", normalized_prj,'\n', normalized_prjVG)
         else:
-            print ("Jin will modify this part later")
+            print("Jin will modify this part later")
             print("Projections and Raster shape match!")
             print("Projection:", prj)
 
@@ -230,10 +230,10 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
     land_mask = (hc >= 0.5) & (hc <= 1.5) # land regions in hy conn.tiff
 
     # --- Read topo-bathymetry and water surface elevation ---
-    band=rasterTB.GetRasterBand(1); tb=band.ReadAsArray(); #tb=-1.0*tb;
-    band=rasterTDIDW.GetRasterBand(1); mlwIDW=band.ReadAsArray();
+    band = rasterTB.GetRasterBand(1); tb=band.ReadAsArray(); #tb=-1.0*tb;
+    band = rasterTDIDW.GetRasterBand(1); mlwIDW=band.ReadAsArray();
     # band=rasterTDIDW.GetRasterBand(2); mslIDW=band.ReadAsArray();
-    band=rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
+    band = rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
 
     # --- DEPTH CALCULATIONS ---")
     D = 100.0 * (mhwIDW - tb); D[tb < 0] = ndv; # Relative depth [cm]
@@ -329,9 +329,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions
-        mask_regular_1 = (RV_VG == 8) & (B > 1) & (B <= 1000)
-        mask_regular_2 = (RV_VG == 8) & (B > PL) & (B < 1800)
-        mask_regular_3 = (RV_VG == 8) & (B >= 1800)
+        mask_regular_1 = mask_salt_marsh & (B > 1) & (B <= 1000)
+        mask_regular_2 = mask_salt_marsh & (B > PL) & (B < 1800)
+        mask_regular_3 = mask_salt_marsh & (B >= 1800)
         mask_irregular = mask_irregular_marsh # 'TBD' &
         mask_mangrove = mask_mangrove # 'TBD' &
 
@@ -369,7 +369,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
         # how about mangrove?
         #marsh[B < 1] = ndv
 
-        #print ("  DONE!")
+        #print (" DONE!")
 
     # --- WRITE OUTPUTS ---
     #print ("")
@@ -394,7 +394,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
     create_raster('new_NWI.tif', rasterHC, VM)
 
-    ###### Here Jin will create raster file for WATTE
+    ###### Here Jin will create a raster file for WATTE
 
     create_raster('Productivity.tif', rasterHC, P)
     ############################################################################################################

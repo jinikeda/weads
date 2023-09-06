@@ -29,8 +29,8 @@
 
 ## Development (mandatory)
 **src/mem.py**
-~~- Read current wetland marsh/mangrove distributions (Jin).~~
-~~- Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
+  - ~~Read current wetland marsh/mangrove distributions (Jin).~~
+  - ~~Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
   - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
   
 - Examine and calculate each species' (ecological) response (Pete).
@@ -38,14 +38,14 @@
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
 - Compare Morris's excel VBA sheet (Pete)
-~~- Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
+- ~~Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
 - Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
-~~- MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
+- ~~MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
 
 ## Modifications (desirable)
-~~- src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
+- ~~src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
 - Read Netcdf outputs
@@ -70,16 +70,16 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 **Jin’s priority list**
 
-~~1. Read current wetland marsh/mangrove distributions in src/mem.py~~
-~~2. Modify the inundation level part (hydromem.py)~~
+1. ~~Read current wetland marsh/mangrove distributions in src/mem.py~~
+2. ~~Modify the inundation level part (hydromem.py)~~
 3. WATTE modification + Evaluate productivity and Inundation level map
 4. Cython and parallelization
 5. Check fort.13
 
 **Jin’s request order**
 
-~~1. maxinundepth.63~~
-~~2. Inundationdepth.tif (maxinundationdepth.63 -> tiff file)~~
+1. ~~maxinundepth.63~~
+2. ~~Inundationdepth.tif (maxinundationdepth.63 -> tiff file)~~
 3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
@@ -87,7 +87,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 ## Development, in no particular order
 - Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)
-~~- NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)~~
+- ~~NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)~~
 
 ## Variables, listed in Pythonic order
 0. idx, local (local index)

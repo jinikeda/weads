@@ -37,7 +37,7 @@
 
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
-- Compare Morris's excel VBA sheet (Pete)
+- Compare Morris's excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
 - ~~Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
 - Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
@@ -55,7 +55,7 @@
 
 ## Books
 - A Blue carbon primer: the state of coastal wetland carbon science, practice and policy
-- another one is not sure
+- Another one is not sure
 
   
 NWI classification

@@ -112,15 +112,15 @@ def main(argv):
     if rasterize_flag: # Create TIF images
         print('\n' + '\tCreating TIF images...')
         
-        # src.basics.fileexists(inputMeshFile)
-        # src.basics.fileexists(inputShapeFile)
-        # src.basics.fileexists(inputEverdriedFile)
-        # src.basics.fileexists(inputHarmonicsFile)
-        #
-        # src.grd2dem(inputMeshFile,inputMeshFile,inputShapeFile,'tbathy',inEPSG,outEPSG,gridSize,-1)
-        # src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
-        # src.grd2dem(inputMeshFile,inputAttrFile,inputShapeFile,'manning',inEPSG,outEPSG,gridSize,1)
-        # src.grd2dem(inputMeshFile,inputHarmonicsFile,inputShapeFile,'harmonics',inEPSG,outEPSG,gridSize,1)
+        src.basics.fileexists(inputMeshFile)
+        src.basics.fileexists(inputShapeFile)
+        src.basics.fileexists(inputEverdriedFile)
+        src.basics.fileexists(inputHarmonicsFile)
+
+        src.grd2dem(inputMeshFile,inputMeshFile,inputShapeFile,'tbathy',inEPSG,outEPSG,gridSize,-1)
+        src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
+        src.grd2dem(inputMeshFile,inputAttrFile,inputShapeFile,'manning',inEPSG,outEPSG,gridSize,1)
+        src.grd2dem(inputMeshFile,inputHarmonicsFile,inputShapeFile,'harmonics',inEPSG,outEPSG,gridSize,1)
 
         if inundationFile:  # Run Inundation calculation
             print('\n' + '\tMake a raster of maximum inundation depth...')

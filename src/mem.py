@@ -115,6 +115,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         # Accretion coefficients
         # Morris et al. (2016) Contributions of organic and inorganic matter to sedimentvolume and accretion in tidal wetlands at steady state
+        q=2.8; # inorganic sediment load
         BDi=1.99; BDo=0.085; Kr=0.2; m_const=0.0001;
         dt=5.0
 

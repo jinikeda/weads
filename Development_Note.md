@@ -1,4 +1,4 @@
-# Development Note (Sep 5 version)
+# Development Note (Sep 12 version)
 
 -  **Discussed the development direction on Aug 30th**
 ---
@@ -13,7 +13,7 @@
 ## Main Python module/function files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
 - hyconn.py (Calculate hydro connectivity and classify ocean, land, and pond using ADCIRC output file: everdried.63)
-- tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is computationally expensive now**)
+- tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is still computationally expensive on Sep/12**)
 - tidaldatumsidw.py (Interpolate the tidal datum on land and partially wet regions)
 - <span style="color:blue"> **mem.py** </span> (Calculate vegetation productivities)
   - read_NWI_file.py (provide a multi-species domain with expansion: Jin completed on Sep 3)
@@ -37,7 +37,7 @@
 
 ## Development (desirable)
 - Replace private module: **pyadcircmodules**
-- Compare Morris's excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
+- Compare Morris's Excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
 - ~~Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
 - Develop a point-based approach. See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.

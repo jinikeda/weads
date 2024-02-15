@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydroMEM.py
 # Name: Peter Bacopoulos, Jin Ikeda
-# Date: August 30, 2023
+# Date: February 15, 2024
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
@@ -115,7 +115,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
 
         # Accretion coefficients
         # Morris et al. (2016) Contributions of organic and inorganic matter to sedimentvolume and accretion in tidal wetlands at steady state
-        q=2.8; # inorganic sediment load
+        q = 2.8;  # inorganic sediment load
         BDi=1.99; BDo=0.085; Kr=0.2; m_const=0.0001;
         dt=5.0
 
@@ -174,8 +174,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, \
         print('The biomass parameters for salt marsh(regularly flooded)')
         print('Irregularly flooded marsh parameter  goes here')
         ### Jin to Pete ###: here, we need max inundation depth info as well
-
-        ################# Jin -> Pete #######################################################################
+        ### Pete to Jin (Why, for WATTE?) Jin comments to max inundation on Feb 15 2024
+        ### The code doesn't include max inundation depth info, but the file may specify the range and inundation depth of irregularly flooded marshes—also for WATTE.
+        # The rasterize file was created through hydromem.py. But Jin will determine how to incorporate it into mem.py later (no action is needed at this moment).
     
     # ----------------------------------------------------------
     # Read raster files

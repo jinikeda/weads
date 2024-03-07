@@ -78,8 +78,8 @@ dt = 5.0  # Time step (yr)
 
 print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 # Salt marsh (8)
-Dmin1 = 2.0;
-Dmax1 = 46.0;
+Dmin1 = -20.#2.0;
+Dmax1 = 46.#46.0;
 Bmax1 = 2400.0;
 Dopt1 = 22.0;
 
@@ -148,19 +148,34 @@ def calculate_biomass_parabola(D, DNonNeg,ndv, al, bl, cl, ar, br, cr):
 
     return B, PL, PH
 
-def calculate_biomass_parabola_beta(DNonNeg,Dopt,ndv, al, bl, cl, ar, br, cr):
+def calculate_biomass_parabola_beta(DNonNeg,Dopt,land_mask,ndv, al, bl, cl, ar, br, cr):
 
     # --- BIOMASS CALCULATIONS ---
-    Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
-    Bl[Bl < 0.0] = ndv
-    Bl[DNonNeg >= Dopt] = 0.0
-    print(Bl.min(), Bl.max())
+    # if DNonNeg > Dopt:
+    #     Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
+    #     Bl[Bl < 0.0] = ndv
+    #     #Bl[DNonNeg >= Dopt] = 0.0
+    #     print('BL:', Bl.min(), Bl.max())
+    # else:
+    #     Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
+    #     Br[Br < 0.0] = ndv
+    #     #Br[DNonNeg < Dopt] = 0.0
+    #     #Br[Br ==np.nan] = ndv
 
-    Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
-    Br[Br < 0.0] = ndv
-    Br[DNonNeg < Dopt] = 0.0
-    #Br[Br ==np.nan] = ndv
-    print(Br.min(), Br.max())
+    # Create a mask for the condition
+    mask1 = (DNonNeg <= Dopt) & land_mask
+    mask2 = (DNonNeg > Dopt) & land_mask
+
+    # Perform the calculations only where the condition is true
+    Bl = np.where(mask1, al * DNonNeg + bl * DNonNeg * DNonNeg + cl, ndv)
+    Br = np.where(mask2, ar * DNonNeg + br * DNonNeg * DNonNeg + cr, ndv)
+
+    print('BL:', Bl.min(), Bl.max())
+    print('BR', Br.min(), Br.max())
+
+    # Set negative values to ndv
+    Bl[Bl < 0.0] = -0.001
+    Br[Br < 0.0] = -0.001
 
     B = Bl + Br
     # B[DNonNeg == 0] = 0.0
@@ -168,7 +183,7 @@ def calculate_biomass_parabola_beta(DNonNeg,Dopt,ndv, al, bl, cl, ar, br, cr):
     B[B < 0] = ndv
 
     Bmax = B.max()
-    print('check Bmax', Bmax)
+    print('check B max and min', Bmax, B.min())
     PL = Bmax / 3
     PH = Bmax * 2 / 3
 
@@ -224,7 +239,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global dt,ndv, q, B, PL, PH, A, tbA, marsh, qstar, qstar2, w, DNonNeg, D, Dmin, Dmax, Dopt, Bmax, k1, k2, kr, RRS, BTR, SSC, FF
+    global dt,ndv, q, B, PL, PH, A, tbA, marsh, qstar, qstar2, w, DNonNeg, Dmin, Dmax, Dopt, Bmax, k1, k2, kr, RRS, BTR, SSC, FF
 
     if vegetationFile==None:
         print('\nA monotypic species with no vegetation mapping\n')
@@ -367,7 +382,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     band = rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
 
     # --- DEPTH CALCULATIONS ---")
-    D = 100.0 * (mhwIDW - tb); #D[tb < 0] = ndv; # Relative depth [cm]
+    D = 100.0 * (mhwIDW - tb); D[D < -10000] = ndv; # Relative depth [cm]
     DNonNeg = D.copy()
 #    DNonNeg[D < 0.0] = 0.0;
     print(DNonNeg.min(),DNonNeg.max())
@@ -444,15 +459,15 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- BIOMASS CALCULATIONS ---
         # Salt marsh (8)
-        B1, PL1, PH1 = calculate_biomass_parabola_beta(DNonNeg, Dopt1, ndv, a1, b1, c1, a1, b1, c1)
+        B1, PL1, PH1 = calculate_biomass_parabola_beta(DNonNeg, Dopt1,land_mask, ndv, a1, b1, c1, a1, b1, c1)
         print('Salt marsh ','PH = ', PH1, ', PL =' ,PL1, 'Bmin',B1.min())
 
         # Mangrove (9)
-        B2, PL2, PH2 = calculate_biomass_parabola_beta(DNonNeg, Dopt2, ndv, a2, b2, c2, a2, b2, c2)
+        B2, PL2, PH2 = calculate_biomass_parabola_beta(DNonNeg, Dopt2,land_mask, ndv, a2, b2, c2, a2, b2, c2)
         print('Mangrove ','PH = ', PH2, ', PL =',PL2,'Bmin',B2.min())
 
         # Irregularly marsh (20)
-        B3, PL3, PH3 = calculate_biomass_parabola_beta(DNonNeg, Dopt3, ndv, a3, b3, c3, a3, b3, c3)
+        B3, PL3, PH3 = calculate_biomass_parabola_beta(DNonNeg, Dopt3, land_mask, ndv, a3, b3, c3, a3, b3, c3)
         print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3,'Bmin',B3.min())
 
         # --- ACCRETION CALCULATIONS ---

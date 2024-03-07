@@ -136,14 +136,13 @@ def calculate_biomass_parabola(D, DNonNeg,ndv, al, bl, cl, ar, br, cr):
     Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
     Br[Br < 0.0] = ndv
     #Br[Br ==np.nan] = ndv
-    print(Br.min(), Br.max())
 
     B = Bl + Br
     B[D == 0] = 0.0
     B[B == 0] = 0.0
     B[B < 0] = ndv
 
-    Bmax = np.max(B)
+    Bmax = B.max()
     PL = Bmax / 3
     PH = Bmax * 2 / 3
 
@@ -159,7 +158,7 @@ def calculate_biomass_parabola_beta(DNonNeg,Dopt,ndv, al, bl, cl, ar, br, cr):
 
     Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
     Br[Br < 0.0] = ndv
-    Br[Br < DNonNeg] = 0.0
+    Br[DNonNeg < Dopt] = 0.0
     #Br[Br ==np.nan] = ndv
     print(Br.min(), Br.max())
 
@@ -168,7 +167,8 @@ def calculate_biomass_parabola_beta(DNonNeg,Dopt,ndv, al, bl, cl, ar, br, cr):
     B[B == 0] = 0.0
     B[B < 0] = ndv
 
-    Bmax = np.amax(B)
+    Bmax = B.max()
+    print('check Bmax', Bmax)
     PL = Bmax / 3
     PH = Bmax * 2 / 3
 

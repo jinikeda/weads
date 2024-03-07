@@ -367,9 +367,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     band = rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
 
     # --- DEPTH CALCULATIONS ---")
-    D = 100.0 * (mhwIDW - tb); D[tb < 0] = ndv; # Relative depth [cm]
+    D = 100.0 * (mhwIDW - tb); #D[tb < 0] = ndv; # Relative depth [cm]
     DNonNeg = D.copy()
-    DNonNeg[D < 0.0] = 0.0;
+#    DNonNeg[D < 0.0] = 0.0;
     print(DNonNeg.min(),DNonNeg.max())
     Dt = 100.0 * (mhwIDW - mlwIDW); # Tidal range [cm]
     Dt[Dt == 0] = 0.0001;

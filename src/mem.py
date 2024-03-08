@@ -17,8 +17,10 @@ import math
 #                   inputRasterTidalDatumsIDW,outputRaster)
 #----------------------------------------------------------
 
+########################################################################################################################
+# Jin to Pete: Please check the following part
 #----------------------------------------------------------
-# GLOSSARY OF VARIABLES # Jin -> Pete please update this list
+# GLOSSARY OF VARIABLES #
 #----------------------------------------------------------
 #
 # A: Accretion [cm]?
@@ -34,11 +36,11 @@ import math
 # Bmax
 
 #----------------------------------------------------------
-# DATASETS Jin -> Pete add States
+# DATASETS Jin -> Pete Please add States and Optimum March 7, 2024
 #----------------------------------------------------------
 #
-# al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet
-# ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet
+# al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet, where?
+# ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet, where?
 #
 # al=1.975; bl=-0.987; cl=1999;   # Biomass curve coefficients LHS-Apalachicola, FL
 # ar=3.265; br=-1.633; cr=1998;   # Biomass curve coefficients RHS-Apalachicola, FL
@@ -53,64 +55,69 @@ import math
 # ar=24.96; br=-0.193; cr=592.7;  # Biomass curve coefficients RHS-Plum Island
 
 biomass_coefficients = {
-    "NorthInlet": {"al": 1000, "bl": -3718, "cl": 1021, "ar": 1000, "br": -3718, "cr": 1021},
+    "NorthInlet": {"al": 1000, "bl": -3718, "cl": 1021, "ar": 1000, "br": -3718, "cr": 1021, "Dopt": 22}, # can be include, "Bmax": 2400},
     "Apalachicola": {"al": 1.975, "bl": -0.987, "cl": 1999, "ar": 3.265, "br": -1.633, "cr": 1998},
     "WeeksBay": {"al": 73.8, "bl": -1.14, "cl": 1587.1, "ar": 73.8, "br": -1.14, "cr": 1587.1},
     "GrandBay": {"al": 32, "bl": -3.2, "cl": 1920, "ar": 6.61, "br": -0.661, "cr": 1983},
     "PlumIsland": {"al": 24.96, "bl": -0.193, "cl": 592.7, "ar": 24.96, "br": -0.193, "cr": 592.7}}
 
-# Need to add Optimum Elevation
+# Need to add Optimum Elevation at least to run calculate_biomass_parabola
+# until here
+########################################################################################################################
+
 
 ########################################################################################################################
 print ("Input parameters for MEM")
 ########################################################################################################################
 # --- GLOBAL PARAMETERS ---
-ndv = -99999.0  # No data value (ndv) using ADCIRC convention
+ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
 qmax = 2.8 # Maximum capture coefficient (-)
 qmin = 1.0 # Minimum capture coefficient (-)
 SSC = 25.0 # Suspended sediment concentration
 FF = 353.0 # Flooding frequency (1/year)
-k1 = 0.085  # Organic inputs # # Bulk density of organic matter (g/cm3)
-k2 = 1.99  # Mineral inputs # Bulk density of inorganic matter (g/cm3)
+BDo = 0.085  # Organic inputs # # Bulk density of organic matter (g/cm3)
+BDi = 1.99  # Mineral inputs # Bulk density of inorganic matter (g/cm3)
 dt = 5.0  # Time step (yr)
+Kr = 0.2  # Refractory fraction (-)
 
 # --- LOCAL ACCRETION PARAMETERS ---
-
+# when vegetationFile == True: modify the following part
 print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
-# Salt marsh (8)
-Dmin1 = -20.#2.0;
-Dmax1 = 46.#46.0;
-Bmax1 = 2400.0;
-Dopt1 = 22.0;
+vegetation_parameters = {
+    "SaltMarsh": {
+        "Dmin": 2.0,
+        "Dmax": 46.0,
+        "Bmax": 2400.0,
+        "Dopt": 22.0,
+        "Kr": 0.1,
+        "RRS": 2.0,
+        "BTR": 0.5
+    },
+    "Mangrove": {
+        "Dmin": 24.0,
+        "Dmax": 66.0,
+        "Bmax": 7800.0,
+        "Dopt": 45.0,
+        "Kr": 0.1,
+        "RRS": 1.8,
+        "BTR": 0.25
+    },
+    "IrregularMarsh": {
+        "Dmin": -21.0,
+        "Dmax": 35.0,
+        "Bmax": 1200.0,
+        "Dopt": 7.0,
+        "Kr": 0.1,
+        "RRS": 1.5,
+        "BTR": 0.5
+    }
+}
 
-# Mangrove (9)
-Dmin2 = 24.0
-Dmax2 = 66.0
-Bmax2 = 7800.0
-Dopt2 = 45.0
-
-# Irregularly flooded marsh (20)
-Dmin3 = -21.0;
-Dmax3 = 35.0;
-Bmax3 = 1200.0;
-Dopt3 = 7.0;  # 3: Irregularly flooded marsh (NWI = 20)
-
-
-# ORGANIC: Morris MEM 2016
-kr1 = 0.1 # Refractory fraction (-)
-kr2 = 0.1 # Refractory fraction (-)
-kr3 = 0.1 # Refractory fraction (-)
-RRS1 = 2.0 # BG-to-shoot bio ratio (-)
-RRS2 = 1.8 # BG-to-shoot bio ratio (-)
-RRS3 = 1.5 # BG-to-shoot bio ratio (-)
-BTR1 = 0.5 # BG turnover rate (1/year)
-BTR2 = 0.25 # BG turnover rate (1/year) for mature mangrove
 ########################################################################################################################
-### Jin to Pete ###: Check the BTR here and what is BG? is not used in the code ########################################
+### Jin to Pete ###: Check the BTR here and what is BG? is not used in the code March 7, 24 ############################
 BTRmat = 0.22  # BG turnover rate (1/year) for mature mangroves
 BTRjuv = 0.67  # BG turnover rate (1/year) for juvenile mangroves
 ########################################################################################################################
-BTR3 = 0.5
 Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
 
 #----------------------------------------------------------
@@ -123,75 +130,62 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
     return a, b, c
 
 
-# this is a problem
-def calculate_biomass_parabola(D, DNonNeg,ndv, al, bl, cl, ar, br, cr):
+# this is a problem for code and delete it soon
+# def calculate_biomass_parabola(D, DNonNeg,ndv, al, bl, cl, ar, br, cr):
+#
+#     # --- BIOMASS CALCULATIONS ---
+#     Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
+#     Bl[Bl < 0.0] = ndv
+#     #Bl[Bl ==np.nan] = ndv
+#     #Bl[D >= 0.0] = 0.0
+#     print(Bl.min(), Bl.max())
+#
+#     Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
+#     Br[Br < 0.0] = ndv
+#     #Br[Br ==np.nan] = ndv
+#
+#     B = Bl + Br
+#     B[D == 0] = 0.0
+#     B[B == 0] = 0.0
+#     B[B < 0] = ndv
+#
+#     Bmax = B.max()
+#     PL = Bmax / 3
+#     PH = Bmax * 2 / 3
+#
+#     return B, PL, PH
+
+def calculate_biomass_parabola(DNonNeg,Dopt,land_mask, al, bl, cl, ar, br, cr):
+    global ndv
+    # Jin -> Pete please think about using D or DNonNeg
 
     # --- BIOMASS CALCULATIONS ---
-    Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
-    Bl[Bl < 0.0] = ndv
-    #Bl[Bl ==np.nan] = ndv
-    #Bl[D >= 0.0] = 0.0
-    print(Bl.min(), Bl.max())
-
-    Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
-    Br[Br < 0.0] = ndv
-    #Br[Br ==np.nan] = ndv
-
-    B = Bl + Br
-    B[D == 0] = 0.0
-    B[B == 0] = 0.0
-    B[B < 0] = ndv
-
-    Bmax = B.max()
-    PL = Bmax / 3
-    PH = Bmax * 2 / 3
-
-    return B, PL, PH
-
-def calculate_biomass_parabola_beta(DNonNeg,Dopt,land_mask,ndv, al, bl, cl, ar, br, cr):
-
-    # --- BIOMASS CALCULATIONS ---
-    # if DNonNeg > Dopt:
-    #     Bl = al * DNonNeg + bl * DNonNeg * DNonNeg + cl
-    #     Bl[Bl < 0.0] = ndv
-    #     #Bl[DNonNeg >= Dopt] = 0.0
-    #     print('BL:', Bl.min(), Bl.max())
-    # else:
-    #     Br = ar * DNonNeg + br * DNonNeg * DNonNeg + cr
-    #     Br[Br < 0.0] = ndv
-    #     #Br[DNonNeg < Dopt] = 0.0
-    #     #Br[Br ==np.nan] = ndv
-
     # Create a mask for the condition
-    mask1 = (DNonNeg <= Dopt) & land_mask
-    mask2 = (DNonNeg > Dopt) & land_mask
+    mask_left_parabora = (DNonNeg <= Dopt) & land_mask
+    mask_right_parabora = (DNonNeg > Dopt) & land_mask
 
     # Perform the calculations only where the condition is true
-    Bl = np.where(mask1, al * DNonNeg + bl * DNonNeg * DNonNeg + cl, ndv)
-    Br = np.where(mask2, ar * DNonNeg + br * DNonNeg * DNonNeg + cr, ndv)
+    Bl = np.where(mask_left_parabora, al * DNonNeg + bl * DNonNeg * DNonNeg + cl, ndv)
+    Br = np.where(mask_right_parabora, ar * DNonNeg + br * DNonNeg * DNonNeg + cr, ndv)
 
     print('BL:', Bl.min(), Bl.max())
-    print('BR', Br.min(), Br.max())
+    print('BR:', Br.min(), Br.max())
 
-    # Set negative values to ndv
+    # Set negative values to negative small value
     Bl[Bl < 0.0] = -0.001
     Br[Br < 0.0] = -0.001
 
     B = Bl + Br
-    # B[DNonNeg == 0] = 0.0
-    B[B == 0] = 0.0
     B[B < 0] = ndv
 
     Bmax = B.max()
-    print('check B max and min', Bmax, B.min())
+    print('B max and min', Bmax, B.min())
     PL = Bmax / 3
     PH = Bmax * 2 / 3
 
     return B, PL, PH
 
-
-
-def calculate_vertical_accretion(qmin, qmax,dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, k1, k2):
+def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, BDo, BDi):
 
     # --- ACCRETION CALCULATIONS ---
     q=qmin+(qmax-qmin)*B/Bmax
@@ -200,7 +194,7 @@ def calculate_vertical_accretion(qmin, qmax,dt, B, Bmax, kr, RRS, BTR, SSC, FF, 
     Vmin=0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter where is Jin -> Pete FIT?
     Vorg[B<0.0]=0.0
     Vmin[B<0.0]=0.0
-    A=(Vorg/k1)+(Vmin/k2) # accretion rate
+    A=(Vorg/BDo)+(Vmin/BDi) # accretion rate
     tbA=A*dt/100.0 # accretion thickness
 
     return tbA, A
@@ -239,7 +233,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global dt,ndv, q, B, PL, PH, A, tbA, marsh, qstar, qstar2, w, DNonNeg, Dmin, Dmax, Dopt, Bmax, k1, k2, kr, RRS, BTR, SSC, FF
+    global ndv, qmax, qmin,SSC, FF, BDo, BDi, dt, Kr, biomass_coefficients, vegetation_parameters
 
     if vegetationFile==None:
         print('\nA monotypic species with no vegetation mapping\n')
@@ -253,11 +247,12 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         ar = coefficients["ar"]
         br = coefficients["br"]
         cr = coefficients["cr"]
+        Dopt = coefficients["Dopt"]
 
         # Accretion coefficients
         # Morris et al. (2016) Contributions of organic and inorganic matter to sedimentvolume and accretion in tidal wetlands at steady state
-        q = 2.8;  # inorganic sediment load
-        BDi=1.99; BDo=0.085; Kr=0.2; m_const=0.0001;
+
+        m_const=0.0001;
 
     else:
         print('\nMulti species vegetation mapping\n')
@@ -296,25 +291,59 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         mask_salt_marsh = (RV_VG == 8)
         mask_mangrove = (RV_VG == 9)
         mask_irregular = (RV_VG == 20)
-        dt = 5.0
 
         print ('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 
-        a1, b1, c1 = calculate_coefficients(Dmin1, Dmax1, Dopt1, Bmax1) # 1: Salt marsh (NWI = 8)
-        a2, b2, c2 = calculate_coefficients(Dmin2, Dmax2, Dopt2, Bmax2)  # 2: Mangrove (NWI = 9) (mangrove (mature))
-        a3, b3, c3 = calculate_coefficients(Dmin3, Dmax3, Dopt3, Bmax3) # 3: Irregularly flooded marsh (NWI = 20)
-        print('check: abc', a1, b1, c1)
+        # Salt marsh
+        vegetation_type="SaltMarsh"
+        params = vegetation_parameters[vegetation_type]
+        Dmin_marsh = params["Dmin"]
+        Dmax_marsh = params["Dmax"]
+        Dopt_marsh = params["Dopt"]
+        Bmax_marsh = params["Bmax"]
+        kr_marsh = params["Kr"]
+        RRS_marsh = params["RRS"]
+        BTR_masrh = params["BTR"]
+
+        a1, b1, c1 = calculate_coefficients(Dmin_marsh, Dmax_marsh, Dopt_marsh, Bmax_marsh) # 1: Salt marsh (NWI = 8)
+
+        # Mangrove
+        vegetation_type = "Mangrove"
+        params = vegetation_parameters[vegetation_type]
+        Dmin_matmang = params["Dmin"]
+        Dmax_matmang = params["Dmax"]
+        Dopt_matmang = params["Dopt"]
+        Bmax_matmang = params["Bmax"]
+        kr_matmang = params["Kr"]
+        RRS_matmang = params["RRS"]
+        BTR_matmang = params["BTR"]
+
+        a2, b2, c2 = calculate_coefficients(Dmin_matmang,Dmax_matmang,Dopt_matmang,Bmax_matmang)  # 2: Mangrove (NWI = 9) (mangrove (mature))
+        print('check: mangrove abc', a2, b2, c2)
+
+        # Irregularly flooded marsh
+        vegetation_type = "IrregularMarsh"
+        params = vegetation_parameters[vegetation_type]
+        Dmin_fmarsh = params["Dmin"]
+        Dmax_fmarsh = params["Dmax"]
+        Dopt_fmarsh = params["Dopt"]
+        Bmax_fmarsh = params["Bmax"]
+        kr_fmarsh = params["Kr"]
+        RRS_fmarsh = params["RRS"]
+        BTR_fmarsh = params["BTR"]
+
+        a3, b3, c3 = calculate_coefficients(Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh, Bmax_fmarsh)  # 20: Irregularly flooded marsh (NWI = 20)
 
 ########################################################################################################################
         # Jin to Pete: how to incorporate juvenile mangrove here
 
-        # Dmin2 = 36
-        # Dmax2 = 55
-        # Bmax2 = 500
-        # Dopt2 = 45
-        # Dmin2 = DminL + dD + dDmin
-        # Dmax2 = DmaxR + dD + dDmax
-        # Dopt2 = ((DoptL + DoptR) / 2) + dD
+        # Dmin_matmang = 36
+        # Dmax_matmang = 55
+        # Bmax_matmang = 500
+        # Dopt_matmang = 45
+        # Dmin_matmang = DminL + dD + dDmin
+        # Dmax_matmang = DmaxR + dD + dDmax
+        # Dopt_matmang = ((DoptL + DoptR) / 2) + dD
 ########################################################################################################################
 
         ### Jin to Pete ###: here, we need max inundation depth info as well
@@ -371,10 +400,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
             print("Projections and Raster shape match!")
             print("Projection:", prj)
 
-    # --- Make masks for fully wet and dried regions ---
-    water_mask = ((-0.5 < hc) & (hc < 0.5)) | (1.5 < hc) # water regions (water and pond in hyconn.tiff)
-    land_mask = (hc >= 0.5) & (hc <= 1.5) # land regions in hy conn.tiff
-
     # --- Read topo-bathymetry and water surface elevation ---
     band = rasterTB.GetRasterBand(1); tb=band.ReadAsArray(); #tb=-1.0*tb;
     band = rasterTDIDW.GetRasterBand(1); mlwIDW=band.ReadAsArray();
@@ -382,11 +407,28 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     band = rasterTDIDW.GetRasterBand(3); mhwIDW=band.ReadAsArray();
 
     # --- DEPTH CALCULATIONS ---")
-    D = 100.0 * (mhwIDW - tb); D[D < -10000] = ndv; # Relative depth [cm]
+    # Create masks for several condition
+    # --- Make masks for fully wet and dried regions ---
+    temp_water_mask = ((-0.5 < hc) & (hc < 0.5)) | (1.5 < hc) # fully wet water regions (water and pond in hyconn.tiff)
+    temp_land_mask = (hc >= 0.5) & (hc <= 1.5) # land, including partially wet regions in hy conn.tiff -> We can use inundationtime.63
+    mask_inundation_depth = (mhwIDW != ndv)
+
+    # Perform the calculation only where the condition is true
+    D = np.where(mask_inundation_depth, 100.0 * (mhwIDW - tb), -ndv) # Relative depth at nan should be positive value in this case
+    Lowest_max_biomass_depth = min(Dmax_marsh, Dmax_matmang, Dmax_fmarsh) # The lowest maximum biomass depth is a criteria where the water and land region should be separated. Future revision is needed based on the inundation time 1: Fully wet, 0: Fully dry, 0-1: Partially wet (intertidal zone)
+    print('Lowest_max_biomass_depth ', Lowest_max_biomass_depth)
+    land_mask = temp_land_mask & (D < Lowest_max_biomass_depth) # partially and fully dried region
+    water_mask = temp_water_mask | (D >= Lowest_max_biomass_depth) # fully wet region
+    D[D > -ndv/2] = ndv; # Relative depth [cm] re-modify to negative value for ndv
+
+########################################################################################################################
+    # Jin to Pete: Please condider check the following part
     DNonNeg = D.copy()
-#    DNonNeg[D < 0.0] = 0.0;
-    print(DNonNeg.min(),DNonNeg.max())
-    Dt = 100.0 * (mhwIDW - mlwIDW); # Tidal range [cm]
+    # DNonNeg[D < 0.0] = 0.0;
+    print(DNonNeg.min(), DNonNeg.max())
+########################################################################################################################
+
+    Dt = 100.0 * (mhwIDW - mlwIDW);  # Tidal range [cm]
     Dt[Dt == 0] = 0.0001;
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
@@ -400,11 +442,17 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- BIOMASS CALCULATIONS ---
         print ("Biomass Calculations")
-        B, PL, PH = calculate_biomass_parabola(D, DNonNeg,ndv, al, bl, cl, ar, br, cr)
+        B, PL, PH = calculate_biomass_parabola(D, DNonNeg, al, bl, cl, ar, br, cr)
 
         # --- ACCRETION CALCULATIONS ---
         print ("Accretion calculations")
-        qstar = q*(DNonNeg/Dt); qstar2= qstar; qstar2[qstar>=1.0] = 1.0;
+########################################################################################################################
+        # Jin to Pete: I need to check the following part
+
+        # use calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, BDo, BDi)
+        # or following part?
+
+        qstar = qmax*(DNonNeg/Dt); qstar2= qstar.copy(); qstar2[qstar>=1.0] = 1.0;
         w = hc.copy();
         w[w < 0.5] = 0.0;
         A= m_const*qstar2*DNonNeg/(BDi*2)+ Kr*B/(BDo*10000); A[D<=0.0]=0.0; A=A*w; A=A/100; A[A<=0]=0; tbA=tb+A*dt; tbA=-1.0*tbA;
@@ -415,9 +463,10 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         tbA[hc<0.5]=ndv; tbA[tb==np.nan]=ndv;
         A[D==0]=ndv; tbA[D==0]=ndv;
 
+########################################################################################################################
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
-        mask1 = (B > 1) & (B <= 1000)
+        mask1 = (B > 0) & (B <= 1000)
         mask2 = (B > PL) & (B < 1800)
         mask3 = (B >= 1800)
 
@@ -459,32 +508,32 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- BIOMASS CALCULATIONS ---
         # Salt marsh (8)
-        B1, PL1, PH1 = calculate_biomass_parabola_beta(DNonNeg, Dopt1,land_mask, ndv, a1, b1, c1, a1, b1, c1)
-        print('Salt marsh ','PH = ', PH1, ', PL =' ,PL1, 'Bmin',B1.min())
+        B1, PL1, PH1 = calculate_biomass_parabola(DNonNeg, Dopt_marsh, land_mask, a1, b1, c1, a1, b1, c1)
+        print('Salt marsh ','PH = ', PH1, ', PL = ' ,PL1)
 
         # Mangrove (9)
-        B2, PL2, PH2 = calculate_biomass_parabola_beta(DNonNeg, Dopt2,land_mask, ndv, a2, b2, c2, a2, b2, c2)
-        print('Mangrove ','PH = ', PH2, ', PL =',PL2,'Bmin',B2.min())
+        B2, PL2, PH2 = calculate_biomass_parabola(DNonNeg, Dopt_matmang, land_mask, a2, b2, c2, a2, b2, c2)
+        #print('Mangrove ','PH = ', PH2, ', PL = ',PL2)
 
         # Irregularly marsh (20)
-        B3, PL3, PH3 = calculate_biomass_parabola_beta(DNonNeg, Dopt3, land_mask, ndv, a3, b3, c3, a3, b3, c3)
-        print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3,'Bmin',B3.min())
+        B3, PL3, PH3 = calculate_biomass_parabola(DNonNeg, Dopt_fmarsh, land_mask, a3, b3, c3, a3, b3, c3)
+        #print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
 
         # --- ACCRETION CALCULATIONS ---
         w=hc.copy(); w[w<0.5]=0.0;
 
 
-        tbA, A =  calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax1, kr1, RRS1, BTR1, SSC, FF, D, k1, k2)
+        tbA, A =  calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, BDo, BDi)
         tbA1=tbA*w; A1=A*w;
 
-        tbA, A = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax2, kr2, RRS2, BTR2, SSC, FF, D, k1, k2)
+        tbA, A = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, SSC, FF, D, BDo, BDi)
         tbA2=tbA*w; A2=A*w;
 
-        tbA, A = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax3, kr3, RRS3, BTR3, SSC, FF, D, k1, k2)
+        tbA, A = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC, FF, D, BDo, BDi)
         tbA3=tbA*w; A3=A*w;
 
-        # # set_non values
-        # ndv_conditions = [hc < 0.5,tb == np.nan] #, tb == np.nan # hc < 0.5 is ocean region
+        # set_non values We probably don't need this part keep it for now March 7, 2024 (Jin)
+        # ndv_conditions = [(hc < 0.5) & (),tb == np.nan] #, tb == np.nan # hc < 0.5 is ocean region
         # #ndv_conditions2 = [hc < 0.5, D ==  0,tb==np.nan]  # ,
         # D = set_ndv(D, ndv_conditions)
         # B1 = set_ndv(B1, ndv_conditions)
@@ -502,20 +551,17 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions
-        mask_regular_1 = mask_salt_marsh & (B1 <= PL1) & (B1 >= 0) #& (B1 <= PL1)
+        mask_regular_1 = mask_salt_marsh & (B1 <= PL1) & (B1 >= 0)
         mask_regular_2 = mask_salt_marsh & (B1 > PL1) & (B1 < PH1)
         mask_regular_3 = mask_salt_marsh & (B1 >= PH1)
-        mask_mangrove = mask_mangrove #& (B2 > 0) & (B2 <= PH2)
-        mask_irregular = mask_irregular  #& (B3 > 0) & (B3 <= PH3)
-        # mask_mangrove = mask_mangrove #& (B2 > 0) & (B2 <= PL2)
-        # mask_mangrove = mask_mangrove #& (B2 > PL2) & (B2 < PH2)
+        mask_mangrove = mask_mangrove & (B2 > 0) & (B2 <= PH2)
+        mask_irregular = mask_irregular & (B3 > 0) & (B3 <= PH3)
+        # mask_mangrove_mat = mask_mangrove & future revision
+        # mask_mangrove_juv = mask_mangrove & future revision
         # mask_mangrove = mask_mangrove #& (B2 >= PH2)
-        # mask_irregular = mask_irregular #& (B3 > 0) & (B3 <= PL3)
-        # mask_irregular = mask_irregular #& (B3 > PL3) & (B3 < PH3)
-        # mask_irregular = mask_irregular #& (B3 >= PH3)
 
         # Assign values based on conditions
-        # background raster
+        # From background raster first. here ndv value will not overwrite the background
         P[land_mask] = 55
         P[water_mask] = 40
 
@@ -528,10 +574,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- MARSH TYPE CALCULATIONS ---
 ########################################################################################################################
-        # Jin to Pete: We need to modify this part later
+        # Jin to Pete: We need to check the following part
         print ("High-Low Marsh Calculations")
-        ## here how to determine the range of the Dmax? mannuarryly? or from the raster file?
-        ### Need to discuss with Pete!
 
         al = a1
         ar = a1
@@ -561,8 +605,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         # mangrove juvenile and mature
         # mangrove [xxx]
 
-########################################################################################################################
-        ### need to discuss with Pete about this part
         # Mask ndv values in the arrays
         B1_masked = np.ma.masked_equal(B1, ndv)
         B2_masked = np.ma.masked_equal(B2, ndv)
@@ -576,7 +618,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         tbA2_masked = np.ma.masked_equal(tbA2, ndv)
         tbA3_masked = np.ma.masked_equal(tbA3, ndv)
 
-        # Perform the addition
+        # Merge the arrays
         B = B1_masked + B2_masked + B3_masked # Biomass density [g m-2 yr -1]
         A = A1_masked + A2_masked + A3_masked # accretion rate
         tbA = tbA1_masked + tbA2_masked + tbA3_masked # accretion thickness

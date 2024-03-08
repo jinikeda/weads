@@ -1,4 +1,4 @@
-# Development Note (Sep 12 version)
+# Development Note (Mar 7, 24 version)
 
 -  **Discussed the development direction on Aug 30th**
 ---
@@ -43,6 +43,7 @@
 - Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
 - ~~MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
 - Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
+- Jin will rework src/hyconn.py to appropriately classify land, water, intertidal zone.
 
 ## Modifications (desirable)
 - ~~src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~

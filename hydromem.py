@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # File: hydromem.py
 # Date: Aug 15, 2023
+# Modified: March 8, 2024 by Jin Ikeda
 
 #----------------------------------------------------------
 # M O D U L E S                                   
@@ -40,6 +41,7 @@ def main(argv):
     parser.add_argument("--all", action="store_true", help="Run all processing steps")
     parser.add_argument("--rasterize", action="store_true", help="Run rasterization step")
     parser.add_argument("--hyconn", action="store_true", help="Run hyconn step")
+    parser.add_argument("--inunT", action="store_true", help="Run hyconn (subtidal, intertidal and land classification) step")
     parser.add_argument("--td", action="store_true", help="Run tidal datum step")
     parser.add_argument("--mem", action="store_true", help="Run mem step")
     parser.add_argument("--adc2rast", action="store_true", help="Run adc2rast step")
@@ -55,8 +57,9 @@ def main(argv):
     parser.add_argument("--outEPSG", type=str, help="Output EPSG code <outEPSGCode>")
     parser.add_argument("--gridSize", type=float, help="Output raster resolution")
     parser.add_argument("--slr", type=float, help="Sea level rise")
-    parser.add_argument("--inundationFile", type=str, help="Use inundation file <maxinundepth.63>")
-    parser.add_argument("--vegetationFile", type=str, help="Path to vegetation file <*.tif>")
+    parser.add_argument("--inputInundationtimeFile", type=str, help="Use inundationtime file for running inunT <inundationtime.63>")
+    parser.add_argument("--inundationdepthFile", type=str, help="Use inundation depth file <maxinundepth.63>")
+    parser.add_argument("--vegetationFile", type=str,default=None, help="Path to vegetation file <*.tif>")
     parser.add_argument("--skipresample", action="store_true", help="Skip reprojection and resample to raster domain")
 
     # Parse the command line arguments
@@ -66,6 +69,7 @@ def main(argv):
     all_flag = args.all
     rasterize_flag = args.rasterize
     hyconn_flag = args.hyconn
+    inunT_flag = args.inunT
     td_flag = args.td
     mem_flag = args.mem
     adc2rast_flag = args.adc2rast
@@ -74,6 +78,7 @@ def main(argv):
     inputAttrFile = args.inputAttrFile
     inputHarmonicsFile = args.inputHarmonicsFile
     inputEverdriedFile = args.inputEverdriedFile
+    inputInundationTFile = args.inputInundationtimeFile
     inputShapeFile = args.inputShapeFile
     outputMEMRasterFile = args.outputMEMRasterFile
     outputMeshFile = args.outputMeshFile
@@ -82,7 +87,7 @@ def main(argv):
     outEPSG = args.outEPSG
     gridSize = args.gridSize
     slr = args.slr
-    inundationFile = args.inundationFile
+    inundationdepthFile = args.inundationdepthFile
     vegetationFile = args.vegetationFile
     skipresample_flag = args.skipresample
 
@@ -104,7 +109,8 @@ def main(argv):
 
     if all_flag:
         rasterize_flag = True
-        hyconn_flag = True
+        hyconn_flag = False # replaced by inunT_flag
+        inunT_flag = True
         td_flag = True
         mem_flag = True
         adc2rast_flag = True
@@ -116,16 +122,18 @@ def main(argv):
         src.basics.fileexists(inputShapeFile)
         src.basics.fileexists(inputEverdriedFile)
         src.basics.fileexists(inputHarmonicsFile)
+        src.basics.fileexists(inputInundationTFile)
 
         src.grd2dem(inputMeshFile,inputMeshFile,inputShapeFile,'tbathy',inEPSG,outEPSG,gridSize,-1)
-        src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
+        #src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
         src.grd2dem(inputMeshFile,inputAttrFile,inputShapeFile,'manning',inEPSG,outEPSG,gridSize,1)
         src.grd2dem(inputMeshFile,inputHarmonicsFile,inputShapeFile,'harmonics',inEPSG,outEPSG,gridSize,1)
+        src.grd2dem(inputMeshFile,inputInundationTFile,inputShapeFile,'inundationtime',inEPSG,outEPSG,gridSize,1,1,False)
 
-        if inundationFile:  # Run Inundation calculation
+        if inundationdepthFile:  # Run Inundation calculation
             print('\n' + '\tMake a raster of maximum inundation depth...')
-            src.basics.fileexists(inundationFile)
-            src.grd2dem(inputMeshFile,inundationFile,inputShapeFile, 'maxinundation', inEPSG, outEPSG, gridSize,1,1,False)
+            src.basics.fileexists(inundationdepthFile)
+            src.grd2dem(inputMeshFile,inundationdepthFile,inputShapeFile, 'maxinundation', inEPSG, outEPSG, gridSize,1,1,False)
     
     if hyconn_flag: # Create TIF of hydraulically connected area
         print('\n' + '\tComputing hydraulic connectivity...')
@@ -134,19 +142,27 @@ def main(argv):
         src.basics.fileexists('everdried.tif')
         
         src.hyconn('tbathy.tif','everdried.tif','hyconn.tif',False)
+
+    if inunT_flag:  # Create TIF of hydraulically connected area
+        print('\n' + '\tComputing land classifcation and thier hydraulic connectivity...')
+
+        src.basics.fileexists('tbathy.tif')
+        src.basics.fileexists('inundationtime.tif')
+
+        src.hydro_classify('tbathy.tif', 'inundationtime.tif', 'hydro_class.tif', False)
     
     if td_flag: # Compute tidal datums
         
         print('\n' + '\tComputing tidal datums...')
         
         src.basics.fileexists('harmonics.tif')
-        src.basics.fileexists('hyconn.tif')
+        src.basics.fileexists('hydro_class.tif')
         
-        src.tidaldatums('harmonics.README','harmonics.tif','hyconn.tif','TidalDatums.tif',rts)
+        src.tidaldatums('harmonics.README','harmonics.tif','hydro_class.tif','TidalDatums.tif',rts)
         
         src.basics.fileexists('TidalDatums.tif')
         
-        src.tidaldatumsidw('hyconn.tif','TidalDatums.tif','TidalDatums_IDW.tif',numIDWNeighbors)
+        src.tidaldatumsidw('hydro_class.tif','TidalDatums.tif','TidalDatums_IDW.tif',numIDWNeighbors)
     
     if vegetationFile: # Organize vegetation file
         print('\n' + '\tOrganizing vegetation file...')
@@ -157,12 +173,12 @@ def main(argv):
         print('\n' + '\tRunning MEM...')
 
         src.basics.fileexists('tbathy.tif')
-        src.basics.fileexists('hyconn.tif')
+        src.basics.fileexists('hydro_class.tif')
         src.basics.fileexists('TidalDatums_IDW.tif')
 
         if vegetationFile is None: # Run MEM without vegetation
             print('\n' + '\tNo vegetation mapping references...')
-            src.mem('hyconn.tif', 'tbathy.tif', 'TidalDatums_IDW.tif', vegetationFile, outputMEMRasterFile + '.tif')
+            src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif')
         else:
             print('\n' + '\tUse vegetation mapping...')
             Domain_raster = 'Domain_classification_distribution_resample100.tif'
@@ -170,7 +186,7 @@ def main(argv):
                 print("Could not find " + Domain_raster)
                 sys.exit(1)
             else:
-                src.mem('hyconn.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif')
+                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif')
 
     if adc2rast_flag:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)

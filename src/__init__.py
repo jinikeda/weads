@@ -1,5 +1,6 @@
 from src.grd2dem import *
 from src.hyconn import *
+from src.hydro_classify import *
 from src.tidaldatums import *
 from src.tidaldatumsidw import *
 from src.nwi import *

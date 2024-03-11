@@ -100,7 +100,7 @@ def tidaldatumsidw(inputRasterHyControl,inputRasterTidalDatums,\
     
     for k in range(0,rasterHC.RasterXSize):
         for kk in range(0,rasterHC.RasterYSize):
-            if hc[kk][k] > 0 : # Only interpolate across the LAND
+            if (-0.5 <= hc[kk][k]) & (hc[kk][k] <= 1.5): # Only interpolate across the LAND (0) and intertidal (1) regions
                 px, py = src.raster.pixel2coord(k,kk,rasterHC) # x,y we want to interpolate to
                 dd, ii = tree.query([px,py], numNeighbors) # Find the nearest neighbors
     
@@ -131,8 +131,16 @@ def tidaldatumsidw(inputRasterHyControl,inputRasterTidalDatums,\
                 mlwIDW[kk][k] = mlw_IDW / np.nansum(w)
                 mslIDW[kk][k] = msl_IDW / np.nansum(w)
                 mhwIDW[kk][k] = mhw_IDW / np.nansum(w)
-    
-    
+
+########################################################################################################################
+    # Future consideration: do we need to reduce the IDW values for land regions?
+    land_mask = (-0.5 <= hc) & (hc <= 0.5)
+    reduction_factor = 1.0
+    mlwIDW[land_mask] = mlwIDW[land_mask] * reduction_factor
+    mslIDW[land_mask] = mslIDW[land_mask] * reduction_factor
+    mhwIDW[land_mask] = mhwIDW[land_mask] * reduction_factor
+########################################################################################################################
+
     # --- WRITE OUTPUTS ---
     #print ("")
     #print ("Writing output raster")

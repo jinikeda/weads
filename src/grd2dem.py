@@ -2,6 +2,7 @@
 # File: grd2dem.py
 # Name: Matthew V. Bilskie
 # Date: June 11, 2021
+# Modified: March 8, 2024 by Jin Ikeda
 
 #----------------------------------------------------------
 # M O D U L E S
@@ -131,7 +132,7 @@ def grd2dem(inputMeshFile,inputDataFile,inputShapefile,\
         g = pyadcircmodules.ReadOutput(inputDataFile)
         g.open()
 
-        if snap == 0  and g.numSnaps() > 1:
+        if snap == 0 and g.numSnaps() > 1:
             print('Please select a snap from the *.63 file.')
             print('grd2dem.py --snap <snap> ...\n')
             sys.exit(2)
@@ -141,6 +142,10 @@ def grd2dem(inputMeshFile,inputDataFile,inputShapefile,\
         g.read()
         useWaterLevelOutput = True
         isASCIIFile = True
+
+        if 'inundationtime' in inputDataFile:
+            isInundationtimeFile = True
+
 
     elif fileExtension == '.13':
 
@@ -223,7 +228,7 @@ def grd2dem(inputMeshFile,inputDataFile,inputShapefile,\
         if isASCIIFile and everdried:
                         
             for n in range(myMesh.numNodes()):
-                values[n] = g.data(snap-1).z(n)
+                values[n] = g.data(snap-1).z(n) # This is the z value of the node
                 if abs(values[n]) > 0.95 and abs(values[n]) < 1.05:
                     values[n] = 1.0
                 else:
@@ -231,6 +236,18 @@ def grd2dem(inputMeshFile,inputDataFile,inputShapefile,\
                     
             values[:,0] = values[:,0] * multFac
             values = np.squeeze(values)
+
+        elif isASCIIFile and isInundationtimeFile:
+            print('Calculate normarized inundation time...')
+
+            for n in range(myMesh.numNodes()):
+                values[n] = g.data(snap-1).z(n) # This is the z value of the node
+
+            max_time = np.max(values)
+            values[:,0] = values[:,0]/max_time * multFac
+            values = np.squeeze(values)
+
+            print('min & max inunT: ', np.min(values),np.max(values))
 
         elif isNetCDFFile:
 

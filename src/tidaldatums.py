@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: tidalDatums.py
 # Name: Peter Bacopoulos, Jin Ikeda
-# Date: September 11, 2023
+# Last modified: March 8, 2024
 # Command line: python tidalDatums.py -i harmonics.README -s harmonics.img -d HyControl.img -o tidalDatums.img
 from osgeo import gdal
 from osgeo import osr
@@ -143,8 +143,8 @@ def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics, \
     
     pha=pha*np.pi/180.0
 
-    # Stored in valid_indices of water regions (valid_rows, valid_cols)
-    valid_rows, valid_cols = np.where((hc >= -0.5) & (hc <= 0.5))
+    # Stored in valid_indices of water regions (valid_rows, valid_cols) # water regions are 2.0
+    valid_rows, valid_cols = np.where((hc >= 1.5) & (hc <= 2.5))
 
     print("Size of t:", t.shape)
     print("Size of omega:", omega.shape)

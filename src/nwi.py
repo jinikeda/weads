@@ -220,7 +220,7 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
         # Create the output raster dataset
         gtiff_driver = gdal.GetDriverByName('GTiff')
         #output_raster_path = os.path.join(Workspace, 'Region3_NWI_LC_UTM19N_resample100.tif')
-        output_raster_path = 'Region3_NWI_LC_UTM19N_resample' + str(int(gridSize)) + '.tif'
+        output_raster_path = 'Region3_NWI_LC_UTM14N_resample' + str(int(gridSize)) + '.tif'
         out_ds = gtiff_driver.Create(output_raster_path, resampled_cols, resampled_rows,gdal.GDT_Byte)
         out_ds.SetProjection(in_ds.GetProjection())
         geotransform = list(in_ds.GetGeoTransform())
@@ -245,7 +245,7 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
 
         # domain raster data
         #Domain_raster_file = os.path.join(Workspace,"hyconn.tif")
-        Domain_raster_file = "hyconn.tif"
+        Domain_raster_file = "hydro_class.tif"
         prj2,rows2,cols2,transform2,hc=gdal_reading(Domain_raster_file) # Reading a raster file on domain
         prj3,rows3,cols3,transform3,band3=gdal_reading(output_raster_path) # Reading a original marsh classification file
 
@@ -314,7 +314,7 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
 
     else:
         output_raster_path=file # input file
-        Domain_raster_file = "hyconn.tif"
+        Domain_raster_file = "hydro_class.tif"
         prj2, rows2, cols2, transform2, hc = gdal_reading(Domain_raster_file)  # Reading a raster file on domain
 
     ### Step 6 ###########################################################
@@ -353,14 +353,14 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
 
     if abs(rows2 - rows) > tolerance or abs(cols2 - cols) > tolerance:
         print('something wrong\n')
-        print('hyconn row and cols:', rows2, ':', cols2)
+        print('hydro_class row and cols:', rows2, ':', cols2)
         print('marsh row and cols:', rows, ':', cols)
     else:
         Domain = np.full((rows2,cols2), ndv_byte) # Create an array of default values (ndv)
 
         # We merge five classification into a single values
-        water_mask = ((-0.5 < hc) & (hc < 0.5)) | (1.5 < hc) # water regions (water and pond in hyconn.tiff)
-        land_mask = (hc >= 0.5) & (hc <= 1.5) # land regions in hy conn.tiff
+        water_mask = ((1.5 < hc) & (hc < 2.5) |(0.5 < hc) & (hc < 1.5) |(2.5 < hc))  # submergence region (hc = 1.0, 2.0, 3.0 including lake and pond)
+        land_mask = (-0.5 < hc) & (hc <= 0.5)  # land region (hc = 0.0) # land regions in hydro_class.tif
 
         # Create a mask for different conditions
         mask1 = (MG == 1) # priority order
@@ -415,4 +415,4 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
         # z[z < -9999.] = ndv_byte  # Replace values less than -9999 with 128
         # #print(z)
 
-#read_tif('NWI_TX_wetlands.tif', 26919, 100, False)
+read_tif('NWI_TX_wetlands4m.tif', 26914, 100, False)

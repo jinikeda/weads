@@ -181,7 +181,7 @@ def main(argv):
             src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif')
         else:
             print('\n' + '\tUse vegetation mapping...')
-            Domain_raster = 'Domain_classification_distribution_resample100.tif'
+            Domain_raster = f'Domain_classification_distribution_resample{gridSize}.tif' # Domain raster be careful
             if not os.path.isfile(Domain_raster):
                 print("Could not find " + Domain_raster)
                 sys.exit(1)

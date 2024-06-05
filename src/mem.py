@@ -84,12 +84,29 @@ SSC = 25.0    # Suspended sediment concentration
 FF = 353.0    # Flooding frequency (1/year)
 BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
 BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-dt = 5.0      # Time step (yr)
+#dt = 100.0      # Time step (yr)
 Kr = 0.2      # Refractory fraction (-)
 
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
 print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
+
+# We may need to modify the following part using the class
+# class Vegetation:
+#     def __init__(self, Dmin, Dmax, Bmax, Dopt, Kr, RRS, BTR):
+#         self.Dmin = Dmin
+#         self.Dmax = Dmax
+#         self.Bmax = Bmax
+#         self.Dopt = Dopt
+#         self.Kr = Kr
+#         self.RRS = RRS
+#         self.BTR = BTR
+#
+# SaltMarsh = Vegetation(2.0, 46.0, 2400.0, 22.0, 0.1, 2.0, 0.5)
+# Mangrove = Vegetation(24.0, 66.0, 7800.0, 45.0, 0.1, 1.8, 0.25)
+# IrregularMarsh = Vegetation(-70.0, -10.0, 1200.0, -40.0, 0.1, 1.5, 0.5)
+
+########################################################################################################################
 vegetation_parameters = {
     "SaltMarsh": {
         "Dmin": 2.0,
@@ -203,7 +220,10 @@ def create_raster(file, rasterHC, zarray, dtype, no_data_value,stats_flag=False)
     out_ds = None
     return
 
-def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,vegetationFile, outputRaster):
+def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,vegetationFile, outputRaster, deltaT = 5):
+
+    # define from hydroMEM.py
+    dt = deltaT # Time step (yr)
 
     '''
     print ("")
@@ -217,7 +237,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global ndv, qmax, qmin, SSC, FF, BDo, BDi, dt, Kr, biomass_coefficients, vegetation_parameters, interest_reference
+    global ndv, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile==None:
         print('\nA monotypic species with no vegetation mapping\n')

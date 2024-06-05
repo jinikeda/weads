@@ -101,7 +101,7 @@ def create_raster_dilate(file, prj,rows,cols,transform,zarray, nodata):
     print('Each dilation has done')
     return file
 
-def read_tif(file,outEPSG,gridSize,skipresample_flag):
+def read_tif(file,outEPSG,gridSize,skipresample_flag,deltaT=5):
     start = time.time()
     ### Step 2 ###########################################################
     print("\n----------------------------------------------------------------------")
@@ -323,8 +323,8 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
     print("----------------------------------------------------------------------\n")
     ######################################################################
     # dilate the
-    speed = 200 # [m/year]
-    area = speed*5 # [m per 5 years calculation]
+    speed = 40 # [m/year]
+    area = speed*deltaT # [m per deltaT years calculation]
     print('The allowable range of expansion speed per simulation is',area, '[m-5yrs]\n')
     #
     # Input raster data
@@ -415,4 +415,5 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag):
         # z[z < -9999.] = ndv_byte  # Replace values less than -9999 with 128
         # #print(z)
 
-read_tif('NWI_TX_wetlands4m.tif', 26914, 100, False)
+# internal command
+# read_tif('NWI_TX_wetlands4m.tif', 26914, 40, False,deltaT=5.0)

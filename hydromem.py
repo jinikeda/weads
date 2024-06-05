@@ -56,6 +56,7 @@ def main(argv):
     parser.add_argument("--inEPSG", type=str, help="Input EPSG code <inEPSGCode>")
     parser.add_argument("--outEPSG", type=str, help="Output EPSG code <outEPSGCode>")
     parser.add_argument("--gridSize", type=float, help="Output raster resolution")
+    parser.add_argument("--deltaT", type=float,default=5, help="time step for WEADS simuiation in years")
     parser.add_argument("--slr", type=float, help="Sea level rise")
     parser.add_argument("--inputInundationtimeFile", type=str, help="Use inundationtime file for running inunT <inundationtime.63>")
     parser.add_argument("--inundationdepthFile", type=str, help="Use inundation depth file <maxinundepth.63>")
@@ -86,6 +87,7 @@ def main(argv):
     inEPSG = args.inEPSG
     outEPSG = args.outEPSG
     gridSize = args.gridSize
+    deltaT = args.deltaT
     slr = args.slr
     inundationdepthFile = args.inundationdepthFile
     vegetationFile = args.vegetationFile
@@ -93,7 +95,8 @@ def main(argv):
 
     inEPSG = int(inEPSG)
     outEPSG = int(outEPSG)
-    gridSize = float(gridSize)
+    gridSize =float(gridSize)
+    deltaT = float(deltaT)
     slr = float(slr)
 
     #----------------------------------------------------------
@@ -167,7 +170,7 @@ def main(argv):
     if vegetationFile: # Organize vegetation file
         print('\n' + '\tOrganizing vegetation file...')
         src.basics.fileexists(vegetationFile)
-        src.nwi.read_tif(vegetationFile, outEPSG, gridSize, skipresample_flag)
+        src.nwi.read_tif(vegetationFile, outEPSG, gridSize, skipresample_flag,deltaT=deltaT)
 
     if mem_flag: # Run MEM
         print('\n' + '\tRunning MEM...')
@@ -178,15 +181,15 @@ def main(argv):
 
         if vegetationFile is None: # Run MEM without vegetation
             print('\n' + '\tNo vegetation mapping references...')
-            src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif')
+            src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif',deltaT=deltaT)
         else:
             print('\n' + '\tUse vegetation mapping...')
-            Domain_raster = f'Domain_classification_distribution_resample{gridSize}.tif' # Domain raster be careful
+            Domain_raster = f'Domain_classification_distribution_resample{int(gridSize)}.tif' # Domain raster be careful
             if not os.path.isfile(Domain_raster):
                 print("Could not find " + Domain_raster)
                 sys.exit(1)
             else:
-                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif')
+                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif',deltaT=deltaT)
 
     if adc2rast_flag:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)

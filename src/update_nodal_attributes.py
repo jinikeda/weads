@@ -56,9 +56,13 @@ def update_nodal_attributes(inputMeshFile, inputRasterFile, \
     # ----------------------------------------------------------
     idx_sshag = n13.locateAttribute('sea_surface_height_above_geoid')
     idx_manning = n13.locateAttribute('mannings_n_at_sea_floor')
+    print ('slr \t =', slr)
     for n in range(mesh.numNodes()):
-        sshag = n13.attribute(idx_sshag, n).value(0) + slr
+#        sshag = n13.attribute(idx_sshag, n).value(0) + slr
+        sshag = slr # directly add the diff from the base year Jin Ikeda need to check this again
         n13.attribute(idx_sshag, n).setValue(sshag)
+
+    print(n13.attribute(idx_sshag, n).value(0),sshag)
 
     # ----------------------------------------------------------
     # Update manning's n attribute based on biomass

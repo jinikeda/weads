@@ -78,6 +78,7 @@ print ("Input parameters for MEM")
 ########################################################################################################################
 # --- GLOBAL PARAMETERS ---
 ndv = -99999  # No data value (ndv) using ADCIRC conversion
+ndv_byte = 128
 qmax = 2.8    # Maximum capture coefficient (-)
 qmin = 1.0    # Minimum capture coefficient (-)
 SSC = 25.0    # Suspended sediment concentration
@@ -237,7 +238,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global ndv, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
+    global ndv,ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile==None:
         print('\nA monotypic species with no vegetation mapping\n')
@@ -635,6 +636,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         VM[(VM == 16) | (VM == 23) | (VM == 32)] = 8 # 8 = salt marsh(regularly flooded) follow with tidal cycle
         VM[(VM == 109)] = 9 # 9 = mangrove
         VM[(VM == 120)] = 20 # 20 = irregularly flooded marsh
+        # VM[(VM == 55)] = ndv_byte # 55 = land_mask
+        # VM[(VM == 40)] = ndv_byte # 40 = water_mask
 
         create_raster('new_NWI.tif', rasterHC, VM, gdal.GDT_Int32, int(ndv))
 

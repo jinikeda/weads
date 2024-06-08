@@ -93,16 +93,16 @@ def rast2adc(inputMeshFile,outputMeshFile,inputRasterFile,\
             continue
 
         #if get_rastvalue(col,row,rast,band) != noDataValue:  
-        if vals[row][col] != noDataValue:
+        if (vals[row][col] != noDataValue) and (vals[row][col] > 1e-6): # Threshold for biomass accumulation is 1e-6
             #print(i,mesh.numNodes(),'New')
-            #newZ[i] = multFac * vals[row][col] + mesh.node(i).z()
-            newZ[i] = multFac * vals[row][col]
+            newZ[i] = multFac * vals[row][col] + mesh.node(i).z()
+            #newZ[i] = multFac * vals[row][col] # coure grid polute adcirc mesh
             #print(mesh.node(i).z(),newZ[i])
         #else:
             #print(i,mesh.numNodes(),'Old')
             #newZ[i] = mesh.node(i).z()
-        
-    mesh.setZ(newZ)
 
+    #print (max(vals.flatten()),min(vals.flatten()))
+    mesh.setZ(newZ)
     mesh.write(outputMeshFile)
 

@@ -192,7 +192,7 @@ def main(argv):
                 src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif',deltaT=deltaT)
 
     if adc2rast_flag:
-        src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,4,1)
+        src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,3,-deltaT) # 3 is the annual accreation rate on MEM (m/yr). Caution: -1 is the multiplier (for ADCIRC file)
         print('Finished new fort.14')
         src.update_nodal_attributes(inputMeshFile,outputMEMRasterFile+'.tif',
                            inputAttrFile,outputAttrFile,

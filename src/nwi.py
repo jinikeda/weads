@@ -121,7 +121,7 @@ def read_tif(file,outEPSG,gridSize,skipresample_flag,deltaT=5):
     if skipresample_flag == False:
         ### Step 3 ###########################################################
         print("\n----------------------------------------------------------------------")
-        print("Step 3.: Reprojection")
+        print("Step 3.: Reprojection for input raster")
         print("----------------------------------------------------------------------\n")
         ######################################################################
         # NEED to make a function later

@@ -1,10 +1,10 @@
-# Development Note (Mar 7, 24 version)
+# Development Note (June 13, 24 version)
 
--  **Discussed the development direction on Aug 30th**
+-  **Discussed the development direction on June 12th**
 ---
 
 ## Input/Output data storage 
-- Folder Path: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO
+- Folder Path: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO (need to update)
 
 
 ## Running file
@@ -31,26 +31,26 @@
 **src/mem.py**
   - ~~Read current wetland marsh/mangrove distributions (Jin).~~
   - ~~Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
-  - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif
+  - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif NWI.py is a currently not elegant.
   
-- Examine and calculate each species' (ecological) response (Pete).
+- Pete must modify homogeneous calculation (bug of the codes.).
 
 ## Development (desirable)
-- Replace private module: **pyadcircmodules**
+- Replace private module: **pyadcircmodules** -> Jin will start point based analysis
 - Compare Morris's Excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
 - ~~Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
-- Develop a point-based approach. See, src_branch
-- Consider the climate and catastrophic aspects of WEADS development after the development of hydroMEM.
+- Develop a point-based approach (Jin's summer plan, 2024). See, src_branch
+- Consider the climate and catastrophic aspects of WEADS development (Shabnam starts climate analysis and literature review).
 - ~~MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
-- Pete modifies src/tidaldatums.py (avoid double for loops) -> Jin and Chris will work on Cython with parallelization.
-- Jin will rework src/hyconn.py to appropriately classify land, water, intertidal zone.
+- ~~Pete modifies src/tidaldatums.py (avoid double for loops) ->~~ Jin and Chris will work on nanobind with parallelization.
+- ~~Jin will rework src/hyconn.py to appropriately classify land, water, intertidal zone.~~
+- Pete and Shabnam work on soil cohorts based on the NUMAR model approach.
 
 ## Modifications (desirable)
 - ~~src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
 - Read Netcdf outputs
-- src/tidaldatumsidw.py: GDAL IDW may not perform well (Jin and Linoj used another approach in CRMS2MAP, which needs to be considered, pending Jin Aug 22)
 
 # NOTE
 
@@ -73,9 +73,10 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 1. ~~Read current wetland marsh/mangrove distributions in src/mem.py~~
 2. ~~Modify the inundation level part (hydromem.py)~~
-3. WATTE modification + Evaluate productivity and Inundation level map
-4. Cython and parallelization
-5. Check fort.13
+3. ~~WATTE modification + Evaluate productivity and Inundation level map~~
+4. Point-based development
+5. Nanobind and parallelization
+6. ~~Check fort.13~~
 
 **Jin’s request order**
 
@@ -87,7 +88,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 ## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted/merged later)
 
 ## Development, in no particular order
-- Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)
+- ~~Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)~~
 - ~~NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)~~
 
 ## Variables, listed in Pythonic order

@@ -85,6 +85,7 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
+## Soil Cohorts ##
 ## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted/merged later)
 
 ## Development, in no particular order

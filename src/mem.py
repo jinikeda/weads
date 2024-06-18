@@ -62,7 +62,7 @@ biomass_coefficients = {
     "NorthInlet": {"al": 1000, "bl": -3718, "cl": 1021, "ar": 1000, "br": -3718, "cr": 1021, "Dopt": 22}, # can be include, "Bmax": 2400},
     "Apalachicola": {"al": 1.975, "bl": -0.987, "cl": 1999, "ar": 3.265, "br": -1.633, "cr": 1998},
     "WeeksBay": {"al": 73.8, "bl": -1.14, "cl": 1587.1, "ar": 73.8, "br": -1.14, "cr": 1587.1},
-    "GrandBay": {"al": 32, "bl": -3.2, "cl": 1920, "ar": 6.61, "br": -0.661, "cr": 1983},
+    "GrandBay": {"al": 32, "bl": -3.2, "cl": 1920, "ar": 6.61, "br": -0.661, "cr": 1983, "Dopt": 5.0},
     "PlumIsland": {"al": 24.96, "bl": -0.193, "cl": 592.7, "ar": 24.96, "br": -0.193, "cr": 592.7},
     "Texas_Coastal_Bend": {"al": 240.0, "bl": -5.0, "cl": -460.0, "ar": 240.0, "br": -5.0, "cr": -460.0, "Dopt": 22.0},
     "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
@@ -461,6 +461,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         ################################################################################################################
         # not sure this equation. Pete please check this part
         A = np.where((tb != ndv) & (above_subtidal_zone), (m_const * qstar2 * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
+        #A = np.where((B > 0.0), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m] # Grand Bay
         ################################################################################################################
         B[tb == ndv] = ndv
         A[tb == ndv] = ndv
@@ -657,6 +658,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # Inundation_depth = tb_update.copy()
     Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs.
     Inundation_depth[mhwIDW == ndv] = ndv
+    #Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
 
     create_raster('Inundation_depth.tif', rasterHC, Inundation_depth, gdal.GDT_Float32,ndv, stats_flag=True) # Inundation depth gdal.GDT_Float32 is 32 bit floating point
     ############################################################################################################

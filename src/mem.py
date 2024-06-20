@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydroMEM.py
 # Name: Peter Bacopoulos, Jin Ikeda
-# last modify: March 10, 2024
+# last modify: June 19, 2024
 
 from osgeo import gdal
 from osgeo import osr
@@ -57,7 +57,7 @@ import math
 
 interest_reference = "Texas_Coastal_Bend"
 
-
+# Use a dictionary to store the coefficients
 biomass_coefficients = {
     "NorthInlet": {"al": 1000, "bl": -3718, "cl": 1021, "ar": 1000, "br": -3718, "cr": 1021, "Dopt": 22}, # can be include, "Bmax": 2400},
     "Apalachicola": {"al": 1.975, "bl": -0.987, "cl": 1999, "ar": 3.265, "br": -1.633, "cr": 1998},
@@ -66,7 +66,6 @@ biomass_coefficients = {
     "PlumIsland": {"al": 24.96, "bl": -0.193, "cl": 592.7, "ar": 24.96, "br": -0.193, "cr": 592.7},
     "Texas_Coastal_Bend": {"al": 240.0, "bl": -5.0, "cl": -460.0, "ar": 240.0, "br": -5.0, "cr": -460.0, "Dopt": 22.0},
     "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
-
 
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
 # until here
@@ -85,14 +84,17 @@ SSC = 25.0    # Suspended sediment concentration
 FF = 353.0    # Flooding frequency (1/year)
 BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
 BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-#dt = 100.0      # Time step (yr)
 Kr = 0.2      # Refractory fraction (-)
 
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
 print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 
+########################################################################################################################
+# Under consideration part
 # We may need to modify the following part using the class
+########################################################################################################################
+
 # class Vegetation:
 #     def __init__(self, Dmin, Dmax, Bmax, Dopt, Kr, RRS, BTR):
 #         self.Dmin = Dmin
@@ -421,12 +423,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
     D[D > -ndv/2] = ndv; # Relative depth [cm] re-modify to negative value for ndv
 
-########################################################################################################################
-    # Jin to Pete: Please consider to modify (check) the following part
     DNonNeg = D.copy()
-    # DNonNeg[D < 0.0] = 0.0;
     print(DNonNeg.min(), DNonNeg.max())
-########################################################################################################################
 
     Dt = 100.0 * (mhwIDW - mlwIDW);  # Tidal range [cm]
     Dt[Dt == 0] = 0.0001;
@@ -446,30 +444,16 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- ACCRETION CALCULATIONS ---
         print ("Accretion calculations")
-########################################################################################################################
-        # Jin to Pete: I need to check the following part
-
-        # use calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, BDo, BDi)
-        # or following part?
-
-        # qstar = qmax*(DNonNeg/Dt)
-        # qstar2= qstar.copy()
-        # qstar2[qstar>=1.0] = 1.0
 
         qstar2 = np.where(qmax * (DNonNeg / Dt) >= 1.0, 1.0, qmax * (DNonNeg / Dt))
-        ##### Jin to Pete: Please check the following part
-        ################################################################################################################
-        # not sure this equation. Pete please check this part
-        A = np.where((tb != ndv) & (above_subtidal_zone), (m_const * qstar2 * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
-        #A = np.where((B > 0.0), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m] # Grand Bay
-        ################################################################################################################
+        A = np.where((tb != ndv) & (above_subtidal_zone), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
+
         B[tb == ndv] = ndv
         A[tb == ndv] = ndv
 
         tb_update = np.where(above_subtidal_zone,tb + (A * dt), tb)  # accretion thickness [m]
         tb_update[tb == ndv] = ndv
 
-########################################################################################################################
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
         mask1 = (B > 0) & (B <= 1000)
@@ -503,12 +487,10 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         marsh[condition_2] = 20
         marsh[condition_3] = 10
 
-        #print ("  DONE!")
-
     else:
 
         ##### Here check the elevation of mask irregularly flooded marsh ###############################################
-        # This part is for tuning the parameters for irregularly flooded marsh
+        # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
         NWI_original = read_band_value('/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.tif', 1) # Before dilation
         mask_irregular_NWI = (NWI_original == 20)
         irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
@@ -656,7 +638,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     create_raster('Productivity.tif', rasterHC, Watte_bio_level, gdal.GDT_Byte,Watte_ndv) # Productivity level gdal.GDT_Byte is unsigned 8 bit integer (0 to 255)
 
     # Inundation_depth = tb_update.copy()
-    Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs.
+    Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. However, this is an arbitary number! Need to consider further (Jin June 19, 2024)
     Inundation_depth[mhwIDW == ndv] = ndv
     #Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
 

@@ -92,15 +92,18 @@ def read_inundationtime63(inputInundationTFile): # Jin's comments. We may need t
     skip_index = 1  # skip the first line
     nN = int(lines[skip_index].split()[1])  # nN: number of nodes
     skip_index2 = 2  # skip the first line
-    max_time = int(lines[skip_index2].split()[1])  # max_time: maximum simulation time [s]
+    max_time = float(lines[skip_index2].split()[1])  # max_time: maximum simulation time [s]
     print("node number\t", nN, "max_time\t", max_time)
 
     ##### Step.3 Output inundationtime ######
-    inundationtime = np.zeros((nN, 2), dtype=int)  # node number, time of inundation (0: dry, 1: wet)
+    inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])  # node number, time of inundation (0: dry, 1: wet)
     for i in range(nN):
         nodeNum, time = lines[(skip_index2 + 1) + i].split()  # skip before inundation number
         inundationtime[i][0] = int(nodeNum)
-        inundationtime[i][1] = float(float(time) / max_time)  # time of inundation (0: dry, 1: wet)
+        if float(time) >= 0:
+            inundationtime[i][1] = float(time) / max_time  #float(float(time) / max_time)  # time of inundation (0: dry, 1: wet)
+        else:
+            pass
 
     return inundationtime, nN, max_time
 
@@ -187,6 +190,11 @@ def filter_points_within_domain(points_gdf, polygon_gdf):
 ########################################################################################################################
 #--- Read a domain shapefile and coordinate conversions ---
 ########################################################################################################################
+
+# --- GLOBAL PARAMETERS ---
+ndv = -99999.0
+
+
 print("   Reading a domain ...\n")
 gdf = read_domain("Cut_domain.shp")
 
@@ -221,7 +229,7 @@ points_within_polygon, true_indices = filter_points_within_domain(points_prj, do
 ADCIRC_nodes_domain = ADCIRC_nodes[true_indices]
 np.savetxt("true_indices.txt", true_indices, fmt='%d')
 print("number of nodes in the domain\t", len(ADCIRC_nodes_domain))
-np.savetxt("mesh.txt", ADCIRC_nodes_domain, fmt='%d\t%.8f\t%.8f\t%.8f')
+np.savetxt("tbathy.txt", ADCIRC_nodes_domain, fmt='%d\t%.8f\t%.8f\t%.8f')
 
 ########################################################################################################################
 #--- Read attributes (inputMeshFile) ---
@@ -270,24 +278,61 @@ np.savetxt("inundationtime.txt", inundationtime_domain, fmt='%d\t%.4f')
 ########################################################################################################################
 #--- Read harmonics (inputHarmonicsFile) ---
 ########################################################################################################################
-Harmonics_nodes, numHarm, nN,tidal_constituents = read_fort53("fort.53")
-print(tidal_constituents)
-Harmonics_nodes_domain = Harmonics_nodes[true_indices]
-np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
-np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
+# Harmonics_nodes, numHarm, nN,tidal_constituents = read_fort53("fort.53")
+# print(tidal_constituents)
+# Harmonics_nodes_domain = Harmonics_nodes[true_indices]
+# np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
+# np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
 
 ########################################################################################################################
-merged_array = np.hstack((ADCIRC_nodes_domain, mann_domain, inundationtime_domain, Harmonics_nodes_domain[:, :, 0], Harmonics_nodes_domain[:, :, 1]))
-dummy_node ='node_2'
+# merged_array = np.hstack((ADCIRC_nodes_domain, mann_domain, inundationtime_domain, Harmonics_nodes_domain[:, :, 0], Harmonics_nodes_domain[:, :, 1]))
+# dummy_node ='node_2'
+#
+# header_list =['node','x','y','z', 'mann', dummy_node,'inundationtime']
+# for i in ['_amp','_phase']:
+#     for j in tidal_constituents:
+#         header_list.append(j+i)
+#
+# df = pd.DataFrame(merged_array, columns=header_list)
+# df.drop(dummy_node, axis=1, inplace=True)
+# df.to_csv("domain_inputs.csv", index=None)
 
-header_list =['node','x','y','z', 'mann', dummy_node,'inundationtime']
-for i in ['_amp','_phase']:
-    for j in tidal_constituents:
-        header_list.append(j+i)
+#######################################################################################################################
+##
 
-df = pd.DataFrame(merged_array, columns=header_list)
-df.drop(dummy_node, axis=1, inplace=True)
-df.to_csv("domain_inputs.csv", index=None)
+
+# --- READ INPUTS ---
+# print ("Reading ADCIRC node")
+
+print(" Read an normalized inundation time (inpuT)")
+inputInundationTFile = "inundationtime.txt"
+inunT = np.loadtxt(inputInundationTFile, usecols=1) # domain_inundationtime.txt
+print (inunT)
+
+print(" Read an tbathy (TB)")
+inputElevation = "tbathy.txt"
+TB = np.loadtxt(inputElevation)
+
+# compare inundationtime and tbathy and Clean up values to only have 1 and -99999
+accuracy = 1.0 * 10 ** -6
+
+""" inunTBN = -99999.0: nodata,
+            0: land, 1: intertidal, 2: subtidal """  # , 3: pond/lake"""
+
+# Create the masks
+mask_land = (0 - accuracy < inunT) & (inunT < 0 + accuracy)
+mask_intertidal = (accuracy < inunT) & (inunT < 1 - accuracy)
+mask_water = (1 - accuracy < inunT) & (inunT < 1 + accuracy)
+mask_outdomain = (TB[:, 3] == ndv)  # Assuming the fourth column is at index 3
+
+# Update the fourth column of TB based on the masks
+TB[mask_land, 3] = int(0)  # fully dried (land) region
+TB[mask_intertidal, 3] = int(1)  # intertidal region
+TB[mask_water, 3] = int(2)  # temporary set to water region and will separate to ocean (subtidal zone) and pond/lake
+TB[mask_outdomain, 3] = int(ndv)  # set nodata value to -99999.0 in the domain of inunT
+
+# Save the modified TB array to a file
+np.savetxt("hydro_class.txt", TB, fmt='%d\t%.8f\t%.8f\t%d')
 
 ########################################################################################################################
 # Calculate the elapsed time

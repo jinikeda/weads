@@ -96,7 +96,8 @@ def read_inundationtime63(inputInundationTFile): # Jin's comments. We may need t
     print("node number\t", nN, "max_time\t", max_time)
 
     ##### Step.3 Output inundationtime ######
-    inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])  # node number, time of inundation (0: dry, 1: wet)
+    #inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])  # node number, time of inundation (0: dry, 1: wet)
+    inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
     for i in range(nN):
         nodeNum, time = lines[(skip_index2 + 1) + i].split()  # skip before inundation number
         inundationtime[i][0] = int(nodeNum)
@@ -245,7 +246,10 @@ print("manning_indices\t", mann_indices)
 inundationtime, nN, max_time = read_inundationtime63("inundationtime.63")
 
 inundationtime_domain = inundationtime[true_indices]
-np.savetxt("inundationtime.txt", inundationtime_domain, fmt='%d\t%.4f')
+
+# Convert structured array to 2D array
+inundationtime_domain_2d = np.column_stack([inundationtime_domain[name] for name in inundationtime_domain.dtype.names])
+np.savetxt("inundationtime.txt", inundationtime_domain_2d, fmt='%d\t%.4f')
 ########################################################################################################################
 
 ### Pending to be implemented
@@ -278,29 +282,34 @@ np.savetxt("inundationtime.txt", inundationtime_domain, fmt='%d\t%.4f')
 ########################################################################################################################
 #--- Read harmonics (inputHarmonicsFile) ---
 ########################################################################################################################
-# Harmonics_nodes, numHarm, nN,tidal_constituents = read_fort53("fort.53")
-# print(tidal_constituents)
-# Harmonics_nodes_domain = Harmonics_nodes[true_indices]
-# np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
-# np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
+Harmonics_nodes, numHarm, nN,tidal_constituents = read_fort53("fort.53")
+print(tidal_constituents)
+Harmonics_nodes_domain = Harmonics_nodes[true_indices]
+np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
+np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
 
 ########################################################################################################################
-# merged_array = np.hstack((ADCIRC_nodes_domain, mann_domain, inundationtime_domain, Harmonics_nodes_domain[:, :, 0], Harmonics_nodes_domain[:, :, 1]))
-# dummy_node ='node_2'
-#
-# header_list =['node','x','y','z', 'mann', dummy_node,'inundationtime']
-# for i in ['_amp','_phase']:
-#     for j in tidal_constituents:
-#         header_list.append(j+i)
-#
-# df = pd.DataFrame(merged_array, columns=header_list)
-# df.drop(dummy_node, axis=1, inplace=True)
-# df.to_csv("domain_inputs.csv", index=None)
+#--- Save the filtered nodes and attributes in the domain as a text file (domain_inputs.csv) ---
+########################################################################################################################
+print("ADCIRC_nodes_domain dimensions: ", ADCIRC_nodes_domain.shape)
+print("mann_domain dimensions: ", mann_domain.shape)
+print("inundationtime_domain dimensions: ", inundationtime_domain_2d.shape)
+print("Harmonics_nodes_domain AMP dimensions: ", Harmonics_nodes_domain[:, :, 0].shape)
+print("Harmonics_nodes_domain PHASE dimensions: ", Harmonics_nodes_domain[:, :, 1].shape)
+merged_array = np.hstack((ADCIRC_nodes_domain, mann_domain, inundationtime_domain_2d, Harmonics_nodes_domain[:, :, 0], Harmonics_nodes_domain[:, :, 1]))
+dummy_node ='node_2'
+
+header_list =['node','x','y','z', 'mann', dummy_node,'inundationtime']
+for i in ['_amp','_phase']:
+    for j in tidal_constituents:
+        header_list.append(j+i)
+
+df = pd.DataFrame(merged_array, columns=header_list)
+df.drop(dummy_node, axis=1, inplace=True)
+df.to_csv("domain_inputs.csv", index=None)
 
 #######################################################################################################################
 ##
-
-
 # --- READ INPUTS ---
 # print ("Reading ADCIRC node")
 

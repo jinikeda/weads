@@ -120,12 +120,13 @@ mlw = np.ones((numPoints, 1), dtype=float)
 mhw = np.ones((numPoints, 1), dtype=float)
 msl = np.ones((numPoints, 1), dtype=float)
 
+inundationtime_index = df.columns.get_loc('inundationtime') # Get the column index for 'inundationtime'
 amp_index = df.columns.get_loc('STEADY_amp') # Get the column index for 'STEADY_amp'
 phase_index = df.columns.get_loc('STEADY_phase') # Get the column index for 'STEADY_phase'
 print ('amp_index:', amp_index, 'phase_index:', phase_index)
 
 for j in range(numPoints):
-    if df.iloc[j,amp_index-1] > 0.0:
+    if (df.iloc[j,inundationtime_index] >= 0.9999) & (df.iloc[j,inundationtime_index] <= 1.0001): # If inundationTime is 1.0, then the point is fully wetted
         # Tidal resynthesis
         wl = df.iloc[j, amp_index] * np.ones((N, 1), dtype=float)
         for count, jj in enumerate(range(amp_index, amp_index + numHarm)):
@@ -153,7 +154,7 @@ df['mlw'] = mlw.flatten()
 df['mhw'] = mhw.flatten()
 
 # Save the DataFrame to a CSV file
-df.to_csv("domain_tide.csv", index=True)
+df.to_csv("domain_tide.csv", index=False)
 
 #--- Exit script ---
 print("\n"); print("EXIT: Existing script!\n");

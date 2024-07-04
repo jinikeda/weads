@@ -118,10 +118,13 @@ def read_fort53(inputHarmonicsFile):
     skip_index = 0  # skip the first line
     numHarm = int(lines[skip_index].split()[0])  # numHarm: number of Harmonics
 
-    tidalconstitunents = []
+    tidal_frequncies = []
+    tidal_constitunents = []
+
     skip_index2 = 1  # skip the first line
     for i in range(numHarm):
-        tidalconstitunents.append(lines[skip_index2 + i].split()[3])
+        tidal_frequncies.append(float(lines[skip_index2 + i].split()[0]))
+        tidal_constitunents.append(lines[skip_index2 + i].split()[3])
 
     skip_index3 = 1+numHarm  # skip the first line
     nN = int(lines[skip_index3].split()[0])  # nN: number of nodes
@@ -136,7 +139,7 @@ def read_fort53(inputHarmonicsFile):
             Harmonics_nodes[i][ii][0] = float(AMP)
             Harmonics_nodes[i][ii][1] = float(PHASE)
 
-    return Harmonics_nodes, nN, numHarm,tidalconstitunents
+    return Harmonics_nodes, nN, numHarm, tidal_frequncies, tidal_constitunents
 
 def read_domain(inputShapeFile):
     gdf = gpd.read_file(inputShapeFile)
@@ -282,9 +285,10 @@ np.savetxt("inundationtime.txt", inundationtime_domain_2d, fmt='%d\t%.4f')
 ########################################################################################################################
 #--- Read harmonics (inputHarmonicsFile) ---
 ########################################################################################################################
-Harmonics_nodes, numHarm, nN,tidal_constituents = read_fort53("fort.53")
+Harmonics_nodes, numHarm, nN,tidal_frequencies,tidal_constituents = read_fort53("fort.53")
 print(tidal_constituents)
 Harmonics_nodes_domain = Harmonics_nodes[true_indices]
+np.savetxt("harmonics_Freq.txt", tidal_frequencies, fmt='%.8f')
 np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
 np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
 
@@ -306,7 +310,7 @@ for i in ['_amp','_phase']:
 
 df = pd.DataFrame(merged_array, columns=header_list)
 df.drop(dummy_node, axis=1, inplace=True)
-df.to_csv("domain_inputs.csv", index=None)
+#df.to_csv("domain_inputs.csv", index=None)
 
 #######################################################################################################################
 ##
@@ -342,6 +346,11 @@ TB[mask_outdomain, 3] = int(ndv)  # set nodata value to -99999.0 in the domain o
 
 # Save the modified TB array to a file
 np.savetxt("hydro_class.txt", TB, fmt='%d\t%.8f\t%.8f\t%d')
+########################################################################################################################
+# Reoder the columns of the DataFrame later Jin July 3, 2024
+df["HydroClass"] = TB[:, 3]
+########################################################################################################################
+df.to_csv("domain_inputs.csv", index=None)
 
 ########################################################################################################################
 # Calculate the elapsed time

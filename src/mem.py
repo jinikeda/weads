@@ -66,6 +66,7 @@ biomass_coefficients = {
     "PlumIsland": {"al": 24.96, "bl": -0.193, "cl": 592.7, "ar": 24.96, "br": -0.193, "cr": 592.7},
     "Texas_Coastal_Bend": {"al": 240.0, "bl": -5.0, "cl": -460.0, "ar": 240.0, "br": -5.0, "cr": -460.0, "Dopt": 22.0},
     "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
+    # "Texas_Coastal_Bend_mangrove_juvenile": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0} # Pete will modify
 
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
 # until here
@@ -446,7 +447,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         print ("Accretion calculations")
 
         qstar2 = np.where(qmax * (DNonNeg / Dt) >= 1.0, 1.0, qmax * (DNonNeg / Dt))
-        A = np.where((tb != ndv) & (above_subtidal_zone), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
+        A = np.where((tb != ndv) & (above_subtidal_zone) & (B != ndv), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
 
         B[tb == ndv] = ndv
         A[tb == ndv] = ndv
@@ -622,7 +623,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         # VM[(VM == 55)] = ndv_byte # 55 = land_mask
         # VM[(VM == 40)] = ndv_byte # 40 = water_mask
 
-        create_raster('new_NWI.tif', rasterHC, VM, gdal.GDT_Int32, int(ndv))
+        create_raster('new_NWI.tif', rasterHC, VM, gdal.GDT_Int32, int(ndv)) # ndv or ndv_byte which is better? Jin July 5, 2024
 
     ####################################################################################################################
     print("\n----------------------------------------------------------------------")

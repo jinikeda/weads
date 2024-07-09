@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 # coding: utf-8
 # Provide general functions for point-based WEADS

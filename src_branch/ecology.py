@@ -1,18 +1,7 @@
 #!/usr/bin/python3
 # File: ecology.py
-# Name: Peter Bacopoulos, Jin Ikeda
-# last modify: July 8, 2024
-
-#--- Load modules ---
-import numpy as np
-import math
-import time
-import pandas as pd
-
-#--- Initialize code ---
-start=time.time()
-print("\n")
-print("LAUNCH: Launching script!\n")
+# Developer: Peter Bacopoulos & Jin Ikeda
+# Last modified: Jul 9, 2024
 
 #----------------------------------------------------------
 # MEM: Marsh Equilibrium Model and Mangrove Development
@@ -25,6 +14,17 @@ print("LAUNCH: Launching script!\n")
 # result = function(inputRasterHyControl,inputRasterTopoBathy,\
 #                   inputRasterTidalDatumsIDW,outputRaster)
 #----------------------------------------------------------
+
+########################################################################################################################
+#--- Load internal modules ---
+from general_functions import *
+from KDTree_idw import Invdisttree # Need KDTree_idw.py
+
+#--- Initialize code ---
+start_time = time.time()
+print("\n"); print("LAUNCH: Launching script!\n")
+
+########################################################################################################################
 
 # Probably make a dictionary python file for the following
 ########################################################################################################################
@@ -78,7 +78,6 @@ biomass_coefficients = {
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
 # until here
 ########################################################################################################################
-
 
 ########################################################################################################################
 print ("Input parameters for MEM")
@@ -137,7 +136,6 @@ BTRmat = 0.22  # BG turnover rate (1/year) for mature mangroves
 BTRjuv = 0.67  # BG turnover rate (1/year) for juvenile mangroves
 ########################################################################################################################
 Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
-
 
 # ----------------------------------------------------------
 # F U N C T I O N
@@ -415,7 +413,7 @@ intertidal_mask = (0.5 < hc) & (hc < 1.5)  # intertidal region (hc = 1.0)
 submergence_mask = water_mask | intertidal_mask | (
             2.5 < hc)  # submergence region (hc = 1.0, 2.0, 3.0 including lake and pond) # these values are not existed current point-based code
 above_subtidal_zone = (mhwIDW != ndv)  # above subtidal zone ()
-np.savetxt('above_subtidal_zone.csv', above_subtidal_zone, delimiter=',')
+# np.savetxt('above_subtidal_zone.csv', above_subtidal_zone, delimiter=',')
 
 # Perform the calculation only where the condition is true
 D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb),
@@ -465,8 +463,8 @@ if vegetationFile == None:
     # --- MARSH TYPE CALCULATIONS ---
     # print ("High-Low Marsh Calculations")
     Dmax = -(al / (2 * bl));
-    Dzero1 = (-al + math.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
-    Dzero2 = (-ar - math.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
+    Dzero1 = (-al + np.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
+    Dzero2 = (-ar - np.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
     DRange = abs(Dzero2 - Dzero1);
     DHigh = Dmax + DRange * 0.1;
     DLow = Dmax - DRange * 0.1;
@@ -558,8 +556,8 @@ else:
 #     cr = c1
 #
 #     Dmax = -(al / (2 * bl));
-#     Dzero1 = (-al + math.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
-#     Dzero2 = (-ar - math.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
+#     Dzero1 = (-al + np.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
+#     Dzero2 = (-ar - np.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
 #     DRange = abs(Dzero2 - Dzero1);
 #     DHigh = Dmax + DRange * 0.1;
 #     DLow = Dmax - DRange * 0.1;
@@ -684,8 +682,11 @@ print ("")
 print ("")
 '''
 
-#--- Exit script ---
-print("EXIT: Existing script!\n")
-end=time.time(); print ("Time elapsed (seconds):",end-start);
+########################################################################################################################
+# Calculate the elapsed time
+end_time = time.time()
+elapsed_time = end_time - start_time
 
-
+# Print the elapsed time
+print("Done interpolating tidal datums using IDW")
+print("Time to Compute: \t\t\t", elapsed_time, " seconds")

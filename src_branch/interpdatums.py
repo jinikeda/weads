@@ -1,32 +1,7 @@
 #!/usr/bin/python3
 # File: interpdatums.py
-# Name: Jin Ikeda and Peter Bacopoulos
-# Date: July 3, 2024
-# Command line: python tidalDatumsIDW.py -i HyControl.img -s tidalDatums.img -o tidalDatumsIDW.img
-
-# ----------------------------------------------------------
-# M O D U L E S
-# ----------------------------------------------------------
-# ----------------------------------------------------------
-
-import numpy as np
-import time
-import pandas as pd
-import geopandas as gpd
-from KDTree_idw import Invdisttree # Need KDTree_idw.py
-
-def convert_gcs2coordinates(gdf, PRJ,Type_str):
-    gdf_proj = gdf.to_crs(PRJ)
-    if Type_str == "Point":
-        gdf_proj["x"] = gdf_proj.geometry.apply(lambda point: point.x)
-        gdf_proj["y"] = gdf_proj.geometry.apply(lambda point: point.y)
-    elif Type_str == "Polygon":
-        gdf_proj["x"] = gdf_proj.geometry.apply(lambda polygon: polygon.centroid.x)
-        gdf_proj["y"] = gdf_proj.geometry.apply(lambda polygon: polygon.centroid.y)
-    else:
-        print("Type_str is not defined")
-    return gdf_proj
-
+# Developer: Jin Ikeda & Peter Bacopoulos
+# Last modified: Jul 9, 2024
 
 # ----------------------------------------------------------
 # F U N C T I O N	T I D A L D A T U M S I D W
@@ -39,6 +14,18 @@ def convert_gcs2coordinates(gdf, PRJ,Type_str):
 # ----------------------------------------------------------
 # def tidaldatumsidw(inputRasterHyControl, inputRasterTidalDatums, \
 #                    outputRaster, numNeighbors=12):
+
+########################################################################################################################
+#--- Load internal modules ---
+from general_functions import *
+from KDTree_idw import Invdisttree # Need KDTree_idw.py
+
+#--- Initialize code ---
+start_time = time.time()
+print("\n"); print("LAUNCH: Launching script!\n")
+
+########################################################################################################################
+
 '''
 print ("")
 print ("")
@@ -49,9 +36,10 @@ print ("")
 '''
 
 # --- GLOBAL PARAMETERS ---
-start=time.time()
 ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 
+### This part should be provided from the parser file #### Jin June 27, 2024
+#################################################################################
 inEPSG = 4269 # GCS_North_American_1983
 outEPSG = 26914
 #################################################################################
@@ -101,10 +89,16 @@ for i in ['msl','mlw','mhw']:
     interpol, weight_factors = invdisttree(xy_interp, nnear=knn, eps=0.0, p=power)  # interpolated using nnear numbers
     tidal_prj.loc[indices[0], i.upper()+'_IDW'] = interpol
 
-tidal_prj.to_csv("tidal_prj.csv",index=False)
+tidal_prj.to_csv("tidal_prj.csv", index=False)
 
-#--- Exit script ---
-print("EXIT: Existing script!\n")
-end=time.time(); print ("Time elapsed (seconds):",end-start);
+########################################################################################################################
+# Calculate the elapsed time
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+# Print the elapsed time
+print("Done interpolating tidal datums using IDW")
+print("Time to Compute: \t\t\t", elapsed_time, " seconds")
+print("Job Finished ʕ •ᴥ•ʔ")
 
 

@@ -88,11 +88,13 @@ ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
 ndv_byte = 128
 qmax = 2.8    # Maximum capture coefficient (-)
 qmin = 1.0    # Minimum capture coefficient (-)
-SSC = 25.0    # Suspended sediment concentration
-FF = 353.0    # Flooding frequency (1/year)
+SSC = 25.0    # Suspended sediment concentration (mg/L) default 25.0: User can freely change this value
+FF = 353.0    # Flooding frequency (1/year) default 353.0: User can freely change this value
 BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
-BDi = 1.99      # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-Kr = 0.2      # Refractory fraction (-)
+BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
+Kr = 0.1      # Refractory fraction (g/g) default 0.1: User can freely change this value
+RRS = 2.0     # Below Ground Bio to Shoot Ratio (g/g) default 2.0  User can freely change this value
+BTR = 0.5     # Below Ground turnover rate (/yr) default 0.5  User can freely change this value
 
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
@@ -148,24 +150,24 @@ Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
 
 
 def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
-    a = -((-Dmin * Bmax - Dmax * Bmax) / ((Dmin - Dopt) * (Dopt - Dmax)))  # coefficient of DNonNeg
-    b = -(Bmax / ((Dmin - Dopt) * (Dopt - Dmax)))  # coefficient of DNonNeg^2
+    a = -((-Dmin * Bmax - Dmax * Bmax) / ((Dmin - Dopt) * (Dopt - Dmax)))  # coefficient of D
+    b = -(Bmax / ((Dmin - Dopt) * (Dopt - Dmax)))  # coefficient of D^2
     c = -Dmin * Bmax * Dmax / ((Dmin - Dopt) * (Dopt - Dmax))  # constant term
     return a, b, c
 
 
-def calculate_biomass_parabola(DNonNeg, Dopt, mask, al, bl, cl, ar, br, cr):
+def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     global ndv
-    # Jin -> Pete please think about using D or DNonNeg
+    # Jin -> Pete please think about using D or D
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
-    mask_left_parabora = (DNonNeg <= Dopt) & mask
-    mask_right_parabora = (Dopt < DNonNeg) & mask
+    mask_left_parabora = (D <= Dopt) & mask
+    mask_right_parabora = (Dopt < D) & mask
 
     # Perform the calculations only where the condition is true
-    Bl = np.where(mask_left_parabora, al * DNonNeg + bl * DNonNeg * DNonNeg + cl, ndv)
-    Br = np.where(mask_right_parabora, ar * DNonNeg + br * DNonNeg * DNonNeg + cr, ndv)
+    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, ndv)
+    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, ndv)
 
     print('BL:', Bl.min(), Bl.max())
     print('BR:', Br.min(), Br.max())
@@ -185,16 +187,16 @@ def calculate_biomass_parabola(DNonNeg, Dopt, mask, al, bl, cl, ar, br, cr):
     return B, PL, PH
 
 
-def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb):
+def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb): #Pending to modify FIT
+
     # --- ACCRETION CALCULATIONS ---
-    q = qmin + (qmax - qmin) * B / Bmax
-    q[B < 0.0] = qmin
-    Vorg = kr * RRS * BTR * B / (100.0 ** 2)  # organic matter
-    Vmin = 0.5 * q * SSC * FF * D / (1000.0 ** 2)  # inorganic matter where is Jin -> Pete FIT?
-    Vorg[B <= 0.0] = 0.0
-    Vmin[
-        B <= 0.0] = 0.0  # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
-    A = np.where(tb != ndv, ((Vorg / BDo) + (Vmin / BDi)) / 100.0, ndv)  # accretion rate per year [m]
+    q = qmin+(qmax-qmin)*B/Bmax
+    q[B<0.0] = qmin
+    Vorg = Kr * RRS * BTR * B/(100.0**2) # organic matter
+    Vmin = 0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter
+    Vorg[B<=0.0] = 0.0
+    Vmin[B<=0.0] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
+    A = np.where(tb != ndv,((Vorg/BDo) + (Vmin/BDi))/100.0, ndv) # accretion rate per year [m]
     tb_update = np.where(tb != ndv, tb + (A * dt), ndv)  # accretion thickness [m]
 
     return tb_update, A
@@ -418,11 +420,9 @@ np.savetxt('above_subtidal_zone.csv', above_subtidal_zone, delimiter=',')
 # Perform the calculation only where the condition is true
 D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb),
              -ndv)  # [cm] Relative depth at nan should be positive value in this case
-
-D[D > -ndv / 2] = ndv;  # Relative depth [cm] re-modify to negative value for ndv
-
-DNonNeg = D.copy()
-print(DNonNeg.min(), DNonNeg.max())
+D[D > -ndv / 2] = ndv  # Relative depth [cm] re-modify to negative value for ndv
+D_mask = (D != ndv)  # Create a mask for the elements of D that are not equal to ndv
+print(D[D_mask].min(), D[D_mask].max())  # Print the minimum and maximum of the elements of D that are not equal to ndv
 
 Dt = 100.0 * (mhwIDW - mlwIDW);  # Tidal range [cm]
 print('Tidal range: min and max [cm]\t',Dt.min(), Dt.max())
@@ -439,37 +439,12 @@ if vegetationFile == None:
 
     # --- BIOMASS CALCULATIONS ---
     print("Biomass Calculations")
-    B, PL, PH = calculate_biomass_parabola(DNonNeg, Dopt, above_subtidal_zone, al, bl, cl, ar, br, cr)
-    ### Jin's comments! Need to confirm with Pete regarding the equation on Line 474 The problem is zmin (non-cohesive: mineral deposition)
-
-    ### Test
-
-    # Solution one
-    # np.where((B <= 0.0), 0.0, B)
-    #
-    # # Solution two
-    # q[B < 0.0] = qmin
-
-    # Vmin = 0.5 * q * SSC * FF * D / (1000.0 ** 2)  # inorganic matter where is Jin -> Pete FIT?
-    # Vorg = kr * RRS * BTR * B / (100.0 ** 2)  # organic matter
-    # A = np.where(tb != ndv, ((Vorg / BDo) + (Vmin / BDi)) / 100.0, ndv)
-
-
+    B, PL, PH = calculate_biomass_parabola(D, Dopt, above_subtidal_zone, al, bl, cl, ar, br, cr)
     print('Salt marsh ', 'PH = ', PH, ', PL = ', PL, 'B max = ', B.max())
 
     # --- ACCRETION CALCULATIONS ---
     print("Accretion calculations")
-
-    qstar2 = np.where(qmax * (DNonNeg / Dt) >= 1.0, 1.0, qmax * (DNonNeg / Dt))
-
-    A = np.where((tb != ndv) & (above_subtidal_zone) & (B != ndv),
-                 (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
-
-    B[tb == ndv] = ndv
-    A[tb == ndv] = ndv
-
-    tb_update = np.where(above_subtidal_zone, tb + (A * dt), tb)  # accretion thickness [m]
-    tb_update[tb == ndv] = ndv
+    tb_update, A = calculate_vertical_accretion(qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb)
 
     # --- PRODUCTIVITY CALCULATIONS ---
     # Create masks for different conditions
@@ -527,15 +502,15 @@ else:
 #
 #     # --- BIOMASS CALCULATIONS ---
 #     # Salt marsh (8)
-#     B1, PL1, PH1 = calculate_biomass_parabola(DNonNeg, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
+#     B1, PL1, PH1 = calculate_biomass_parabola(D, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
 #     print('Salt marsh ', 'PH = ', PH1, ', PL = ', PL1)
 #
 #     # Mangrove (9)
-#     B2, PL2, PH2 = calculate_biomass_parabola(DNonNeg, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
+#     B2, PL2, PH2 = calculate_biomass_parabola(D, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
 #     # print('Mangrove ','PH = ', PH2, ', PL = ',PL2)
 #
 #     # Irregularly marsh (20)
-#     B3, PL3, PH3 = calculate_biomass_parabola(DNonNeg, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
+#     B3, PL3, PH3 = calculate_biomass_parabola(D, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
 #     # print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
 #
 #     # --- ACCRETION CALCULATIONS ---

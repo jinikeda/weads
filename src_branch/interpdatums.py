@@ -64,7 +64,7 @@ print ("  Read HyControl (HC) and tidal datums (TD) successfully")
 
 print(df.shape,df.columns)
 
-tidal_gdf = gpd.GeoDataFrame(df[['x','y','HydroClass','msl','mlw','mhw']], geometry=gpd.points_from_xy(df['x'], df['y'], crs='EPSG:'+str(inEPSG)))
+tidal_gdf = gpd.GeoDataFrame(df[['node','x','y','z','HydroClass','msl','mlw','mhw']], geometry=gpd.points_from_xy(df['x'], df['y'], crs='EPSG:'+str(inEPSG)))
 tidal_prj = convert_gcs2coordinates(tidal_gdf, PRJ, None)
 tidal_prj['x_prj'] = tidal_prj.geometry.apply(lambda point: point.x)
 tidal_prj['y_prj'] = tidal_prj.geometry.apply(lambda point: point.y)

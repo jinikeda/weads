@@ -29,8 +29,6 @@ import math
 # Bl: Biomass density left side
 # Br: Biomass density right side
 # tb_update: modified topo-bathy
-# qstar: q might vary with each species and location, moved to if conditions
-# qstar2:  q might vary with each species and location, moved to if conditions
 # P: Productivity
 # marsh: marsh classification
 # Dmin, Dmax, Dopt
@@ -65,8 +63,8 @@ biomass_coefficients = {
     "GrandBay": {"al": 32, "bl": -3.2, "cl": 1920, "ar": 6.61, "br": -0.661, "cr": 1983, "Dopt": 5.0},
     "PlumIsland": {"al": 24.96, "bl": -0.193, "cl": 592.7, "ar": 24.96, "br": -0.193, "cr": 592.7},
     "Texas_Coastal_Bend": {"al": 240.0, "bl": -5.0, "cl": -460.0, "ar": 240.0, "br": -5.0, "cr": -460.0, "Dopt": 22.0},
-    "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
-    # "Texas_Coastal_Bend_mangrove_juvenile": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0} # Pete will modify
+    "Texas_Coastal_Bend_mangrove": {"al": 1170.0, "bl": -16.25, "cl": -13195.0, "ar": 1170.0, "br": -16.25, "cr": -13195.0, "Dopt": 34.0}}
+    "Texas_Coastal_Bend_mangrove_juvenile": {"al": 842.3, "bl": -11.54, "cl": -14100.0, "ar": 842.3, "br": -11.54, "cr": -14100.0, "Dopt": 34.0}
 
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
 # until here
@@ -85,7 +83,9 @@ SSC = 25.0    # Suspended sediment concentration
 FF = 353.0    # Flooding frequency (1/year)
 BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
 BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-Kr = 0.2      # Refractory fraction (-)
+Kr = 0.1      # Refractory fraction (-)
+RRS = 2.0     # Root-to-shoot ratio
+BTR = 0.5     # BG turnover rate (/yr)
 
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
@@ -191,13 +191,13 @@ def calculate_biomass_parabola(DNonNeg,Dopt,mask, al, bl, cl, ar, br, cr):
 
     return B, PL, PH
 
-def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, BDo, BDi,tb):
+def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, kr, RRS, BTR, SSC, FF, D, FIT, BDo, BDi, tb):
 
     # --- ACCRETION CALCULATIONS ---
     q=qmin+(qmax-qmin)*B/Bmax
     q[B<0.0]=qmin
     Vorg=kr*RRS*BTR*B/(100.0**2) # organic matter
-    Vmin=0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter where is Jin -> Pete FIT?
+    Vmin=0.5*q*SSC*FF*D*FIT/(1000.0**2) # inorganic matter
     Vorg[B<=0.0]=0.0
     Vmin[B<=0.0]=0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
     A=np.where(tb != ndv,((Vorg/BDo)+(Vmin/BDi))/100.0, ndv) # accretion rate per year [m]
@@ -259,8 +259,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # Accretion coefficients
         # Morris et al. (2016) Contributions of organic and inorganic matter to sedimentvolume and accretion in tidal wetlands at steady state
-
-        m_const=0.0001;
 
     else:
         print('\nMulti species vegetation mapping\n')
@@ -345,15 +343,11 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         a3, b3, c3 = calculate_coefficients(Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh, Bmax_fmarsh)  # 20: Irregularly flooded marsh (NWI = 20)
 
 ########################################################################################################################
-        # Jin to Pete: how to incorporate juvenile mangrove here
+        # Juvenile mangroves
 
-        # Dmin_matmang = 36
-        # Dmax_matmang = 55
-        # Bmax_matmang = 500
-        # Dopt_matmang = 45
-        # Dmin_matmang = DminL + dD + dDmin
-        # Dmax_matmang = DmaxR + dD + dDmax
-        # Dopt_matmang = ((DoptL + DoptR) / 2) + dD
+        Dmin_juvmang=26.0; Dmax_juvmang=47.0; Bmax_juvmang=1200.0; Dopt_juvmang=34.0;
+        a4, b4, c4 = calculate_coefficients(Dmin_juvmang, Dmax_juvmang, Dopt_juvmang, Bmax_juvmang)
+
 ########################################################################################################################
 
     # ----------------------------------------------------------
@@ -421,6 +415,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
     # Perform the calculation only where the condition is true
     D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -ndv) # [cm] Relative depth at nan should be positive value in this case
+    FIT = np.where(above_subtidal_zone, (mhwIDW - tb) / (mhwIDW - mlwIDW), -ndv)
 
     D[D > -ndv/2] = ndv; # Relative depth [cm] re-modify to negative value for ndv
 
@@ -446,14 +441,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         # --- ACCRETION CALCULATIONS ---
         print ("Accretion calculations")
 
-        qstar2 = np.where(qmax * (DNonNeg / Dt) >= 1.0, 1.0, qmax * (DNonNeg / Dt))
-        A = np.where((tb != ndv) & (above_subtidal_zone) & (B != ndv), (m_const * qstar2 * SSC * FF * DNonNeg / (BDi * 2) + Kr * B / (BDo * 10000))/100, 0)  # accretion rate per year [m]
-
-        B[tb == ndv] = ndv
-        A[tb == ndv] = ndv
-
-        tb_update = np.where(above_subtidal_zone,tb + (A * dt), tb)  # accretion thickness [m]
-        tb_update[tb == ndv] = ndv
+        tb_update, A = calculate_vertical_accretion(qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, FIT, BDo, BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
@@ -518,9 +506,9 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
         #print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
 
         # --- ACCRETION CALCULATIONS ---
-        _, A1 = calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, BDo, BDi,tb)
-        _, A2 = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, SSC, FF, D, BDo, BDi,tb)
-        _, A3 = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC, FF, D, BDo, BDi,tb)
+        _, A1 = calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, FIT, BDo, BDi, tb)
+        _, A2 = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, SSC, FF, D, FIT, BDo, BDi, tb)
+        _, A3 = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC, FF, D, FIT, BDo, BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions

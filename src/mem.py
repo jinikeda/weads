@@ -179,19 +179,17 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
     c = -Dmin*Bmax*Dmax/((Dmin-Dopt)*(Dopt-Dmax)) # constant term
     return a, b, c
 
-def calculate_biomass_parabola(DNonNeg,Dopt,mask, al, bl, cl, ar, br, cr):
+def calculate_biomass_parabola(D,Dopt,mask, al, bl, cl, ar, br, cr):
     global ndv
-
-    # Jin -> Pete please think about using D or DNonNeg
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
-    mask_left_parabora = (DNonNeg <= Dopt) & mask
-    mask_right_parabora = (Dopt < DNonNeg) & mask
+    mask_left_parabora = (D <= Dopt) & mask
+    mask_right_parabora = (Dopt < D) & mask
 
     # Perform the calculations only where the condition is true
-    Bl = np.where(mask_left_parabora, al * DNonNeg + bl * DNonNeg * DNonNeg + cl, ndv)
-    Br = np.where(mask_right_parabora, ar * DNonNeg + br * DNonNeg * DNonNeg + cr, ndv)
+    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, ndv)
+    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, ndv)
 
     print('BL:', Bl.min(), Bl.max())
     print('BR:', Br.min(), Br.max())
@@ -445,20 +443,18 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
     # Perform the calculation only where the condition is true
     D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -ndv) # [cm] Relative depth at nan should be positive value in this case
+    D[D > -ndv/2] = ndv # Relative depth [cm] re-modify to negative value for ndv
+    D_mask = (D != ndv) # Create a mask for the elements of D that are not equal to ndv
+    print(D[D_mask ].min(), D[D_mask ].max()) # Print the minimum and maximum of the elements of D that are not equal to ndv
+
+    Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
+    Dt[Dt == 0] = 0.0001
 
     ### Pete to Jin: Please check the following part ###################################################################
     # Jin is pending to modify the following part because of qmax and qmin is similar to q=qmin+(qmax-qmin)*B/Bmax
     # Pete has to confirm q and FIT calculation
     # FIT = np.where( (mlwIDW <= tb) , (mhwIDW - tb) / (mhwIDW - mlwIDW), -ndv)
     ####################################################################################################################
-
-    D[D > -ndv/2] = ndv # Relative depth [cm] re-modify to negative value for ndv
-
-    DNonNeg = D.copy()
-    print(DNonNeg.min(), DNonNeg.max())
-
-    Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
-    Dt[Dt == 0] = 0.0001
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
     print ("Starting Hydro-MEM Calculations")
@@ -470,7 +466,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- BIOMASS CALCULATIONS ---
         print ("Biomass Calculations")
-        B, PL, PH = calculate_biomass_parabola(DNonNeg, Dopt, above_subtidal_zone, al, bl, cl, ar, br, cr)
+        B, PL, PH = calculate_biomass_parabola(D, Dopt, above_subtidal_zone, al, bl, cl, ar, br, cr)
         print('Salt marsh ', 'PH = ', PH, ', PL = ', PL, 'B max = ', B.max())
 
         # --- ACCRETION CALCULATIONS ---
@@ -529,15 +525,15 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- BIOMASS CALCULATIONS ---
         # Salt marsh (8)
-        B1, PL1, PH1 = calculate_biomass_parabola(DNonNeg, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
+        B1, PL1, PH1 = calculate_biomass_parabola(D, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
         print('Salt marsh ','PH = ', PH1, ', PL = ', PL1)
 
         # Mangrove (9)
-        B2, PL2, PH2 = calculate_biomass_parabola(DNonNeg, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
+        B2, PL2, PH2 = calculate_biomass_parabola(D, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
         #print('Mangrove ','PH = ', PH2, ', PL = ',PL2)
 
         # Irregularly marsh (20)
-        B3, PL3, PH3 = calculate_biomass_parabola(DNonNeg, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
+        B3, PL3, PH3 = calculate_biomass_parabola(D, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
         #print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
 
         # --- ACCRETION CALCULATIONS ---
@@ -625,16 +621,26 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
     # --- WRITE OUTPUTS ---
     #print ("")
     #print ("Writing output raster")
-    driver=gdal.GetDriverByName('HFA'); dst_datatype=gdal.GDT_Float32;
-    dst_geot=rasterHC.GetGeoTransform(); dst_proj=osr.SpatialReference(); dst_proj.ImportFromWkt(rasterHC.GetProjectionRef());
+    driver=gdal.GetDriverByName('HFA')
+    dst_datatype=gdal.GDT_Float32
+    dst_geot=rasterHC.GetGeoTransform()
+    dst_proj=osr.SpatialReference()
+    dst_proj.ImportFromWkt(rasterHC.GetProjectionRef())
     dst_ds=driver.Create(outputRaster,rasterHC.RasterXSize,rasterHC.RasterYSize,6,dst_datatype)
-    dst_ds.SetGeoTransform(dst_geot); dst_ds.SetProjection(dst_proj.ExportToWkt());
-    dst_ds.GetRasterBand(1).SetNoDataValue(ndv); dst_ds.GetRasterBand(1).WriteArray(D);
-    dst_ds.GetRasterBand(2).SetNoDataValue(ndv); dst_ds.GetRasterBand(2).WriteArray(B);
-    dst_ds.GetRasterBand(3).SetNoDataValue(ndv); dst_ds.GetRasterBand(3).WriteArray(A);
-    dst_ds.GetRasterBand(4).SetNoDataValue(ndv); dst_ds.GetRasterBand(4).WriteArray(tb_update);
-    dst_ds.GetRasterBand(5).SetNoDataValue(ndv); dst_ds.GetRasterBand(5).WriteArray(marsh);
-    dst_ds.GetRasterBand(6).SetNoDataValue(ndv); dst_ds.GetRasterBand(6).WriteArray(P);
+    dst_ds.SetGeoTransform(dst_geot)
+    dst_ds.SetProjection(dst_proj.ExportToWkt())
+    dst_ds.GetRasterBand(1).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(1).WriteArray(D)
+    dst_ds.GetRasterBand(2).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(2).WriteArray(B)
+    dst_ds.GetRasterBand(3).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(3).WriteArray(A)
+    dst_ds.GetRasterBand(4).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(4).WriteArray(tb_update)
+    dst_ds.GetRasterBand(5).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(5).WriteArray(marsh)
+    dst_ds.GetRasterBand(6).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(6).WriteArray(P)
     dst_ds = None
 
     ###### Renew vegetation map ####################

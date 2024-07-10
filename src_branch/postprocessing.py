@@ -1,185 +1,142 @@
 #!/usr/bin/python3
 # File: postprocessing.py
-# Name: Peter Bacopoulos
-# Date: August 23, 2023
+# Developer: Jin Ikeda & Peter Bacopoulos
+# Last modified: Jul 10, 2024
 
-#--- Load modules ---
-import numpy as np
-from tqdm import tqdm
-import time
+########################################################################################################################
+#--- Load internal modules ---
+from general_functions import *
 
 #--- Initialize code ---
-start=time.time()
-print("\n"); print("LAUNCH: Launching script!\n");
+start_time = time.time()
+print("\n"); print("LAUNCH: Launching script!\n")
+########################################################################################################################
+# --- GLOBAL PARAMETERS ---
+ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
+SLR = 0.5 # Sea level rise [m]
 
-#--- Read data as scatter points ---
-print("   Processing scatter points...\n")
-myFile=open("filteredBiomassAccretion.pts","r")
-myLines=myFile.readlines();
-numPoints=len(myLines);
-pts=np.ones((numPoints,21),dtype=float);
-myFile.seek(0);
-for j in range(numPoints):
-    myLine=myFile.readline();
-    myRow=myLine.split();
-    pts[j][0]=int(myRow[0]);
-    pts[j][1]=int(myRow[1]);
-    pts[j][2]=float(myRow[2]);
-    pts[j][3]=float(myRow[3]);
-    pts[j][4]=float(myRow[4]);
-    pts[j][5]=float(myRow[5]);
-    pts[j][6]=float(myRow[6]);
-    pts[j][7]=float(myRow[7]);
-    pts[j][8]=float(myRow[8]);
-    pts[j][9]=float(myRow[9]);
-    pts[j][10]=float(myRow[10]);
-    pts[j][11]=float(myRow[11]);
-    pts[j][12]=float(myRow[12]);
-    pts[j][13]=float(myRow[13]);
-    pts[j][14]=float(myRow[14]);
-    pts[j][15]=float(myRow[15]);
-    pts[j][16]=float(myRow[16]);
-    pts[j][17]=float(myRow[17]);
-    pts[j][18]=float(myRow[18]);
-    pts[j][19]=float(myRow[19]);
-    pts[j][20]=float(myRow[20])
-myFile.close()
+# --- READ INPUTS ---
+# Read the CSV file
+df = pd.read_csv("mem.csv")
+print("  Read MEM I/O file successfully")
 
-#--- Read and write mesh ---
-print("   Processing mesh...\n")
-myFile=open("fort.14","r");
-myOut=open("fort.dt.14","w");
-myLine=myFile.readline();
-myOut.write(myLine.strip()+"\n");
-myLine=myFile.readline();
-myOut.write(myLine.strip()+"\n");
-myRow=myLine.split();
-numNodes=int(myRow[1]);
-nn=np.ones((numNodes,1),dtype=int);
-nx=np.ones((numNodes,1),dtype=float);
-ny=np.ones((numNodes,1),dtype=float);
-nz=np.ones((numNodes,1),dtype=float);
-print("      Reading mesh...\n")
-for j in tqdm(range(numNodes)):
-    myLine=myFile.readline();
-    myRow=myLine.split();
-    N=int(myRow[0]);
-    X=float(myRow[1]);
-    Y=float(myRow[2]);
-    Z=float(myRow[3]);
-    nn[j][0]=N;
-    nx[j][0]=X;
-    ny[j][0]=Y;
-    nz[j][0]=Z;
-for j in range(numPoints):
-    idx=int(pts[j][1]);
-    nz[idx-1][0]=-pts[j][19];
+print(df.shape, df.columns, df.dtypes)
+new_z =  df['tb_update'].values # Update the z value for the ADCIRC mesh
+node_id = df['node'].values
+x = df['x'].values
+y = df['y'].values
 
-print("\n"); print("      Writing mesh: Nodal table...\n");
-for j in tqdm(range(numNodes)):
-    myOut.write(str(nn[j][0])+" ");
-    myOut.write(str(nx[j][0])+" ");
-    myOut.write(str(ny[j][0])+" ");
-    myOut.write(str(nz[j][0])+"\n");
-print("\n"); print("      Writing mesh: Element connectivity and nodestring information...\n");
-while True:
-    myLine=myFile.readline()
-    if not myLine:
-        break
-    myOut.write(myLine.strip()+"\n")
-myFile.close(); myOut.close();
+# Filter out rows where 'manning' is equal to ndv
+manning_df = df[df['manning'] != ndv]
 
-#--- Read everdried ---
-print("   Processing everdried...\n")
-myFile=open("everdried.63","r")
-myLine=myFile.readline()
-myLine=myFile.readline()
-myLine=myFile.readline()
-ed=np.ones((numNodes,1),dtype=float)
-for j in range(numNodes):
-    myLine=myFile.readline();
-    myRow=myLine.split();
-    ed[j][0]=float(myRow[1]);
-myFile.close()
+# only keep the rows where 'manning' is not equal to ndv
+print('update manning:\t', manning_df.shape)
+manning_node = manning_df['node'].values
+manning = manning_df['manning'].values
+# Convert manning_id and manning to a dictionary
+manning_dict = dict(zip(manning_node, manning))
+
+##### Update an ADCIRC file ######
+inputMeshFile = 'TX2008_T35H_Refined_052224.grd'
+inputAttrFile = 'TX2008_T35H_Refined_052224.13'
+outputMeshFile = 'fort_new.14'
+outputAttrFile = 'fort_new.13'
+
+shutil.copy(inputMeshFile, outputMeshFile) # Copy the original mesh file to the new file
+shutil.copy(inputAttrFile, outputAttrFile) # Copy the original attribute file to the new file
+
+lines = read_text_file(outputMeshFile)
+
+# Update the z value for the ADCIRC mesh
+for i in range (df.shape[0]):
+    idx = int(node_id[i])
+    lines[idx+1] = "{0:>10}     {1:.6f}      {2:.6f} {3:.8E}\n".format(idx, x[i], y[i], - new_z[i])  # Note: z value is negated to match the ADCIRC convention. Also node start from line 2 to nN-1
+
+# Write the updated lines back to the ADCIRC file
+with open(outputMeshFile, 'w') as f:
+    f.writelines(lines)
+
+print(f"Updated ADCIRC file '{outputMeshFile}' with new node data from mem results")
 
 #--- Read and write attributes ---
 print("   Processing attributes...\n")
-nOW=0.022; # Manning's roughness for open-water conversion
-myFile=open("fort.13","r");
-myOut=open("fort.dt.13","w");
-myLine=myFile.readline();
-myOut.write(myLine.strip()+"\n");
-myLine=myFile.readline();
-myOut.write(myLine.strip()+"\n");
-myLine=myFile.readline();
-myOut.write(myLine.strip()+"\n");
-myRow=myLine.split();
-numAttributes=int(myRow[0]);
-for j in range(numAttributes):
-    myLine=myFile.readline();
-    myOut.write(myLine.strip()+"\n");
-    myRow=myLine.split();
-    if myRow[0]=="mannings_n_at_sea_floor":
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myRow=myLine.split();
-        mann0=float(myRow[0]);
-    else:
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-mann=np.ones((numNodes,2),dtype=float);
-mann[:,1]=mann[:,1]*mann0;
 
-for j in range(numAttributes):
-    myLine=myFile.readline();
-    myOut.write(myLine.strip()+"\n");
-    myRow=myLine.split();
-    if myRow[0]=="mannings_n_at_sea_floor":
-        print("      Working bottom roughness...\n")
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myRow=myLine.split();
-        numMann=int(myRow[0]);
-        cnt=np.ones((numMann,1),dtype=float);
-        print("         Reading values...\n");
-        for jj in tqdm(range(numMann)):
-            myLine=myFile.readline();
-            myRow=myLine.split();
-            NN=int(myRow[0]);
-            mann[NN-1][0]=float(NN);
-            mann[NN-1][1]=float(myRow[1]);
-            cnt[jj][0]=mann[NN-1][0];
-        print("\n"); print("         Processing values...\n");
-        for jj in range(numPoints):
-            idx=int(pts[jj][1]);
-            mann[idx-1][0]=pts[jj][20];
-        print("         Writing values...\n")
-        for jj in tqdm(range(numMann)):
-            NN=int(cnt[jj][0])
-            if ed[NN-1][0]>0.0 and mann[NN-1][1]>0.025:
-                mann[NN-1][1]=nOW
-            myOut.write(str(int(mann[NN-1][0]))+" ");
-            myOut.write(str(mann[NN-1][1])+"\n");
-    else:
-        myLine=myFile.readline();
-        myOut.write(myLine.strip()+"\n");
-        myRow=myLine.split();
-        numAttr=int(myRow[0]);
-        for jj in range(numAttr):
-            myLine=myFile.readline();
-            myOut.write(myLine.strip()+"\n");
-myFile.close(); myOut.close();
+lines = read_text_file(outputAttrFile)
+skip_index = 1  # skip the first line
+nN = int(lines[skip_index].split()[0])  # nN: number of nodes
+print("number of nodes:", nN)
 
-#--- Exit script ---
-print("\n"); print("EXIT: Existing script!\n");
-end=time.time(); print ("Time elapsed (seconds):",end-start);
+# Select the line numbers that include 'sea_surface_height_above_geoid'
+idx_sshag = [i for i, line in enumerate(lines) if 'sea_surface_height_above_geoid' in line]
+idx_manning = [i for i, line in enumerate(lines) if 'mannings_n_at_sea_floor' in line]
+print ('idx_sshag:\t', idx_sshag, '\nidx_manning:\t', idx_manning)
+
+# Read the global sea_surface_height_above_geoid and manning's n
+global_SSH = float(lines[idx_sshag[0] + 3].split()[0])  # global sea_surface_height_above_geoid
+global_mann = float(lines[idx_manning[0] + 3].split()[0])  # global manning's n
+print("global SSH:\t", global_SSH, "\nglobal manning's n:\t", global_mann)
+
+# Update the sea_surface_height_above_geoid and manning's n for the ADCIRC mesh
+new_global_SSH = global_SSH + SLR
+lines[idx_sshag[0] + 3] = "{0:.6f}\n".format(new_global_SSH)  # Update the global sea_surface_height_above_geoid # this part differs from raster version. Directory change global and local values
+print("Updated global SSH:\t", new_global_SSH)
+
+# Read local sea_surface_height_above_geoid and manning's n and update them
+num_local_sshag = int(lines[idx_sshag[1] + 1].split()[0])  # number of local sea_surface_height_above_geoid
+num_local_manning = int(lines[idx_manning[1] + 1].split()[0])  # number of local manning's n
+print("num_local_sshag:\t", num_local_sshag, "\nnum_local_manning:\t", num_local_manning)
+if num_local_sshag != 0:
+    for i in range(num_local_sshag):
+        local_ssh_idx = int(lines[idx_sshag[1] + 2 + i].split()[0])
+        local_ssh = float(lines[idx_sshag[1] + 2 + i].split()[1])
+        new_local_ssh = local_ssh + SLR
+        # overwrite the local sea_surface_height_above_geoid
+        lines[idx_sshag[1] + 2 + i] = "{0:>10}     {1:.6f}\n".format(local_ssh_idx, new_local_ssh)
+
+node_value_updated = np.full(nN, global_SSH, dtype=float)
+
+if num_local_manning != 0:
+    for i in range(num_local_manning):
+        local_node, local_value = lines[idx_manning[1] + 2 + i].split()
+        local_node = int(local_node)
+        local_value = float(local_value)
+
+        node_value_updated[local_node-1] = local_value
+else:
+    pass    # If there is no local manning's n, then pass
+
+print ('size of node_value_updated:\t', len(node_value_updated))
+# Update the manning's n for the ADCIRC mesh based on the MEM results
+for i in range(len(manning_node)):
+    node_value_updated[int(manning_node[i])-1] = manning[i]
+
+if num_local_manning != 0:
+    # delete the local manning's n
+    del lines[idx_manning[1] + 2 : idx_manning[1] + 2 + num_local_manning]
+else:
+    pass
+
+# Update the number of local manning's n
+lines[idx_manning[1] + 1] = "{0:>10}\n".format(nN)
+
+# Create all the lines to be inserted
+new_lines = ["{0:>10}      {1:.6f}\n".format(i+1, node_value_updated[i]) for i in range(nN)]
+lines[idx_manning[1] + 2 : idx_manning[1] + 2] = new_lines # Insert all the lines at once
+
+# Write the updated lines back to the ADCIRC attribute file
+with open(outputAttrFile, 'w') as f:
+    f.writelines(lines)
+
+print(f"Updated ADCIRC file '{outputAttrFile}' with new node data from mem results")
+
+########################################################################################################################
+# Calculate the elapsed time
+end_time = time.time()
+elapsed_time = end_time - start_time
+
+# Print the elapsed time
+print("Done interpolating tidal datums using IDW")
+print("Time to Compute: \t\t\t", elapsed_time, " seconds")
+print("Job Finished ʕ •ᴥ•ʔ")
 
 

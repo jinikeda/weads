@@ -199,6 +199,16 @@ def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF,
 
     return tb_update, A
 
+def calculate_manning(P):
+    if 10 <= P < 20: # 16: low productivity
+        return 0.035
+    elif 20 <= P < 28: # 23 medium productivity
+        return 0.05
+    elif 28 <= P < 38: # 32 high productivitiy
+        return 0.07
+    else:
+        return ndv
+
 #def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW, vegetationFile, outputRaster, deltaT=5):
 # define from hydroMEM.py
 
@@ -607,9 +617,9 @@ df['A'] = A.flatten()
 df['tb_update'] = tb_update.flatten()
 df['marsh'] = marsh.flatten()
 df['P'] = P.flatten()
+df['manning'] = df['P'].apply(calculate_manning)
 
 df.to_csv('mem.csv', index=False)
-
 
 
 # driver = gdal.GetDriverByName('HFA');

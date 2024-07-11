@@ -214,10 +214,9 @@ def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF,
     q = qmin+(qmax-qmin)*B/Bmax
     q[B<0.0] = qmin
     Vorg = Kr * RRS * BTR * B/(100.0**2) # organic matter
-
     Vmin = 0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter
     Vorg[B<=0.0] = 0.0
-    Vmin[B<=0.0] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
+    Vmin[np.logical_or(B <= 0.0, D <= 0.0)] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
     A = np.where(tb != ndv,((Vorg/BDo) + (Vmin/BDi))/100.0, ndv) # accretion rate per year [m]
     tb_update = np.where(tb != ndv, tb + (A * dt), ndv)  # accretion thickness [m]
 
@@ -471,7 +470,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW,ve
 
         # --- ACCRETION CALCULATIONS ---
         print ("Accretion calculations")
-
         tb_update, A = calculate_vertical_accretion(qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---

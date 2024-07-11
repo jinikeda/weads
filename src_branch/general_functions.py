@@ -149,13 +149,13 @@ def create_gdf(ADCIRC_nodes,xy_list, drop_list, crs, output_file=None):
 
     return gdf
 
-# def create_df2gdf(df, xy_list, drop_list, crs, output_file=None):
-#     gdf = gpd.GeoDataFrame(df.drop(drop_list, axis=1), geometry=gpd.points_from_xy(df[xy_list[0]], df[xy_list[1]], crs=crs))
-#
-#     if output_file != None:
-#         gdf.to_file(output_file, driver='ESRI Shapefile')
-#
-#     return gdf
+def create_df2gdf(df, xy_list, drop_list, crs, output_file=None):
+    gdf = gpd.GeoDataFrame(df.drop(drop_list, axis=1), geometry=gpd.points_from_xy(df[xy_list[0]], df[xy_list[1]], crs=crs))
+
+    if output_file != None:
+        gdf.to_file(output_file, driver='ESRI Shapefile')
+
+    return gdf
 
 def convert_gcs2coordinates(gdf, PRJ,Type_str):
     gdf_proj = gdf.to_crs(PRJ)

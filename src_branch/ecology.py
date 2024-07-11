@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # File: ecology.py
 # Developer: Peter Bacopoulos & Jin Ikeda
-# Last modified: Jul 9, 2024
+# Last modified: Jul 11, 2024
+import numpy as np
+import pandas as pd
 
 #----------------------------------------------------------
 # MEM: Marsh Equilibrium Model and Mangrove Development
@@ -193,7 +195,7 @@ def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF,
     Vorg = Kr * RRS * BTR * B/(100.0**2) # organic matter
     Vmin = 0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter
     Vorg[B<=0.0] = 0.0
-    Vmin[B<=0.0] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
+    Vmin[np.logical_or(B <= 0.0, D <= 0.0)] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
     A = np.where(tb != ndv,((Vorg/BDo) + (Vmin/BDi))/100.0, ndv) # accretion rate per year [m]
     tb_update = np.where(tb != ndv, tb + (A * dt), ndv)  # accretion thickness [m]
 
@@ -215,7 +217,8 @@ def calculate_manning(P):
 
 ### manual inputs
 deltaT = 5  # Time step (yr)
-vegetationFile = None  # Vegetation file (Early development)
+#vegetationFile = None  # Vegetation file (Early development)
+vegetationFile = "domain_nwi.csv"  # Vegetation file
 
 dt = deltaT  # Time step (yr)
 
@@ -256,85 +259,82 @@ if vegetationFile == None:
 else:
     print('\nMulti species vegetation mapping\n')
 
-    # print("Read a vegetation raster")
-    # rasterVG = gdal.Open(vegetationFile)
-    # transformVG = rasterVG.GetGeoTransform()
-    # prjVG = rasterVG.GetProjection()  # Read projection
-    # band = rasterVG.GetRasterBand(1);
-    # RV_VG = band.ReadAsArray();
-    #
-    # print(np.max(RV_VG), np.min(RV_VG), RV_VG.shape)
-    #
-    # unique_values, counts = np.unique(RV_VG, return_counts=True)
-    # print('Original unique_value is : ', unique_values)
-    # print('Their count is : ', counts)
-    #
-    # #### here is the example ####
-    # # 8 = salt marsh(regularly flooded) follow with tidal cycle
-    # # 9 = mangrove
-    # # 20 = irregularly flooded marsh
-    # # 40 = water_mask
-    # # 55 = land_mask
-    # # 128 = NAN for byte data
-    # #############################
-    #
-    # values_to_remove = [40, 55, 128]  # Values to remove from the array
-    # updated_unique_values = np.delete(unique_values, np.where(np.isin(unique_values, values_to_remove)))
-    #
-    # print('Interest unique_value is :', updated_unique_values)
-    #
-    # ################# Jin -> Pete box #######################################################################
-    # # Please work on this box
-    #
-    # # Create a mask for different vegetation types
-    # mask_salt_marsh = (RV_VG == 8)
-    # mask_mangrove = (RV_VG == 9)
-    # mask_irregular = (RV_VG == 20) | (RV_VG == 8)  # try
-    #
-    # print('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
-    #
-    # # Salt marsh
-    # vegetation_type = "SaltMarsh"
-    # params = vegetation_parameters[vegetation_type]
-    # Dmin_marsh = params["Dmin"]
-    # Dmax_marsh = params["Dmax"]
-    # Dopt_marsh = params["Dopt"]
-    # Bmax_marsh = params["Bmax"]
-    # kr_marsh = params["Kr"]
-    # RRS_marsh = params["RRS"]
-    # BTR_masrh = params["BTR"]
-    #
-    # a1, b1, c1 = calculate_coefficients(Dmin_marsh, Dmax_marsh, Dopt_marsh, Bmax_marsh)  # 1: Salt marsh (NWI = 8)
-    # print('Check: SaltMarsh abc', a1, b1, c1)
-    #
-    # # Mangrove
-    # vegetation_type = "Mangrove"
-    # params = vegetation_parameters[vegetation_type]
-    # Dmin_matmang = params["Dmin"]
-    # Dmax_matmang = params["Dmax"]
-    # Dopt_matmang = params["Dopt"]
-    # Bmax_matmang = params["Bmax"]
-    # kr_matmang = params["Kr"]
-    # RRS_matmang = params["RRS"]
-    # BTR_matmang = params["BTR"]
-    #
-    # a2, b2, c2 = calculate_coefficients(Dmin_matmang, Dmax_matmang, Dopt_matmang,
-    #                                     Bmax_matmang)  # 2: Mangrove (NWI = 9) (mangrove (mature))
-    # print('Check: Mangrove abc', a2, b2, c2)
-    #
-    # # Irregularly flooded marsh
-    # vegetation_type = "IrregularMarsh"
-    # params = vegetation_parameters[vegetation_type]
-    # Dmin_fmarsh = params["Dmin"]
-    # Dmax_fmarsh = params["Dmax"]
-    # Dopt_fmarsh = params["Dopt"]
-    # Bmax_fmarsh = params["Bmax"]
-    # kr_fmarsh = params["Kr"]
-    # RRS_fmarsh = params["RRS"]
-    # BTR_fmarsh = params["BTR"]
-    #
-    # a3, b3, c3 = calculate_coefficients(Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh,
-    #                                     Bmax_fmarsh)  # 20: Irregularly flooded marsh (NWI = 20)
+    print("Read a vegetation file")
+    df_VG = pd.read_csv(vegetationFile)
+    Point_VG = df_VG['NWI'].values
+
+    print(np.max(Point_VG), np.min(Point_VG), df_VG.shape)
+
+    unique_values, counts = np.unique(Point_VG, return_counts=True)
+    print('Original unique_value is : ', unique_values)
+    print('Their count is : ', counts)
+
+    #### here is the example ####
+    # 8 = salt marsh(regularly flooded) follow with tidal cycle
+    # 9 = mangrove
+    # 20 = irregularly flooded marsh
+    # 40 = water_mask
+    # 55 = land_mask
+    # 128 = NAN for byte data
+    #############################
+
+    values_to_remove = [40, 55, 128]  # Values to remove from the array
+    updated_unique_values = np.delete(unique_values, np.where(np.isin(unique_values, values_to_remove)))
+
+    print('Interest unique_value is :', updated_unique_values)
+
+    ################# Jin -> Pete box #######################################################################
+    # Please work on this box
+
+    # Create a mask for different vegetation types
+    mask_salt_marsh = (Point_VG == 8)
+    mask_mangrove = (Point_VG == 9)
+    mask_irregular = (Point_VG == 20) | (Point_VG == 8)  # try
+
+    print('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
+
+    # Salt marsh
+    vegetation_type = "SaltMarsh"
+    params = vegetation_parameters[vegetation_type]
+    Dmin_marsh = params["Dmin"]
+    Dmax_marsh = params["Dmax"]
+    Dopt_marsh = params["Dopt"]
+    Bmax_marsh = params["Bmax"]
+    kr_marsh = params["Kr"]
+    RRS_marsh = params["RRS"]
+    BTR_masrh = params["BTR"]
+
+    a1, b1, c1 = calculate_coefficients(Dmin_marsh, Dmax_marsh, Dopt_marsh, Bmax_marsh)  # 1: Salt marsh (NWI = 8)
+    print('Check: SaltMarsh abc', a1, b1, c1)
+
+    # Mangrove
+    vegetation_type = "Mangrove"
+    params = vegetation_parameters[vegetation_type]
+    Dmin_matmang = params["Dmin"]
+    Dmax_matmang = params["Dmax"]
+    Dopt_matmang = params["Dopt"]
+    Bmax_matmang = params["Bmax"]
+    kr_matmang = params["Kr"]
+    RRS_matmang = params["RRS"]
+    BTR_matmang = params["BTR"]
+
+    a2, b2, c2 = calculate_coefficients(Dmin_matmang, Dmax_matmang, Dopt_matmang,
+                                        Bmax_matmang)  # 2: Mangrove (NWI = 9) (mangrove (mature))
+    print('Check: Mangrove abc', a2, b2, c2)
+
+    # Irregularly flooded marsh
+    vegetation_type = "IrregularMarsh"
+    params = vegetation_parameters[vegetation_type]
+    Dmin_fmarsh = params["Dmin"]
+    Dmax_fmarsh = params["Dmax"]
+    Dopt_fmarsh = params["Dopt"]
+    Bmax_fmarsh = params["Bmax"]
+    kr_fmarsh = params["Kr"]
+    RRS_fmarsh = params["RRS"]
+    BTR_fmarsh = params["BTR"]
+
+    a3, b3, c3 = calculate_coefficients(Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh,
+                                        Bmax_fmarsh)  # 20: Irregularly flooded marsh (NWI = 20)
 
 ########################################################################################################################
 # Jin to Pete: how to incorporate juvenile mangrove here
@@ -352,8 +352,6 @@ else:
 # Read point files
 # ----------------------------------------------------------
 
-# ndv = -99999.0  # No data value (ndv) using ADCIRC convention
-
 inEPSG = 4269  # GCS_North_American_1983
 outEPSG = 26914
 #################################################################################
@@ -363,19 +361,8 @@ PRJ = "EPSG:" + str(outEPSG)
 # Read the CSV file
 df = pd.read_csv("tidal_prj.csv")
 print("  Read HyControl (HC) and tidal datums (TD) successfully")
-
 print(df.shape, df.columns, df.dtypes)
-
-
-
-    # print ("Reading rasters")
-
-    # rasterHC = gdal.Open(inputRasterHyControl)
-    # gt = rasterHC.GetGeoTransform()
-    # X = rasterHC.RasterXSize
-    # Y = rasterHC.RasterYSize
-    # prj = rasterHC.GetProjection()  # Read projection
-    # hc = read_band_value(inputRasterHyControl, 1)
+assert Point_VG.shape != df_VG.shape[0], "The shape of the vegetation file is not matched with the tidal file"
 
 hc = df['HydroClass'] # 'HydroClass' 0: land, 1: intertidal, 2: subtidal(water)
 
@@ -489,128 +476,128 @@ if vegetationFile == None:
 
 else:
 
-    pass
-#
-#     ##### Here check the elevation of mask irregularly flooded marsh ###############################################
-#     # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
-#     NWI_original = read_band_value('/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.tif',
-#                                    1)  # Before dilation
-#     mask_irregular_NWI = (NWI_original == 20)
-#     irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
-#     irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
-#     print('Irregular_depth [cm], min, max, mean, std', irregular_NWI_depth.min(), irregular_NWI_depth.max(),
-#           irregular_NWI_depth.mean(), irregular_NWI_depth.std())
-#     ################################################################################################################
-#
-#     P = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv,
-#                 dtype=float)  # Create an array of default values (ndv)
-#     marsh = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv, dtype=float)
-#     mangrove = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv, dtype=float)
-#     irregular = np.full((rasterHC.RasterYSize, rasterHC.RasterXSize), ndv, dtype=float)
-#
-#     # --- BIOMASS CALCULATIONS ---
-#     # Salt marsh (8)
-#     B1, PL1, PH1 = calculate_biomass_parabola(D, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
-#     print('Salt marsh ', 'PH = ', PH1, ', PL = ', PL1)
-#
-#     # Mangrove (9)
-#     B2, PL2, PH2 = calculate_biomass_parabola(D, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
-#     # print('Mangrove ','PH = ', PH2, ', PL = ',PL2)
-#
-#     # Irregularly marsh (20)
-#     B3, PL3, PH3 = calculate_biomass_parabola(D, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
-#     # print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
-#
-#     # --- ACCRETION CALCULATIONS ---
-#     _, A1 = calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D,
-#                                          BDo, BDi, tb)
-#     _, A2 = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang,
-#                                          SSC, FF, D, BDo, BDi, tb)
-#     _, A3 = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC,
-#                                          FF, D, BDo, BDi, tb)
-#
-#     # --- PRODUCTIVITY CALCULATIONS ---
-#     # Create a mask for different conditions
-#     mask_regular_1 = mask_salt_marsh & (0 < B1) & (B1 <= PL1)
-#     mask_regular_2 = mask_salt_marsh & (PL1 < B1) & (B1 < PH1)
-#     mask_regular_3 = mask_salt_marsh & (PH1 <= B1)
-#     mask_mangrove = mask_mangrove & (
-#                 0 < B2)  # & (B2 <= PH2) # This part keep for future revision (0 < B2) & (B2 <= PH2)
-#     mask_irregular = mask_irregular & (0 < B3)  # & (B3 <= PH3)
-#     # mask_mangrove_mat = mask_mangrove & future revision
-#     # mask_mangrove_juv = mask_mangrove & future revision
-#     # mask_mangrove = mask_mangrove #& (B2 >= PH2)
-#
-#     # Assign values based on conditions
-#     # From background raster first. here ndv value will not overwrite the background
-#     P[land_mask] = 55
-#     P[submergence_mask] = 40
-#
-#     # Marsh productivity (Caution for the oder of the mask)
-#     P[mask_irregular] = 120  # irregularly flooded marsh
-#     P[mask_regular_1] = 16  # low productivity
-#     P[mask_regular_2] = 23  # medium productivity
-#     P[mask_regular_3] = 32  # high productivity
-#     P[mask_mangrove] = 109  # mangrove
-#
-#     # --- MARSH TYPE CALCULATIONS ---
-#     ########################################################################################################################
-#     # Jin to Pete: We need to check the following part
-#     print("High-Low Marsh Calculations")
-#
-#     al = a1
-#     ar = a1
-#     bl = b1
-#     br = b1
-#     cl = c1
-#     cr = c1
-#
-#     Dmax = -(al / (2 * bl));
-#     Dzero1 = (-al + np.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
-#     Dzero2 = (-ar - np.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
-#     DRange = abs(Dzero2 - Dzero1);
-#     DHigh = Dmax + DRange * 0.1;
-#     DLow = Dmax - DRange * 0.1;
-#
-#     condition_1 = (Dzero1 < D) & (D <= DLow)
-#     condition_2 = (DLow < D) & (D < DHigh)
-#     condition_3 = (DHigh <= D) & (D < Dzero2)
-#     condition_4 = Dzero2 <= D
-#
-#     marsh[condition_1] = 30
-#     marsh[condition_2] = 20
-#     marsh[condition_3] = 10
-#
-#     irregular[condition_4] = 120
-#
-#     # mangrove juvenile and mature
-#     # mangrove [xxx]
-#
-#     # Mask ndv values in the arrays
-#     B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1,
-#                          ndv)  # mask_marsh may compete with mangrove due to the dilution order, so evaluate both masks here.
-#     B2_masked = np.where(mask_mangrove, B2, ndv)
-#     B3_masked = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), B3, ndv)
-#
-#     A1_masked = np.where((mask_salt_marsh | mask_mangrove), A1, 0)  # background of entire grid is set at 0 [m]
-#     A2_masked = np.where(mask_mangrove, A2, 0)
-#     A3_masked = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), A3, 0)
-#
-#     print('Amax', A1_masked.max(), A2_masked.max(), A3_masked.max())
-#
-#     # Merge the arrays (used maximum value for each cell)
-#     B = np.maximum.reduce([B1_masked, B2_masked, B3_masked])  # Maximum biomass density on each grid [g m-2 yr -1]
-#     A = np.maximum.reduce([A1_masked, A2_masked, A3_masked])  # Maximum accretion rate per year on each grid [m]
-#     A[tb == ndv] = ndv  # Overwrite the outside domain as  the ndv values
-#
-#     # Update topo-bathy data
-#     tb_update = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), tb + (A * dt), tb)
-#     tb_update[tb == ndv] = ndv  # update topo-bathy data due to some holes are existed inside the domain
-#
+    ##### Here check the elevation of mask irregularly flooded marsh ###############################################
+    # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
+    #NWI_original = pd.read_csv('/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.csv')  # Before dilation
+    df_VG = pd.read_csv('domain_nwi_original.csv')  # Before dilation
+    NWI_original = df_VG['NWI'].values
+    mask_irregular_NWI = (NWI_original == 20)
+    irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
+    irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
+    print('Irregular_depth [cm], min, max, mean, std', irregular_NWI_depth.min(), irregular_NWI_depth.max(),
+          irregular_NWI_depth.mean(), irregular_NWI_depth.std())
+    ################################################################################################################
+
+    P = np.full((df.shape[0], 1), ndv,
+                dtype=float)  # Create an array of default values (ndv)
+    marsh = np.full((df.shape[0], 1), ndv, dtype=float)
+    mangrove = np.full((df.shape[0], 1), ndv, dtype=float)
+    irregular = np.full((df.shape[0], 1), ndv, dtype=float)
+
+    # --- BIOMASS CALCULATIONS ---
+    # Salt marsh (8)
+    B1, PL1, PH1 = calculate_biomass_parabola(D, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
+    print('Salt marsh ', 'PH = ', PH1, ', PL = ', PL1)
+
+    # Mangrove (9)
+    B2, PL2, PH2 = calculate_biomass_parabola(D, Dopt_matmang, above_subtidal_zone, a2, b2, c2, a2, b2, c2)
+    print('Mangrove ','PH = ', PH2, ', PL = ',PL2)
+
+    # Irregularly marsh (20)
+    B3, PL3, PH3 = calculate_biomass_parabola(D, Dopt_fmarsh, above_subtidal_zone, a3, b3, c3, a3, b3, c3)
+    print('Irregularly marsh ','PH = ', PH3, ', PL =',PL3)
+
+    # --- ACCRETION CALCULATIONS ---
+    _, A1 = calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D,
+                                         BDo, BDi, tb)
+    _, A2 = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang,
+                                         SSC, FF, D, BDo, BDi, tb)
+    _, A3 = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC,
+                                         FF, D, BDo, BDi, tb)
+
+    # --- PRODUCTIVITY CALCULATIONS ---
+    # Create a mask for different conditions
+    mask_regular_1 = mask_salt_marsh & (0 < B1) & (B1 <= PL1)
+    mask_regular_2 = mask_salt_marsh & (PL1 < B1) & (B1 < PH1)
+    mask_regular_3 = mask_salt_marsh & (PH1 <= B1)
+    mask_mangrove = mask_mangrove & (
+                0 < B2)  # & (B2 <= PH2) # This part keep for future revision (0 < B2) & (B2 <= PH2)
+    mask_irregular = mask_irregular & (0 < B3)  # & (B3 <= PH3)
+    # mask_mangrove_mat = mask_mangrove & future revision
+    # mask_mangrove_juv = mask_mangrove & future revision
+    # mask_mangrove = mask_mangrove #& (B2 >= PH2)
+
+    # Assign values based on conditions
+    # From background raster first. here ndv value will not overwrite the background
+    P[land_mask] = 55
+    P[submergence_mask] = 40
+
+    # Marsh productivity (Caution for the oder of the mask)
+    P[mask_irregular] = 120  # irregularly flooded marsh
+    P[mask_regular_1] = 16  # low productivity
+    P[mask_regular_2] = 23  # medium productivity
+    P[mask_regular_3] = 32  # high productivity
+    P[mask_mangrove] = 109  # mangrove
+
+    # --- MARSH TYPE CALCULATIONS ---
+    ########################################################################################################################
+    # Jin to Pete: We need to check the following part
+    print("High-Low Marsh Calculations")
+
+    al = a1
+    ar = a1
+    bl = b1
+    br = b1
+    cl = c1
+    cr = c1
+
+    Dmax = -(al / (2 * bl));
+    Dzero1 = (-al + np.sqrt(((al * al) - (4 * bl * cl)))) / (2 * bl);
+    Dzero2 = (-ar - np.sqrt(((ar * ar) - (4 * br * cr)))) / (2 * br);
+    DRange = abs(Dzero2 - Dzero1);
+    DHigh = Dmax + DRange * 0.1;
+    DLow = Dmax - DRange * 0.1;
+
+    condition_1 = (Dzero1 < D) & (D <= DLow)
+    condition_2 = (DLow < D) & (D < DHigh)
+    condition_3 = (DHigh <= D) & (D < Dzero2)
+    condition_4 = Dzero2 <= D
+
+    marsh[condition_1] = 30
+    marsh[condition_2] = 20
+    marsh[condition_3] = 10
+
+    irregular[condition_4] = 120
+
+    # mangrove juvenile and mature
+    # mangrove [xxx]
+
+    # Mask ndv values in the arrays
+    B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1,
+                         ndv)  # mask_marsh may compete with mangrove due to the dilution order, so evaluate both masks here.
+    B2_masked = np.where(mask_mangrove, B2, ndv)
+    B3_masked = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), B3, ndv)
+
+    A1_masked = np.where((mask_salt_marsh | mask_mangrove), A1, 0)  # background of entire grid is set at 0 [m]
+    A2_masked = np.where(mask_mangrove, A2, 0)
+    A3_masked = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), A3, 0)
+
+    print('Amax', A1_masked.max(), A2_masked.max(), A3_masked.max())
+
+    # Merge the arrays (used maximum value for each cell)
+    B = np.maximum.reduce([B1_masked, B2_masked, B3_masked])  # Maximum biomass density on each grid [g m-2 yr -1]
+    A = np.maximum.reduce([A1_masked, A2_masked, A3_masked])  # Maximum accretion rate per year on each grid [m]
+    A[tb == ndv] = ndv  # Overwrite the outside domain as  the ndv values
+
+    # Update topo-bathy data
+    tb_update = np.where((mask_salt_marsh | mask_mangrove | mask_irregular), tb + (A * dt), tb)
+    tb_update[tb == ndv] = ndv  # update topo-bathy data due to some holes are existed inside the domain
+
 ####################################################################################################################
 # --- WRITE OUTPUTS ---
-# print ("")
-# print ("Writing point base output raster")
+print ("")
+print ("Writing point base output")
+
 df['D'] = D.flatten() # mhwIDW - tb [cm]
 df['B'] = B.flatten()
 df['A'] = A.flatten()
@@ -621,29 +608,6 @@ df['manning'] = df['P'].apply(calculate_manning)
 
 df.to_csv('mem.csv', index=False)
 
-
-# driver = gdal.GetDriverByName('HFA');
-# dst_datatype = gdal.GDT_Float32;
-# dst_geot = rasterHC.GetGeoTransform();
-# dst_proj = osr.SpatialReference();
-# dst_proj.ImportFromWkt(rasterHC.GetProjectionRef());
-# dst_ds = driver.Create(outputRaster, rasterHC.RasterXSize, rasterHC.RasterYSize, 6, dst_datatype)
-# dst_ds.SetGeoTransform(dst_geot);
-# dst_ds.SetProjection(dst_proj.ExportToWkt());
-# dst_ds.GetRasterBand(1).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(1).WriteArray(D);
-# dst_ds.GetRasterBand(2).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(2).WriteArray(B);
-# dst_ds.GetRasterBand(3).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(3).WriteArray(A);
-# dst_ds.GetRasterBand(4).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(4).WriteArray(tb_update);
-# dst_ds.GetRasterBand(5).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(5).WriteArray(marsh);
-# dst_ds.GetRasterBand(6).SetNoDataValue(ndv);
-# dst_ds.GetRasterBand(6).WriteArray(P);
-# dst_ds = None
-#
 ###### Renew vegetation map ####################
 if vegetationFile is not None:
     VM = P.copy()

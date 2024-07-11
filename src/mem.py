@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydroMEM.py
 # Name: Peter Bacopoulos, Jin Ikeda
-# last modify: June 19, 2024
+# last modify: July 11, 2024
 
 from osgeo import gdal
 from osgeo import osr

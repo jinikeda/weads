@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 # File: preprocessing.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Jul 9, 2024
+# Last modified: Jul 13, 2024
 
 # Development Notes:
 """ This script is used to preprocess the input files for the WEAD project. The input files are the ADCIRC mesh file (fort.14), the attributes file (fort.13), the inundation time file (inundationtime.63), and the harmonics file (fort.53). The script reads the input files and filters the nodes within the domain shapefile (Cut_domain.shp). The script outputs the filtered nodes and attributes in the domain as a text file (domain_inputs.csv). The script is used in the WEAD project."""
+import numpy as np
 
 ########################################################################################################################
 #--- Load internal modules ---
@@ -41,7 +42,7 @@ domain_prj = convert_gcs2coordinates(gdf, PRJ, None)
 ########################################################################################################################
 #--- Read mesh (inputMeshFile) ---
 ########################################################################################################################
-ADCIRC_nodes, numNodes, numElements = read_fort14("TX2008_T35H_Refined_052224.grd")
+ADCIRC_nodes, numNodes, numElements = read_fort14("fort.14")
 
 xy_list = ['x', 'y']
 drop_list = []
@@ -62,7 +63,7 @@ np.savetxt("tbathy.txt", ADCIRC_nodes_domain, fmt='%d\t%.8f\t%.8f\t%.8f')
 ########################################################################################################################
 #--- Read attributes (inputMeshFile) ---
 ########################################################################################################################
-mann, mann_indices, local_mann_indices, global_mann = read_fort13("TX2008_T35H_Refined_052224.13")
+mann, mann_indices, local_mann_indices, global_mann = read_fort13("fort.13")
 mann_domain = mann[true_indices]
 np.savetxt("mannings_n_at_sea_floor.txt", mann_domain, fmt='%f')
 print("manning_indices\t", mann_indices)
@@ -110,9 +111,11 @@ np.savetxt("inundationtime.txt", inundationtime_domain_2d, fmt='%d\t%.4f')
 #--- Read harmonics (inputHarmonicsFile) ---
 ########################################################################################################################
 Harmonics_nodes, numHarm, nN,tidal_frequencies,tidal_constituents = read_fort53("fort.53")
+#np.savetxt("harmonics_AMP_pre.txt", Harmonics_nodes[:, :, 0], fmt='%.8f')
+#print("Harmonics_nodes dimensions: ", Harmonics_nodes.shape)
 print(tidal_constituents)
 Harmonics_nodes_domain = Harmonics_nodes[true_indices]
-np.savetxt("harmonics_Freq.txt", tidal_frequencies, fmt='%.8f')
+np.savetxt("harmonics_Freq.txt", tidal_frequencies, fmt='%.12f')
 np.savetxt("harmonics_AMP.txt", Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
 np.savetxt("harmonics_PHASE.txt", Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
 

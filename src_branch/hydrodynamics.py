@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: hydrodynamics.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Jul 9, 2024
+# Last modified: Jul 13, 2024
 
 # ----------------------------------------------------------
 # F U N C T I O N    T I D A L D A T U M S
@@ -74,9 +74,10 @@ print ('amp_index:', amp_index, 'phase_index:', phase_index)
 for j in range(numPoints):
     if (df.iloc[j,inundationtime_index] >= 0.9999) & (df.iloc[j,inundationtime_index] <= 1.0001): # If inundationTime is 1.0, then the point is fully wetted
         # Tidal resynthesis
-        wl = df.iloc[j, amp_index] * np.ones((N, 1), dtype=float)
+        #wl = df.iloc[j, amp_index] * np.ones((N, 1), dtype=float)
+        wl = np.zeros((N, 1), dtype=float)
         for count, jj in enumerate(range(amp_index, amp_index + numHarm)):
-            wl += df.iloc[j, jj] * np.cos(freq[count] * t - df.iloc[j,jj + numHarm])
+            wl += df.iloc[j, jj] * np.cos(freq[count] * t - df.iloc[j,jj + numHarm]*np.pi/180.0) # Compute the water level a*Cos(wt - phi)
 
 ### Jin, July 3, 2024 Need to modify the code below (cannot remember the reasons)
 ########################################################################################################################

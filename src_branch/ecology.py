@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: ecology.py
 # Developer: Peter Bacopoulos & Jin Ikeda
-# Last modified: Jul 11, 2024
+# Last modified: Jul 13, 2024
 import numpy as np
 import pandas as pd
 
@@ -211,9 +211,64 @@ def calculate_manning(P):
     else:
         return ndv
 
+
+########################################################################################################################
+### Renew the vegetation map (raster value) based on the mode of the NWI
+########################################################################################################################
+
+# Create a function to get the mode with priority (internal function for the mode_calculate2raster)
+def prioritized_mode(series, priority_order):
+    mode_values = series.mode()
+    #print(mode_values)
+    for value in priority_order:
+        if value in mode_values.values:
+            return value
+    return mode_values.iloc[0]
+
+
+# For renew raster value need to assign the cell id and value
+def mode_calculate2raster(file_path,target_list, drop_value, priority_order, output_file): # target_list = [target group, target value]= ['Raster_id', 'NWI']
+
+    df = pd.read_csv(file_path) # Read the CSV file
+    df = df[df[target_list[0]] != drop_value] # Remove rows with ndv values
+
+    # Get the unique values and their counts
+    value_counts = df[target_list[0]].value_counts()
+
+    # Get target_list[0] values with count greater than one
+    print(value_counts[value_counts > 1]) # Print values with count greater than one
+    raster_id_over_2 = value_counts[value_counts > 1].index
+
+    # Select rows in the DataFrame where target_list[0] is in 'raster_id' greater than one
+    df_id_deplicate = df[df[target_list[0]].isin(raster_id_over_2)]
+    df_process = df.loc[~df[target_list[0]].isin(raster_id_over_2), target_list] # Remove rows with target_list[0] in 'raster_id greater than one'
+
+    # Group the DataFrame by 'Raster_id'
+    grouped = df_id_deplicate.groupby(target_list[0])
+
+    # Initialize a list to store the results
+    results = []
+
+    for raster_id, group in grouped:
+        nwi_mode = prioritized_mode(group[target_list[1]], priority_order)
+        results.append([raster_id, nwi_mode])
+
+    # Create a DataFrame from the results
+    mode_df = pd.DataFrame(results, columns=target_list)
+    # mode_df.to_csv("check_mode.csv", index=False)
+
+    # Concatenate the mode_df and df
+    df_merge = pd.concat([df_process, mode_df], ignore_index=True)
+    df_merge.to_csv(output_file, index=False)
+
+    return df_merge
+
+########################################################################################################################
+
 #def mem(inputRasterHyControl, inputRasterTopoBathy, inputRasterTidalDatumsIDW, vegetationFile, outputRaster, deltaT=5):
 # define from hydroMEM.py
 
+outputEcology = "mem.csv"  # Output file
 
 ### manual inputs
 deltaT = 5  # Time step (yr)
@@ -479,8 +534,8 @@ else:
     ##### Here check the elevation of mask irregularly flooded marsh ###############################################
     # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
     #NWI_original = pd.read_csv('/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.csv')  # Before dilation
-    df_VG = pd.read_csv('domain_nwi_original.csv')  # Before dilation
-    NWI_original = df_VG['NWI'].values
+    df_VG_Org = pd.read_csv('domain_nwi_original.csv')  # Before dilation
+    NWI_original = df_VG_Org['NWI'].values
     mask_irregular_NWI = (NWI_original == 20)
     irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
     irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
@@ -606,9 +661,8 @@ df['marsh'] = marsh.flatten()
 df['P'] = P.flatten()
 df['manning'] = df['P'].apply(calculate_manning)
 
-df.to_csv('mem.csv', index=False)
-
 ###### Renew vegetation map ####################
+print("Renew the vegetation map based on the mode of the new_NWI")
 if vegetationFile is not None:
     VM = P.copy()
     VM[(VM == 16) | (VM == 23) | (VM == 32)] = 8  # 8 = salt marsh(regularly flooded) follow with tidal cycle
@@ -619,6 +673,38 @@ if vegetationFile is not None:
 
     mask = (VM != 8) & (VM != 9) & (VM != 20)
     VM[mask] = ndv_byte
+
+    target_list = ['Raster_id', 'new_NWI']
+    df[target_list[0]] = df_VG[target_list[0]]
+    df[target_list[1]] = VM.flatten()
+
+    df.to_csv(outputEcology, index=False)
+
+    # Read the NWI raster file
+    df_renew_VG = mode_calculate2raster(outputEcology, target_list, ndv, [9, 8, 20, 128], "renew_nwi.csv")
+
+    # Input raster data
+    Vegetation_Raster_file = "NWI_TX_wetlands_resample10m.tif"
+    print(Vegetation_Raster_file)
+
+    prj, rows, cols, transform, RV, Rasterdata = gdal_reading(Vegetation_Raster_file)  # Reading a raster file
+
+    RV_flattened = RV.ravel()
+
+    for id, value in zip(df_renew_VG[target_list[0]].values.astype(int), df_renew_VG[target_list[1]].values):
+        RV_flattened[id] = value
+    print('New NWI values assigned on raster file')
+
+    New_RV = np.reshape(RV_flattened, (rows, cols))  # original interpol is 1D
+    create_raster('new_NWI.tif', Rasterdata, New_RV, gdal.GDT_Int32, ndv_byte)  # Create a new NWI raster file
+
+else:
+    df.to_csv(outputEcology, index=False)
+
+    ####################################################################################################################
+    ### Need to consider ecological revolution for the next step #######################################################
+    ### July 12, 2024 ##################################################################################################
+    ####################################################################################################################
 #
 # ####################################################################################################################
 # print("\n----------------------------------------------------------------------")
@@ -662,5 +748,5 @@ end_time = time.time()
 elapsed_time = end_time - start_time
 
 # Print the elapsed time
-print("Done interpolating tidal datums using IDW")
+print("Done ecological response")
 print("Time to Compute: \t\t\t", elapsed_time, " seconds")

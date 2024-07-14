@@ -3,7 +3,7 @@
 # Provide general functions for point-based WEADS
 # Developed by the Center for Computation & Technology and Center for Coastal Ecosystem Design Studio at Louisiana State University (LSU).
 # Developer: Jin Ikeda, Peter Bacopoulos and Christopher E. Kees
-# Last modified Jul 9, 2024
+# Last modified Jul 13, 2024
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,11 @@ from datetime import datetime
 import time
 import glob
 from pathlib import Path
+
+# import spatial analysis
+from osgeo import gdal,ogr,osr
+from osgeo.gdalconst import *
+gdal.UseExceptions()
 
 def read_text_file(fileName):
     with open(fileName, "r") as f:
@@ -115,21 +120,23 @@ def read_fort53(inputHarmonicsFile):
 
     skip_index2 = 1  # skip the first line
     for i in range(numHarm):
-        tidal_frequncies.append(float(lines[skip_index2 + i].split()[0]))
-        tidal_constitunents.append(lines[skip_index2 + i].split()[3])
+        tidal_frequncies.append(float(lines[skip_index2 + i].split()[0])) # tidal frequencies (rad/s)
+        tidal_constitunents.append(lines[skip_index2 + i].split()[3]) # tidal constituents
 
-    skip_index3 = 1+numHarm  # skip the first line
+    skip_index3 = 1+numHarm  # skip the line until the number of nodes
     nN = int(lines[skip_index3].split()[0])  # nN: number of nodes
-    print("number of Harmonics\t",numHarm,"node number\t", nN)
+    print("number of Harmonics\t",numHarm,", node number\t", nN)
 
     # Tidal harmonics of each node
     Harmonics_nodes = np.zeros((nN, numHarm, 2), dtype=float) # 3D array [AMP, PHASE] cannot save as a text file
 
     for i in range(nN):
+        #print('check',lines[skip_index3 + 1 + i * (numHarm + 1)].split())
         for ii in range(numHarm):
-            AMP, PHASE = lines[skip_index3 + 2 + i*(numHarm+1) + ii].split() # skip before inundation number
+            AMP, PHASE = lines[skip_index3 + 2 + i*(numHarm+1) + ii].split() # skip before EMAGT(k,j), PHASEDE(k,j) here number of node is skipped.
             Harmonics_nodes[i][ii][0] = float(AMP)
             Harmonics_nodes[i][ii][1] = float(PHASE)
+            #print(ii, Harmonics_nodes[i][ii][0], Harmonics_nodes[i][ii][1])
 
     return Harmonics_nodes, nN, numHarm, tidal_frequncies, tidal_constitunents
 
@@ -182,3 +189,60 @@ def filter_points_within_domain(points_gdf, polygon_gdf):
     true_indices = points_within_domain.index
 
     return points_within_domain, true_indices
+
+def gdal_reading(file): # 0 GA_ReadOnly or 1
+    Rasterdata = gdal.Open(file, GA_ReadOnly)
+    if Rasterdata is None:
+        print("Could not open " + Rasterdata)
+        sys.exit(1)
+    print("Reading raster file (georeference, etc)")
+
+    # Coordinate system
+    prj = Rasterdata.GetProjection()  # Read projection
+    print("Projection:", prj)
+
+    # Get raster size and band
+    rows = Rasterdata.RasterYSize  # number of rows
+    cols = Rasterdata.RasterXSize  # number of columns
+    bandnum = Rasterdata.RasterCount  # band number
+    print("rows=", rows, "cols=", cols)
+    # print("band=", bandnum)
+
+    # Get georeference info
+    transform = Rasterdata.GetGeoTransform()
+    xOrigin = transform[0]  # Upperleft x
+    yOrigin = transform[3]  # Upperleft y
+    pixelWidth = transform[1]  # cell size x
+    pixelHeight = transform[5]  # cell size y (value is negative)
+    print("xOrigin=", xOrigin, "m", "yOrigin=", yOrigin, "m")
+    print("pixelWidth=", pixelWidth, "m", "pixelHeight=", -pixelHeight, "m")  # pixelHeight is always negative
+
+    # Read the raster band
+    band = Rasterdata.GetRasterBand(1)
+    # Data type of the values
+    print('data type is', gdal.GetDataTypeName(band.DataType))  # Each raster file has a different data type
+    # Get band value info
+    RV = band.ReadAsArray()          # raster values in the band
+
+    return prj,rows,cols,transform,RV, Rasterdata
+
+def create_raster(file, rasterdata, zarray, dtype, no_data_value,stats_flag=False):
+    # Create the output raster dataset
+    gtiff_driver = gdal.GetDriverByName('GTiff')
+    out_ds = gtiff_driver.Create(file, rasterdata.RasterXSize, rasterdata.RasterYSize, rasterdata.RasterCount, dtype) # dtype is e.g. gdal.GDT_Int32 and gdal.GDT_Float32
+    out_ds.SetProjection(rasterdata.GetProjection())
+    out_ds.SetGeoTransform(rasterdata.GetGeoTransform())
+    dst_band = out_ds.GetRasterBand(1)
+    dst_band.WriteArray(zarray)
+    dst_band.SetNoDataValue(no_data_value)  # Exclude nodata value
+    stats = dst_band.ComputeStatistics(0)
+    min_val, max_val, mean_val, std_dev_val = stats
+    if stats_flag:
+        print(
+        f'Made a raster file. Statistics:\n\tMinimum: {min_val}, Maximum: {max_val}, Mean: {mean_val}, Standard Deviation: {std_dev_val}')
+    else:
+        print('Made a raster file')
+    out_ds = None
+
+    return
+

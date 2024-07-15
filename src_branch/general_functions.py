@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import os, sys, zipfile, shutil
+from scipy.spatial import KDTree
 from datetime import datetime
 import time
 import glob
@@ -167,8 +168,8 @@ def create_df2gdf(df, xy_list, drop_list, crs, output_file=None):
 def convert_gcs2coordinates(gdf, PRJ,Type_str):
     gdf_proj = gdf.to_crs(PRJ)
     if Type_str == "Point":
-        gdf_proj["x"] = gdf_proj.geometry.apply(lambda point: point.x)
-        gdf_proj["y"] = gdf_proj.geometry.apply(lambda point: point.y)
+        gdf_proj["x_prj"] = gdf_proj.geometry.apply(lambda point: point.x)
+        gdf_proj["y_prj"] = gdf_proj.geometry.apply(lambda point: point.y)
     elif Type_str == "Polygon":
         gdf_proj["x"] = gdf_proj.geometry.apply(lambda polygon: polygon.centroid.x)
         gdf_proj["y"] = gdf_proj.geometry.apply(lambda polygon: polygon.centroid.y)
@@ -246,3 +247,37 @@ def create_raster(file, rasterdata, zarray, dtype, no_data_value,stats_flag=Fals
 
     return
 
+def expand_nodes(nodes_positions, node_states,target_value, infection_distance):
+    # nodes_positions: the positions of the nodes (x, y coordinates) as a numpy array (N,2)
+    # node_states: the states of the nodes (0: not infected, target_value: infected) as a numpy array (N,1)
+
+    # Create a KDTree for efficient neighbor search
+    tree = KDTree(nodes_positions)
+
+    # Find all nodes within the infection distance of the infected node(s) and update their states
+    potential_expansion_nodes = np.where(node_states == target_value)[0] # Get the indices of infected nodes here node_state a tuple
+    for node in potential_expansion_nodes:
+        neighbors = tree.query_ball_point(nodes_positions[node], infection_distance, p=2.0) # p=2 (circle) for Euclidean distance
+        for neighbor in neighbors:
+            if neighbor != node:  # Exclude the node itself
+                node_states[neighbor] = target_value
+
+    return node_states
+
+# x = np.arange(6)
+# y = np.arange(6)
+#
+# # Create a meshgrid
+# xv, yv = np.meshgrid(x, y)
+#
+# # Stack arrays in sequence horizontally (column wise)
+# node_positions = np.column_stack((xv.flatten(), yv.flatten()))
+#
+# node_states = np.array([[0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
+# node_states = node_states.flatten()
+#
+# target_value = 1
+# infection_distance = 2.0
+#
+# node_updates = expand_nodes(node_positions, node_states, target_value, infection_distance)
+# print(node_updates)

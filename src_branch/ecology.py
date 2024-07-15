@@ -421,32 +421,6 @@ assert Point_VG.shape != df_VG.shape[0], "The shape of the vegetation file is no
 
 hc = df['HydroClass'] # 'HydroClass' 0: land, 1: intertidal, 2: subtidal(water)
 
-# ----------------------------------------------------------
-# Check projection and raster shape between provided vegetation and calculated raster files
-# ----------------------------------------------------------
-########################################################################################################################
-# gdal prj will be different from the one that we have. Need to modify this part July 4, 2024
-########################################################################################################################
-if vegetationFile == None:
-    prj = PRJ
-    print("Projection:", prj)
-
-else:
-    pass
-#     # Normalize both projection strings
-#     normalized_prj = " ".join(prj.strip().split()).split(',')[0]  ##### need to modify this part later Aug 29
-#     normalized_prjVG = " ".join(prjVG.strip().split()).split(',')[0]
-#
-#     # Compare the normalized projection strings
-#     if normalized_prj != normalized_prjVG or transformVG != gt:
-#         print("Vegetation raster does not match with current raster files! Need to modify the VG raster")
-#         print("Projection:", prj, '\n', prjVG)
-#         print("Projection:", normalized_prj, '\n', normalized_prjVG)
-#     else:
-#         print("Jin will modify this part later")
-#         print("Projections and Raster shape match!")
-#         print("Projection:", prj)
-
 # --- Read topo-bathymetry and water surface elevation ---
 tb = df['z']  # tb=-1.0*tb;
 print('tb: min&max', np.min(tb), np.max(tb))
@@ -662,7 +636,7 @@ df['P'] = P.flatten()
 df['manning'] = df['P'].apply(calculate_manning)
 
 ###### Renew vegetation map ####################
-print("Renew the vegetation map based on the mode of the new_NWI")
+print("Renew the vegetation map from the PRODUCTIVITY CALCULATIONS")
 if vegetationFile is not None:
     VM = P.copy()
     VM[(VM == 16) | (VM == 23) | (VM == 32)] = 8  # 8 = salt marsh(regularly flooded) follow with tidal cycle
@@ -670,42 +644,10 @@ if vegetationFile is not None:
     VM[(VM == 120)] = 20  # 20 = irregularly flooded marsh
     # VM[(VM == 55)] = ndv_byte # 55 = land_mask
     # VM[(VM == 40)] = ndv_byte # 40 = water_mask
+    df['new_NWI'] = VM.flatten()
 
-    mask = (VM != 8) & (VM != 9) & (VM != 20)
-    VM[mask] = ndv_byte
+df.to_csv(outputEcology, index=False)
 
-    target_list = ['Raster_id', 'new_NWI']
-    df[target_list[0]] = df_VG[target_list[0]]
-    df[target_list[1]] = VM.flatten()
-
-    df.to_csv(outputEcology, index=False)
-
-    # Read the NWI raster file
-    df_renew_VG = mode_calculate2raster(outputEcology, target_list, ndv, [9, 8, 20, 128], "renew_nwi.csv")
-
-    # Input raster data
-    Vegetation_Raster_file = "NWI_TX_wetlands_resample10m.tif"
-    print(Vegetation_Raster_file)
-
-    prj, rows, cols, transform, RV, Rasterdata = gdal_reading(Vegetation_Raster_file)  # Reading a raster file
-
-    RV_flattened = RV.ravel()
-
-    for id, value in zip(df_renew_VG[target_list[0]].values.astype(int), df_renew_VG[target_list[1]].values):
-        RV_flattened[id] = value
-    print('New NWI values assigned on raster file')
-
-    New_RV = np.reshape(RV_flattened, (rows, cols))  # original interpol is 1D
-    create_raster('new_NWI.tif', Rasterdata, New_RV, gdal.GDT_Int32, ndv_byte)  # Create a new NWI raster file
-
-else:
-    df.to_csv(outputEcology, index=False)
-
-    ####################################################################################################################
-    ### Need to consider ecological revolution for the next step #######################################################
-    ### July 12, 2024 ##################################################################################################
-    ####################################################################################################################
-#
 # ####################################################################################################################
 # print("\n----------------------------------------------------------------------")
 # print("Create WATTE input files")

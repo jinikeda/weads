@@ -264,21 +264,3 @@ def expand_nodes(nodes_positions, node_states,target_value, infection_distance):
                 node_states[neighbor] = target_value
 
     return node_states
-
-# x = np.arange(6)
-# y = np.arange(6)
-#
-# # Create a meshgrid
-# xv, yv = np.meshgrid(x, y)
-#
-# # Stack arrays in sequence horizontally (column wise)
-# node_positions = np.column_stack((xv.flatten(), yv.flatten()))
-#
-# node_states = np.array([[0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
-# node_states = node_states.flatten()
-#
-# target_value = 1
-# infection_distance = 2.0
-#
-# node_updates = expand_nodes(node_positions, node_states, target_value, infection_distance)
-# print(node_updates)

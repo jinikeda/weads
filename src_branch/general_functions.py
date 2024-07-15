@@ -18,6 +18,7 @@ from pathlib import Path
 # import spatial analysis
 from osgeo import gdal,ogr,osr
 from osgeo.gdalconst import *
+import rasterio
 gdal.UseExceptions()
 
 def read_text_file(fileName):

@@ -9,21 +9,18 @@
 #######
 # Caution: Segmentation fault might happen when read a large tiff file
 
+#--- Load internal modules ---
+from .general_functions import *
+
 ### Step 1 ###########################################################
 print("\n----------------------------------------------------------------------")
 print("Step 1.: Import modules")
 print("----------------------------------------------------------------------\n")
 ######################################################################
 
-#--- Load internal modules ---
-from general_functions import *
-
-
 # --- GLOBAL PARAMETERS ---
 ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 ndv_byte = 128
-
-
 
 ### Function #####################################################################################################
 def extract_point_values(raster_path, points_gdf, points_path):
@@ -76,20 +73,15 @@ def apply_priority_order(df, indices_values, output_file):
     df.to_csv(output_file, index=False)  # Save the DataFrame to a CSV file with headers
     return df
 
-def process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,deltaT=5):
+def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spread_flag,OutputvegetationFile,inEPSG,outEPSG,deltaT=5):
 
     start_time = time.time()
 
-    output_file = 'domain_nwi.csv'
+    #OutputvegetationFile = 'domain_nwi.csv'
     # potential expansion speed
     speed = 40  # [m/year]
     radius = speed * deltaT  # [m per deltaT years calculation]
     print('The allowable range of expansion speed per simulation is', radius, '[m-5yrs]\n')
-
-    #################################################################################
-    inEPSG = 4269  # GCS_North_American_1983
-    outEPSG = 26914
-    #################################################################################
 
     ### Step 2 ###########################################################
     print("\n----------------------------------------------------------------------")
@@ -98,9 +90,9 @@ def process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,
     ######################################################################
 
     # Input raster data
-    print(Raster_file)
+    print(InputvegetationFile)
 
-    prj, rows, cols, transform, RV, _ = gdal_reading(Raster_file)  # Reading a raster file
+    prj, rows, cols, transform, RV, _ = gdal_reading(InputvegetationFile)  # Reading a raster file
     print('row and cols: ', np.shape(RV))
 
     xy_list = ['x', 'y']
@@ -132,7 +124,7 @@ def process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,
 
         process_file = 'domain_nwi_original.csv'
 
-        NWI_values, NWI_df = extract_point_values(Raster_file, points_prj, process_file)
+        NWI_values, NWI_df = extract_point_values(InputvegetationFile, points_prj, process_file)
 
     else:
 
@@ -180,10 +172,10 @@ def process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,
         # mask2 = (MG != 1) & (SRF == 1)
         # mask3 = (MG != 1) & (SRF != 1) & (SIRF == 1)
 
-        NWI_df = apply_priority_order(NWI_df, [(SIRF_indices, 20), (SRF_indices, 8), (MG_indices, 9)],output_file) # order from low to high priority
+        NWI_df = apply_priority_order(NWI_df, [(SIRF_indices, 20), (SRF_indices, 8), (MG_indices, 9)],OutputvegetationFile) # order from low to high priority
 
     if spread_flag == False:
-        shutil.copy(process_file, output_file)
+        shutil.copy(process_file, OutputvegetationFile)
 
     print('The NWI data has been saved')
 
@@ -197,6 +189,6 @@ def process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,
 
 ########################################################################################################################
 # internal command
-# process_vegetation_file('NWI_TX_wetlands4m.tif', False,True,deltaT=5.0) #process_vegetation_file(Raster_file,skip_raster_extracting_Flag,spread_flag,deltaT=5):
-process_vegetation_file('NWI_TX_wetlands.tif', False, True, deltaT=5.0) #
+# process_vegetation_file('NWI_TX_wetlands4m.tif', False,True,deltaT=5.0) #process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spread_flag,deltaT=5):
+# process_vegetation_file('NWI_TX_wetlands.tif', False, True, deltaT=5.0) #
 

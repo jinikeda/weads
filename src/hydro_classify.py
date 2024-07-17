@@ -25,7 +25,6 @@ from osgeo import gdal
 from osgeo import osr
 from scipy import ndimage
 
-
 # ----------------------------------------------------------
 # F U N C T I O N    M A I N
 # ----------------------------------------------------------

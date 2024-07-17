@@ -51,8 +51,8 @@ def main(argv):
     parser.add_argument("--inputEverdriedFile", type=str, help="Input everdried.63 file")
     parser.add_argument("--inputShapeFile", type=str, help="Input domain shape file <*.shp>")
     parser.add_argument("--outputMEMRasterFile", type=str, help="Output MEM raster file:HydroMEM.tif")
-    parser.add_argument("--outputMeshFile", type=str, help="Output mesh file <fort_new.14>")
-    parser.add_argument("--outputAttrFile", type=str, help="Output attribute file")
+    parser.add_argument("--outputMeshFile", type=str, default="fort_new.14", help="Output mesh file <fort_new.14>")
+    parser.add_argument("--outputAttrFile", type=str, default="fort_new.13", help="Output attribute file")
     parser.add_argument("--inEPSG", type=str, help="Input EPSG code <inEPSGCode>")
     parser.add_argument("--outEPSG", type=str, help="Output EPSG code <outEPSGCode>")
     parser.add_argument("--gridSize", type=float, help="Output raster resolution")
@@ -167,10 +167,7 @@ def main(argv):
         
         src.tidaldatumsidw('hydro_class.tif','TidalDatums.tif','TidalDatums_IDW.tif',numIDWNeighbors)
     
-    if vegetationFile: # Organize vegetation file
-        print('\n' + '\tOrganizing vegetation file...')
-        src.basics.fileexists(vegetationFile)
-        src.nwi.read_tif(vegetationFile, outEPSG, gridSize, skipresample_flag,deltaT=deltaT)
+
 
     if mem_flag: # Run MEM
         print('\n' + '\tRunning MEM...')
@@ -179,17 +176,23 @@ def main(argv):
         src.basics.fileexists('hydro_class.tif')
         src.basics.fileexists('TidalDatums_IDW.tif')
 
-        if vegetationFile is None: # Run MEM without vegetation
-            print('\n' + '\tNo vegetation mapping references...')
-            src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif',deltaT=deltaT)
-        else:
+        if vegetationFile:  # Organize vegetation file
+            print('\n' + '\tOrganizing vegetation file...')
+            src.basics.fileexists(vegetationFile)
+            src.nwi.read_tif(vegetationFile, outEPSG, gridSize, skipresample_flag, deltaT=deltaT)
+
             print('\n' + '\tUse vegetation mapping...')
-            Domain_raster = f'Domain_classification_distribution_resample{int(gridSize)}.tif' # Domain raster be careful
+            Domain_raster = f'Domain_classification_distribution_resample{int(gridSize)}.tif'  # Domain raster be careful
             if not os.path.isfile(Domain_raster):
                 print("Could not find " + Domain_raster)
                 sys.exit(1)
             else:
-                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',Domain_raster, outputMEMRasterFile + '.tif',deltaT=deltaT)
+                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif', Domain_raster,
+                        outputMEMRasterFile + '.tif', deltaT=deltaT)
+
+        else: # Run MEM without vegetation
+            print('\n' + '\tNo vegetation mapping references...')
+            src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif',vegetationFile, outputMEMRasterFile + '.tif',deltaT=deltaT)
 
     if adc2rast_flag:
         src.rast2adc(inputMeshFile,outputMeshFile,outputMEMRasterFile+'.tif',inEPSG,3,-deltaT) # 3 is the annual accreation rate on MEM (m/yr). Caution: -1 is the multiplier (for ADCIRC file)

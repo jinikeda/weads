@@ -209,58 +209,6 @@ def calculate_manning(P):
     else:
         return ndv
 
-
-# ########################################################################################################################
-# ### Renew the vegetation map (raster value) based on the mode of the NWI
-# ########################################################################################################################
-#
-# # Create a function to get the mode with priority (internal function for the mode_calculate2raster)
-# def prioritized_mode(series, priority_order):
-#     mode_values = series.mode()
-#     #print(mode_values)
-#     for value in priority_order:
-#         if value in mode_values.values:
-#             return value
-#     return mode_values.iloc[0]
-#
-#
-# # For renew raster value need to assign the cell id and value
-# def mode_calculate2raster(file_path,target_list, drop_value, priority_order, output_file): # target_list = [target group, target value]= ['Raster_id', 'NWI']
-#
-#     df = pd.read_csv(file_path) # Read the CSV file
-#     df = df[df[target_list[0]] != drop_value] # Remove rows with ndv values
-#
-#     # Get the unique values and their counts
-#     value_counts = df[target_list[0]].value_counts()
-#
-#     # Get target_list[0] values with count greater than one
-#     print(value_counts[value_counts > 1]) # Print values with count greater than one
-#     raster_id_over_2 = value_counts[value_counts > 1].index
-#
-#     # Select rows in the DataFrame where target_list[0] is in 'raster_id' greater than one
-#     df_id_deplicate = df[df[target_list[0]].isin(raster_id_over_2)]
-#     df_process = df.loc[~df[target_list[0]].isin(raster_id_over_2), target_list] # Remove rows with target_list[0] in 'raster_id greater than one'
-#
-#     # Group the DataFrame by 'Raster_id'
-#     grouped = df_id_deplicate.groupby(target_list[0])
-#
-#     # Initialize a list to store the results
-#     results = []
-#
-#     for raster_id, group in grouped:
-#         nwi_mode = prioritized_mode(group[target_list[1]], priority_order)
-#         results.append([raster_id, nwi_mode])
-#
-#     # Create a DataFrame from the results
-#     mode_df = pd.DataFrame(results, columns=target_list)
-#     # mode_df.to_csv("check_mode.csv", index=False)
-#
-#     # Concatenate the mode_df and df
-#     df_merge = pd.concat([df_process, mode_df], ignore_index=True)
-#     df_merge.to_csv(output_file, index=False)
-#
-#     return df_merge
-
 ########################################################################################################################
 
 def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, deltaT=5):

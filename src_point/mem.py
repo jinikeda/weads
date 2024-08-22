@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: ecology.py
-# Developer: Peter Bacopoulos & Jin Ikeda
-# Last modified: Jul 15, 2024
+# Developer: Jin Ikeda & Peter Bacopoulos
+# Last modified: Aug 21, 2024
 
 
 #----------------------------------------------------------
@@ -45,7 +45,7 @@ print("\n"); print("LAUNCH: Launching script!\n")
 # Bmax
 
 #----------------------------------------------------------
-# DATASETS Jin -> Pete Please add States and Optimum March 7, 2024
+# DATASETS Need to add States and Optimum March 7, 2024
 #----------------------------------------------------------
 #
 # al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet, where?
@@ -76,7 +76,6 @@ biomass_coefficients = {
     "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
 
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
-# until here
 ########################################################################################################################
 
 ########################################################################################################################
@@ -127,11 +126,23 @@ vegetation_parameters = {
         "Kr": 0.1,
         "RRS": 1.5,
         "BTR": 0.5
-    }
+    },
+########################################################################################################################
+### Need future Revision Aug 21, 2024, Jin
+########################################################################################################################
+    # "juvenile_mangrove": {
+    #     "Dmin": 24.0,
+    #     "Dmax": 66.0,
+    #     "Bmax": 7800.0,
+    #     "Dopt": 45.0,
+    #     "Kr": 0.1,
+    #     "RRS": 1.8,
+    #     "BTR": 0.25
+    # },
+########################################################################################################################
 }
 
 ########################################################################################################################
-### Jin to Pete ###: Check the BTR here and what is BG? is not used in the code March 7, 24 ############################
 BTRmat = 0.22  # BG turnover rate (1/year) for mature mangroves
 BTRjuv = 0.67  # BG turnover rate (1/year) for juvenile mangroves
 ########################################################################################################################
@@ -156,7 +167,6 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
 
 def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     global ndv
-    # Jin -> Pete please think about using D or D
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
@@ -185,13 +195,20 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     return B, PL, PH
 
 
-def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb): #Pending to modify FIT
+def calculate_vertical_accretion(qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF, D, Dt, BDo, BDi, tb):
 
     # --- ACCRETION CALCULATIONS ---
     q = qmin+(qmax-qmin)*B/Bmax
     q[B<0.0] = qmin
     Vorg = Kr * RRS * BTR * B/(100.0**2) # organic matter
-    Vmin = 0.5*q*SSC*FF*D/(1000.0**2) # inorganic matter
+
+    # calculate tidal flood time (FIT)
+    FIT = np.zeros(D.shape)
+    FIT[D < 0] = 0
+    FIT[(D >= 0) & (D <= 1)] = D[(D >= 0) & (D <= 1)] / Dt[(D >= 0) & (D <= 1)]
+    FIT[D > 1] = 1
+
+    Vmin = 0.5*FIT*q*SSC*FF*D/(1000.0**2) # inorganic matter q2 add FIT
     Vorg[B<=0.0] = 0.0
     Vmin[np.logical_or(B <= 0.0, D <= 0.0)] = 0.0 # If we also evaluate the accretion rate for mineral matter, we will change the code using mask such as (mhwIDW != ndv)
     A = np.where(tb != ndv,((Vorg/BDo) + (Vmin/BDi))/100.0, ndv) # accretion rate per year [m]
@@ -276,9 +293,6 @@ def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, d
 
         print('Interest unique_value is :', updated_unique_values)
 
-        ################# Jin -> Pete box #######################################################################
-        # Please work on this box
-
         # Create a mask for different vegetation types
         mask_salt_marsh = (Point_VG == 8)
         mask_mangrove = (Point_VG == 9)
@@ -328,18 +342,6 @@ def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, d
 
         a3, b3, c3 = calculate_coefficients(Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh,
                                             Bmax_fmarsh)  # 20: Irregularly flooded marsh (NWI = 20)
-
-    ########################################################################################################################
-    # Jin to Pete: how to incorporate juvenile mangrove here
-
-    # Dmin_matmang = 36
-    # Dmax_matmang = 55
-    # Bmax_matmang = 500
-    # Dopt_matmang = 45
-    # Dmin_matmang = DminL + dD + dDmin
-    # Dmax_matmang = DmaxR + dD + dDmax
-    # Dopt_matmang = ((DoptL + DoptR) / 2) + dD
-    ########################################################################################################################
 
     # ----------------------------------------------------------
     # Read point files
@@ -404,7 +406,7 @@ def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, d
 
         # --- ACCRETION CALCULATIONS ---
         print("Accretion calculations")
-        tb_update, A = calculate_vertical_accretion(qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, BDo, BDi, tb)
+        tb_update, A = calculate_vertical_accretion(qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D,Dt, BDo, BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
@@ -474,11 +476,11 @@ def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, d
 
         # --- ACCRETION CALCULATIONS ---
         _, A1 = calculate_vertical_accretion(qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D,
-                                             BDo, BDi, tb)
+                                             Dt, BDo, BDi, tb)
         _, A2 = calculate_vertical_accretion(qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang,
-                                             SSC, FF, D, BDo, BDi, tb)
+                                             SSC, FF, D, Dt, BDo, BDi, tb)
         _, A3 = calculate_vertical_accretion(qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC,
-                                             FF, D, BDo, BDi, tb)
+                                             FF, D, Dt, BDo, BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions
@@ -506,7 +508,6 @@ def mem(interpolateHarmonicsFile,vegetationFile, outputMEMFile,inEPSG,outEPSG, d
 
         # --- MARSH TYPE CALCULATIONS ---
         ########################################################################################################################
-        # Jin to Pete: We need to check the following part
         print("High-Low Marsh Calculations")
 
         al = a1

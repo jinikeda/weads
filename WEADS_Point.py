@@ -44,7 +44,7 @@ def main(argv):
     parser.add_argument("--inputAttrFile", type=str, help="Input attribute <fort.13 file>")
     parser.add_argument("--inputHarmonicsFile", type=str, help="Input harmonics <fort.53 file>")
     parser.add_argument("--inputShapeFile", type=str, help="Input domain shape file <*.shp>")
-    parser.add_argument("--outputMEMFile", type=str, help="Output MEM file:mem.csv")
+    parser.add_argument("--outputMEMFile", type=str, default="mem", help="Output MEM file:mem.csv")
     parser.add_argument("--outputMeshFile", type=str, default="fort_new.14", help="Output mesh file <fort_new.14>")
     parser.add_argument("--outputAttrFile", type=str, default="fort_new.13", help="Output attribute file")
     parser.add_argument("--inEPSG", type=str, help="Input EPSG code <inEPSGCode>")
@@ -53,7 +53,7 @@ def main(argv):
     parser.add_argument("--slr", type=float, help="Sea level rise")
     parser.add_argument("--inputInundationtimeFile", type=str, help="Use inundationtime file for running inunT <inundationtime.63>")
     parser.add_argument("--InputvegetationFile", type=str,default=None, help="Path to vegetation file <*.tif>")
-    parser.add_argument("--outputVegetationFile", type=str, help="Output MEM file:mem.csv")
+    #parser.add_argument("--outputVegetationFile", type=str,  help="Output MEM file:mem.csv")
     parser.add_argument("--skipresample", action="store_true", help="Skip reprojection and resample to raster domain")
 
     # Parse the command line arguments

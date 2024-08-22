@@ -66,14 +66,16 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
         plt.show()
         plt.savefig('terminal_tbathy.png')
 
-    # compare everdried and tbathy and Clean up values to only have 1 and -99999
-    mask = EDBN > 0.5 
+    # compare everdried and tbathy and Clean up values to only have 1 and
+    # -99999
+    mask = EDBN > 0.5
     EDBN[mask] = 1.0
     EDBN[EDBN <= 0] = -99999.0
 
     EDBN[TBBN == -99999.0] = -99999.0
 
-    labeled, num_objects = ndimage.label(mask) # labeled connected region and provide the number of regions
+    # labeled connected region and provide the number of regions
+    labeled, num_objects = ndimage.label(mask)
 
     if DEBUG:
         print('----- Raster from everdried and tbathy -----')
@@ -89,38 +91,44 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
     # print("\nCreating 3 raster bands\n")
 
     # sizes is array containing sizes of all the labeled objects
-    sizes = ndimage.sum(mask, labeled, range(num_objects+1)) # calculate the size of each regions
-    print('size max and min',sizes.max(),sizes.min(), ',number of areas', num_objects) #max size should be ocean and min size should be land
+    # calculate the size of each regions
+    sizes = ndimage.sum(mask, labeled, range(num_objects + 1))
+    print('size max and min', sizes.max(), sizes.min(), ',number of areas',
+          num_objects)  # max size should be ocean and min size should be land
 
-    # maximum is tuple where first element is index of largest object in the labeled image array # This approach may not work where ocean is not a largest size 
+    # maximum is tuple where first element is index of largest object in the
+    # labeled image array # This approach may not work where ocean is not a
+    # largest size
     maximum = np.where(sizes == sizes.max())[0]
     # create 1D mask arrays where each index that has max in corresponding labeled image is set to 1
-    # max feature is 2D image array where  only the largest labels are highlighted
+    # max feature is 2D image array where  only the largest labels are
+    # highlighted
     max_index = np.zeros(num_objects + 1, np.float32)
     max_index[maximum] = 1
     max_feature = max_index[labeled]
 
-    ############################################################################################################
-    # This command eliminates small regions and replace as land 
+    ##########################################################################
+    # This command eliminates small regions and replace as land
 
-    mask_size = sizes < 10 # user defined
+    mask_size = sizes < 10  # user defined
     remove_pixel = mask_size[labeled]
     remove_pixel.shape
-    labeled[remove_pixel]=np.argmin(sizes)
+    labeled[remove_pixel] = np.argmin(sizes)
 
     labels = np.unique(labeled)
     labeled1 = np.searchsorted(labels, labeled)
 
-    ############################################################################################################
-    
-    minimum = np.where(sizes==sizes.min())[0]
+    ##########################################################################
+
+    minimum = np.where(sizes == sizes.min())[0]
     min_index = np.zeros(num_objects + 1, np.float32)
     min_index[minimum] = 1
     min_feature = min_index[labeled]
     # print('maxf: ', max_feature,'minf: ', min_feature)
     OCEAN = max_feature
-    LAND = min_feature - (TBBN == -99999.0) # binary 1: True, 0: False 
-    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0) # Need to check again: Jin Aug 19th
+    LAND = min_feature - (TBBN == -99999.0)  # binary 1: True, 0: False
+    # Need to check again: Jin Aug 19th
+    POND = 1 - np.add(OCEAN, LAND) - (TBBN == -99999.0)
     if DEBUG:
         print('----- Ocean raster -----')
         plt.imshow(OCEAN)
@@ -141,7 +149,7 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
         plt.show()
 
     out_array = np.zeros((EDBN.shape[0], EDBN.shape[1]), np.float32)
-    #write value to 0 for OCEAN, 1 for LAND, or 2 for POND to one array
+    # write value to 0 for OCEAN, 1 for LAND, or 2 for POND to one array
 
     out_array[OCEAN == 1] = 0
     out_array[LAND == 1] = 1
@@ -150,7 +158,7 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
 
     if DEBUG:
 
-        print('----- 3 band output raster -----')            
+        print('----- 3 band output raster -----')
         plt.imshow(out_array)
         plt.axis('off')
         plt.savefig('HyControl.png')
@@ -161,26 +169,25 @@ def hyconn(inputElevation, inputRaster, outputRaster, DEBUG=False):
     #print ("Writing output rasters")
     x_pixels = EDBN.shape[1]
     y_pixels = EDBN.shape[0]
-    driver= gdal.GetDriverByName('HFA')
-    dst_datatype=gdal.GDT_Float32
-    dst_geo=rasterED.GetGeoTransform()
-    dst_proj=osr.SpatialReference()
+    driver = gdal.GetDriverByName('HFA')
+    dst_datatype = gdal.GDT_Float32
+    dst_geo = rasterED.GetGeoTransform()
+    dst_proj = osr.SpatialReference()
     dst_proj.ImportFromWkt(rasterED.GetProjectionRef())
     # dst_ds=driver.Create('HyCon_Binary.img',rasterED.RasterXSize, rasterED.RasterYSize, 3, dst_datatype)
-    dst_ds=driver.Create(outputRaster,x_pixels, y_pixels, 1, dst_datatype)
+    dst_ds = driver.Create(outputRaster, x_pixels, y_pixels, 1, dst_datatype)
     dst_ds.SetGeoTransform(dst_geo)
     dst_ds.SetProjection(dst_proj.ExportToWkt())
     dst_ds.GetRasterBand(1).SetNoDataValue(ndv)
     dst_ds.GetRasterBand(1).WriteArray(out_array)
 
-    #close file, deallocate memory
-    dst_ds = None 
-
+    # close file, deallocate memory
+    dst_ds = None
 
    # print ("Output rasters written successfully")
    # print ("")
 
 
 ### RUN MAIN ###
-#if __name__ == "__main__":
+# if __name__ == "__main__":
  #   main(sys.argv[1:])

@@ -9,7 +9,7 @@
 #######
 # Caution: Segmentation fault might happen when read a large tiff file
 
-#--- Load internal modules ---
+# --- Load internal modules ---
 from .general_functions import *
 
 ### Step 1 ###########################################################
@@ -22,7 +22,9 @@ print("----------------------------------------------------------------------\n"
 ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 ndv_byte = 128
 
-### Function #####################################################################################################
+### Function #############################################################
+
+
 def extract_point_values(raster_path, points_gdf, points_path):
     # Load the shapefile of points
     points = points_gdf
@@ -54,26 +56,43 @@ def extract_point_values(raster_path, points_gdf, points_path):
     points['Raster_id'] = raster_id
     points['NWI'] = raster_values
     # points.to_file(points_path, driver='ESRI Shapefile')
-    points.to_csv(points_path, index=False)  # Save the DataFrame to a CSV file with headers
+    # Save the DataFrame to a CSV file with headers
+    points.to_csv(points_path, index=False)
 
     return raster_values, points
 
-def calculate_potential_expansion(node_positions,NWI_values,target_value, radius):
-    Vegetation_mask = np.where(NWI_values == target_value, target_value, 0).flatten()  # salt marsh (regularly flooded) 8
-    Potential_expansion = expand_nodes(node_positions, Vegetation_mask, target_value, radius) # refer general function
+
+def calculate_potential_expansion(
+        node_positions, NWI_values, target_value, radius):
+    Vegetation_mask = np.where(
+        NWI_values == target_value,
+        target_value,
+        0).flatten()  # salt marsh (regularly flooded) 8
+    Potential_expansion = expand_nodes(
+        node_positions,
+        Vegetation_mask,
+        target_value,
+        radius)  # refer general function
     indices = np.where(Potential_expansion == target_value)[0]
     return Potential_expansion, indices
 
+
 def apply_priority_order(df, indices_values, output_file):
-    df.rename(columns={'NWI': 'NWI_org'}, inplace=True)  # Rename the column name
-    df['NWI'] = df['NWI_org']  # Copy the original NWI values to potential NWI values
+    df.rename(columns={'NWI': 'NWI_org'},
+              inplace=True)  # Rename the column name
+    # Copy the original NWI values to potential NWI values
+    df['NWI'] = df['NWI_org']
     for indices, value in indices_values:
         for i in indices:
-            df.loc[i, 'NWI'] = value # Assign the potential NWI values to the original NWI values
-    df.to_csv(output_file, index=False)  # Save the DataFrame to a CSV file with headers
+            # Assign the potential NWI values to the original NWI values
+            df.loc[i, 'NWI'] = value
+    # Save the DataFrame to a CSV file with headers
+    df.to_csv(output_file, index=False)
     return df
 
-def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spread_flag,OutputvegetationFile,inEPSG,outEPSG,deltaT=5):
+
+def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
+                            spread_flag, OutputvegetationFile, inEPSG, outEPSG, deltaT=5):
 
     start_time = time.time()
 
@@ -81,7 +100,10 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
     # potential expansion speed
     speed = 40  # [m/year]
     radius = speed * deltaT  # [m per deltaT years calculation]
-    print('The allowable range of expansion speed per simulation is', radius, '[m-5yrs]\n')
+    print(
+        'The allowable range of expansion speed per simulation is',
+        radius,
+        '[m-5yrs]\n')
 
     ### Step 2 ###########################################################
     print("\n----------------------------------------------------------------------")
@@ -92,12 +114,14 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
     # Input raster data
     print(InputvegetationFile)
 
-    prj, rows, cols, transform, RV, _ = gdal_reading(InputvegetationFile)  # Reading a raster file
+    prj, rows, cols, transform, RV, _ = gdal_reading(
+        InputvegetationFile)  # Reading a raster file
     print('row and cols: ', np.shape(RV))
 
     xy_list = ['x', 'y']
     drop_list = []
-    raster_prj = prj.split('],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
+    raster_prj = prj.split(
+        '],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
     PRJ = 'EPSG:' + raster_prj.replace('"', '')
     print('Raster projection is', PRJ)
     crs_points = 'EPSG:' + str(inEPSG)
@@ -114,8 +138,8 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
         df = pd.read_csv("domain_inputs.csv")
         print(df.shape, df.columns, df.dtypes)
 
-        df = df.loc [:, ['node','x','y','z']]
-        df ['NWI'] = ndv_byte
+        df = df.loc[:, ['node', 'x', 'y', 'z']]
+        df['NWI'] = ndv_byte
 
         # Create a GeoDataFrame for filtering
         gdf_ADCIRC = create_df2gdf(df, xy_list, drop_list, crs_points, None)
@@ -124,7 +148,8 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
 
         process_file = 'domain_nwi_original.csv'
 
-        NWI_values, NWI_df = extract_point_values(InputvegetationFile, points_prj, process_file)
+        NWI_values, NWI_df = extract_point_values(
+            InputvegetationFile, points_prj, process_file)
 
     else:
 
@@ -144,7 +169,8 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
         print(NWI_df.columns)
 
         # Create a GeoDataFrame for filtering
-        gdf_ADCIRC = create_df2gdf(NWI_df, xy_list, drop_list, crs_points, None)
+        gdf_ADCIRC = create_df2gdf(
+            NWI_df, xy_list, drop_list, crs_points, None)
         points_prj = convert_gcs2coordinates(gdf_ADCIRC, PRJ, "Point")
         print(points_prj.head(20))
 
@@ -154,16 +180,20 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
         Point_y = points_prj[['y_prj']]
         node_positions = np.column_stack((Point_x, Point_y))
 
-        assert Point_x.shape[0] == len(NWI_values), 'The number of points and NWI values are not matched'
+        assert Point_x.shape[0] == len(
+            NWI_values), 'The number of points and NWI values are not matched'
 
         print("\n----------------------------------------------------------------------")
         print("Step 4.: Spread vegetation nodes and make potential expansion")
         print("----------------------------------------------------------------------\n")
 
         # Apply binary dilation using scipy.ndimage
-        Potential_SRF, SRF_indices = calculate_potential_expansion(node_positions,NWI_values,8, radius)  # salt marsh (regularly flooded) 8
-        Potential_MG, MG_indices = calculate_potential_expansion(node_positions,NWI_values,9, radius)  # mangrove 9
-        Potential_SIRF, SIRF_indices = calculate_potential_expansion(node_positions,NWI_values,20, radius)  # irregularly flooded marsh 20
+        Potential_SRF, SRF_indices = calculate_potential_expansion(
+            node_positions, NWI_values, 8, radius)  # salt marsh (regularly flooded) 8
+        Potential_MG, MG_indices = calculate_potential_expansion(
+            node_positions, NWI_values, 9, radius)  # mangrove 9
+        Potential_SIRF, SIRF_indices = calculate_potential_expansion(
+            node_positions, NWI_values, 20, radius)  # irregularly flooded marsh 20
 
         # Save the potential expansion nodes
 
@@ -172,14 +202,15 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
         # mask2 = (MG != 1) & (SRF == 1)
         # mask3 = (MG != 1) & (SRF != 1) & (SIRF == 1)
 
-        NWI_df = apply_priority_order(NWI_df, [(SIRF_indices, 20), (SRF_indices, 8), (MG_indices, 9)],OutputvegetationFile) # order from low to high priority
+        NWI_df = apply_priority_order(NWI_df, [(SIRF_indices, 20), (SRF_indices, 8), (
+            MG_indices, 9)], OutputvegetationFile)  # order from low to high priority
 
     if spread_flag == False:
         shutil.copy(process_file, OutputvegetationFile)
 
     print('The NWI data has been saved')
 
-    ####################################################################################################################
+    ##########################################################################
     # Calculate the elapsed time
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -187,8 +218,7 @@ def process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spre
     # Print the elapsed time
     print("Time to Compute: \t\t\t", elapsed_time, " seconds")
 
-########################################################################################################################
+##########################################################################
 # internal command
 # process_vegetation_file('NWI_TX_wetlands4m.tif', False,True,deltaT=5.0) #process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spread_flag,deltaT=5):
 # process_vegetation_file('NWI_TX_wetlands.tif', False, True, deltaT=5.0) #
-

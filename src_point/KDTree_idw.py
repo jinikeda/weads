@@ -13,7 +13,9 @@ Modified on Jan 25 2024
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
 
-## use the class method. remove function as its slower 
+# use the class method. remove function as its slower
+
+
 class Invdisttree:
 
     """ inverse-distance-weighted interpolation using KDTree:
@@ -59,18 +61,19 @@ In contrast, the commonly-used Gaussian kernel exp( - (distance/h)**2 )
 is exceedingly sensitive to distance and to h.
     """
 
-#leafsize: The number of points at which the algorithm switches over to brute-force. Default: 10.
+# leafsize: The number of points at which the algorithm switches over to
+# brute-force. Default: 10.
 
-    def __init__(self, X, z, leafsize=10, stat=0): # scale=scaling factor for distances
+    def __init__(self, X, z, leafsize=10, stat=0):  # scale=scaling factor for distances
         assert len(X) == len(z), "len(X) %d != len(z) %d" % (len(X), len(z))
         self.tree = KDTree(X, leafsize=leafsize)  # build the tree
         self.z = z
         self.stat = stat
         self.wn = 0
-        self.wsum = None;
+        self.wsum = None
 
     def __call__(self, q, nnear=6, eps=0, p=1, weights=None):
-            # nnear nearest neighbours of each query point --
+        # nnear nearest neighbours of each query point --
         q = np.asarray(q)
         qdim = q.ndim
         if qdim == 1:
@@ -78,7 +81,8 @@ is exceedingly sensitive to distance and to h.
         if self.wsum is None:
             self.wsum = np.zeros(nnear)
 
-        self.distances, self.ix = self.tree.query( q, k=nnear, eps=eps ) #scipy.spatial.KDTree.query
+        self.distances, self.ix = self.tree.query(
+            q, k=nnear, eps=eps)  # scipy.spatial.KDTree.query
         interpol = np.zeros((len(self.distances),) + np.shape(self.z[0]))
         weight_factors = []  # list to store weight factors
         jinterpol = 0
@@ -93,12 +97,13 @@ is exceedingly sensitive to distance and to h.
                 if weights is not None:
                     w *= weights[ix]  # >= 0
                 w /= np.sum(w)
-                weight_factors.append(w)  # store the weight factors for each query point
+                # store the weight factors for each query point
+                weight_factors.append(w)
                 wz = np.dot(w, self.z[ix])
                 if self.stat:
                     self.wn += 1
                     self.wsum += w
             interpol[jinterpol] = wz
             jinterpol += 1
-        #return interpol, dist if qdim > 1 else interpol[0]
+        # return interpol, dist if qdim > 1 else interpol[0]
         return interpol, weight_factors if qdim > 1 else interpol[0]

@@ -1,4 +1,4 @@
-# Development Note (June 13, 24 version)
+# Development Note (Aug 22, 24 version)
 
 -  **Discussed the development direction on June 12th**
 ---
@@ -8,7 +8,7 @@
 
 
 ## Running file
-- hydromem.py (Argument file to run WEAD)
+- WEADS_Raster or WEADS_Point.py (Argument file to run WEAD)
   
 ## Main Python module/function files (src folders)
 - grd2dem.py (Convert ADCIRC unstructured mesh file to tiff file)
@@ -36,18 +36,11 @@
 - Pete must modify homogeneous calculation (bug of the codes.).
 
 ## Development (desirable)
-- Replace private module: **pyadcircmodules** -> Jin will start point based analysis
 - Compare Morris's Excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
-- ~~Read maxele.63 and create a max inundation map (Jin completed on Sep 5th).~~
-- Develop a point-based approach (Jin's summer plan, 2024). See, src_branch
 - Consider the climate and catastrophic aspects of WEADS development (Shabnam starts climate analysis and literature review).
-- ~~MEM 5 classifications in src/mem.py (Jin done on Aug 22)~~
-- ~~Pete modifies src/tidaldatums.py (avoid double for loops) ->~~ Jin and Chris will work on nanobind with parallelization.
-- ~~Jin will rework src/hyconn.py to appropriately classify land, water, intertidal zone.~~
-- Pete and Shabnam work on soil cohorts based on the NUMAR model approach.
+- Pete and Shabnam work on soil cohorts using the NUMAR model approach.
 
 ## Modifications (desirable)
-- ~~src/hyconn.py (currently used for loops and time-consuming + not sure about pond classification; Jin slightly modified the code Aug 19)~~
 
 ## Modifications (optional)
 - Read Netcdf outputs
@@ -71,93 +64,16 @@ WATTE classification (hydroMEM will also incorporate with WATTE)
 
 **Jin’s priority list**
 
-1. ~~Read current wetland marsh/mangrove distributions in src/mem.py~~
-2. ~~Modify the inundation level part (hydromem.py)~~
-3. ~~WATTE modification + Evaluate productivity and Inundation level map~~
-4. Point-based development
-5. Nanobind and parallelization
-6. ~~Check fort.13~~
+1. Nanobind and parallelization
+
 
 **Jin’s request order**
 
-1. ~~maxinundepth.63~~
-2. ~~Inundationdepth.tif (maxinundationdepth.63 -> tiff file)~~
-3. Refer to a chunk of code in the preprocessing.py script to read maxinundepth.63 into internal memory
 
 ## Pete's development
 ## Soil Cohorts ##
 ## Excluded **pyadcircmodule** dependency (src_branch folder: This folder will be deleted/merged later)
 
 ## Development, in no particular order
-- ~~Adjustment of Manning’s n for open-water conversion – DONE (based on everdried; see postprocessing.py)~~
-- ~~NWI classification is supportive for model initialization; however, how to evolve into the future with multi-type distribution? (Jin proposed a solution. Check it)~~
-
-## Variables, listed in Pythonic order
-0. idx, local (local index)
-1. idx, global (global index)
-2. x, geo (longitude)
-3. y, geo (latitude)
-4. x, cpp (easting)
-5. y, cpp (northing)
-6. z (elevation)
-7. n (Manning)
-8. ed (everdried)
-9. it (inundation time)
-10. mi (maximum inundation depth)
-11. mlw (mean low water)
-12. msl (mean sea level)
-13. mhw (mean high water)
-14. mlw, interp (mean low water, interpolated)
-15. mhw, interp (mean high water, interpolated)
-16. nwi (integer-valued National Wetlands Inventory)
-17. B (biomass)
-18. A (accretion)
-19. z-adj (elevation, adjusted)
-20. n-adj (Manning, adjusted)
-
-## Modules, listed in no particular order
-- numpy, math, sys, tqdm, time
-
-## Scripts, listed in order of execution with respective runtime (mm:ss) for TCBa
-1. preprocessing.py (ADCIRC or another model) - 04:26
-2. hydrodynamics.py (agnostic—points) - 09:56
-3. interpdatums.py (agnostic—points) - 35:42
-4. ecology.py(d) (agnostic—points) - 00:19
-5. postprocessing.py (ADCIRC or another model) - 01:25
-
-Total runtime: 51 minutes, 58 seconds
-
-TCB: 3,527,549 mesh nodes; 8 attributes; 23 tidal constituents; 3 static global outputs
-
-Bounding box set externally via lower-left corner (lon/lat) and upper-right corner (lon/lat)
-
-Three wetland types: salt marsh (regularly flooded); mangrove; irregularly flooded marsh
-
-Accounts for multi-type calculation of biomass and accretion with updating of elevation and Manning’s n
-
-## Files, listed according to type
-### Input (6, derived from present simulation)
-- fort.14
-- fort.13
-- fort.53
-- everdried.63
-- inundationtime.63
-- maxinundepth.63
-
-### Input (2)
-- fort.NWI.14 (initializes wetland type distribution)
-- ROI.pts (assigns bounding box for ROI—region of interest)
-
-### Intermediate (6)
-- filteredData.pts (clipped to bounding box)
-- filteredHarmAmp.pts (clipped to bounding box)
-- filteredHarmPha.pts (clipped to bounding box)
-- filteredTidalDatums.pts (clipped to bounding box)
-- filteredTidalDatumsIDW.pts (clipped to bounding box, intertidal points only)
-- filteredBiomassAccretion.pts (clipped to bounding box, intertidal points only)
-
-### Output (2, configured for subsequent simulation)
-- fort.dt.14
-- fort.dt.13
 
 

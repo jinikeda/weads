@@ -56,7 +56,7 @@ def hydro_classify(inputElevation, inputInundationTFile, outputClass, DEBUG=Fals
     print(" Read an tbathy (TB)")
     TB = np.loadtxt(inputElevation)  # domain_elevation?.txt
     # TBband = rasterTB.GetRasterBand(1)
-    Here need to read column 4: Jin June 27th, 2024
+    # Here need to read column 4: Jin June 27th, 2024
     TBBN = xxxx
 
     # if DEBUG:
@@ -80,7 +80,7 @@ def hydro_classify(inputElevation, inputInundationTFile, outputClass, DEBUG=Fals
     mask_intertidal = (accuracy < inunTBN) & (inunTBN < 1 - accuracy)
     mask_water = (1 - accuracy < inunTBN) & (inunTBN < 1 + accuracy)
     # out of domain
-    mask_outdomain = (TBBN == ndv) This part will not be needed. However, we will keep at this stage
+    # mask_outdomain = (TBBN == ndv) This part will not be needed. However, we will keep at this stage
 
     inunTBN[mask_land] = int(0)  # fully dried (land) region
     inunTBN[mask_intertidal] = int(1)  # intertidal region

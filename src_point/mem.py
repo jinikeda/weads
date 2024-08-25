@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: Ecology.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Aug 21, 2024
+# Last modified: Aug 24, 2024
 
 
 # ----------------------------------------------------------
@@ -11,7 +11,7 @@
 # Uses Inverse Distance Weighting to interpolate/extrapolote
 # tidal datums outside fully wet areas.
 
-# result = function(interpolateHarmonicsFile, InputvegetationFile, outputMEMFile + '.csv',inEPSG,outEPSG, deltaT=deltaT)
+# result = function(interpolateHarmonicsFile, inputvegetationFile, outputMEMFile + '.csv',inEPSG,outEPSG, deltaT=deltaT)
 # ----------------------------------------------------------
 
 ##########################################################################
@@ -70,7 +70,6 @@ biomass_coefficients = {
     "Texas_Coastal_Bend_mangrove": {"al": 1600, "bl": -17.7, "cl": -28016.0, "ar": 1600, "br": -17.7, "cr": -28016.0, "Dopt": 45.0}}
 
 # Need to add Optimum Elevation at least to run calculate_biomass_parabola
-##########################################################################
 
 ##########################################################################
 print("Input parameters for MEM")
@@ -328,7 +327,7 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         # Create a mask for different vegetation types
         mask_salt_marsh = (Point_VG == 8)
         mask_mangrove = (Point_VG == 9)
-        mask_irregular = (Point_VG == 20)  # try | (Point_VG == 8)
+        mask_irregular = (Point_VG == 20) | (Point_VG == 8)  # Since overwrap by salt marshes, include mask_salt_marsh into this mask
 
         print('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 

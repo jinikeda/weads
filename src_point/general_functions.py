@@ -196,7 +196,7 @@ def create_df2gdf(df, xy_list, drop_list, crs, output_file=None):
     return gdf
 
 
-def convert_gcs2coordinates(gdf, PRJ, Type_str):
+def convert_gcs2coordinates(gdf, PRJ, Type_str): # Type_str means convert the type of vector data.
     gdf_proj = gdf.to_crs(PRJ)
     if Type_str == "Point":
         gdf_proj["x_prj"] = gdf_proj.geometry.apply(lambda point: point.x)

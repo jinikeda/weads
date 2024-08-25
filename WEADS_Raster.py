@@ -36,8 +36,8 @@ def main(argv):
     # Create an ArgumentParser instance
     parser = argparse.ArgumentParser(description="Running WEAD simulation.")
 
-    rts = 3600.0
-    numIDWNeighbors = 12
+    tstep = 1800.0 # run time steps for tidal datum [seconds]
+    numIDWNeighbors = 12 # For idw interpolations
 
     # Add arguments
     parser.add_argument(
@@ -88,8 +88,8 @@ def main(argv):
     parser.add_argument(
         "--outputMEMRasterFile",
         type=str,
-        default="mem",
-        help="Output MEM raster file:HydroMEM.tif")
+        default="ecology",
+        help="Output MEM raster file:ecology.tif")
     parser.add_argument(
         "--outputMeshFile",
         type=str,
@@ -283,7 +283,7 @@ def main(argv):
             'harmonics.tif',
             'hydro_class.tif',
             'TidalDatums.tif',
-            rts)
+            tstep)
 
         src.basics.fileexists('TidalDatums.tif')
 

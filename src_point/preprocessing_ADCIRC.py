@@ -10,7 +10,6 @@
 # --- Load internal modules ---
 
 from .general_functions import *
-#from general_functions import *
 
 
 def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
@@ -35,14 +34,11 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     print(gdf.head(5))
 
     print("   Processing coordinate conversion...\n")
-    # Convert inEPSG(GCS) to outEPSG(target projection)
-    # This part should be provided from the parser file #### Jin June 27, 2024
-
-    #PRJ = "EPSG:" + str(outEPSG)
     PRJ = int(outEPSG)
     print("PRJ\t", PRJ)
     domain_prj = convert_gcs2coordinates(gdf, PRJ, None)
 
+    # User's option for plot the domain
     # domain_prj.plot()
     # plt.show()
 
@@ -64,9 +60,10 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     points_within_polygon, true_indices = filter_points_within_domain(
         points_prj, domain_prj)
     ADCIRC_nodes_domain = ADCIRC_nodes[true_indices]
-    np.savetxt("true_indices.txt", true_indices, fmt='%d')
+    # np.savetxt("true_indices.txt", true_indices, fmt='%d') # optional to turn on the output file
     print("number of nodes in the domain\t", len(ADCIRC_nodes_domain))
-    np.savetxt("tbathy.txt", ADCIRC_nodes_domain, fmt='%d\t%.8f\t%.8f\t%.8f')
+    inputElevation = "tbathy.txt"
+    np.savetxt(inputElevation, ADCIRC_nodes_domain, fmt='%d\t%.8f\t%.8f\t%.8f')
 
     ##########################################################################
     # --- Read attributes (inputMeshFile) ---
@@ -74,7 +71,7 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     mann, mann_indices, local_mann_indices, global_mann = read_fort13(
         inputAttrFile)
     mann_domain = mann[true_indices]
-    np.savetxt("mannings_n_at_sea_floor.txt", mann_domain, fmt='%f')
+    # np.savetxt("mannings_n_at_sea_floor.txt", mann_domain, fmt='%f') # optional to turn on the output file
     print("manning_indices\t", mann_indices)
 
     ##########################################################################
@@ -90,33 +87,6 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
         [inundationtime_domain[name] for name in inundationtime_domain.dtype.names])
     np.savetxt("inundationtime.txt", inundationtime_domain_2d, fmt='%d\t%.4f')
     ##########################################################################
-
-    # Pending to be implemented
-    # #--- Read everdried ---
-    # print("\n"); print("   Processing everdried...\n");
-    # myFile=open("everdried.63","r")
-    # myLine=myFile.readline()
-    # myLine=myFile.readline()
-    # myLine=myFile.readline()
-    # ed=np.ones((numNodes,1),dtype=float)
-    # for j in range(numNodes):
-    #     myLine=myFile.readline(); myRow=myLine.split(); ed[j][0]=float(myRow[1]);
-    # myFile.close()
-
-    ##########################################################################
-    # Pending to be implemented
-
-    # #--- Read maxinundepth ---
-    # print("   Processing maxinundepth...\n")
-    # myFile=open("maxinundepth.63","r")
-    # myLine=myFile.readline()
-    # myLine=myFile.readline()
-    # myLine=myFile.readline()
-    # mi=np.ones((numNodes,1),dtype=float)
-    # for j in range(numNodes):
-    #     myLine=myFile.readline(); myRow=myLine.split(); mi[j][0]=float(myRow[1]);
-    # myFile.close()
-
     ##########################################################################
     # --- Read harmonics (inputHarmonicsFile) ---
     ##########################################################################
@@ -127,10 +97,10 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     print(tidal_constituents)
     Harmonics_nodes_domain = Harmonics_nodes[true_indices]
     np.savetxt("harmonics_Freq.txt", tidal_frequencies, fmt='%.12f')
-    np.savetxt("harmonics_AMP.txt",
-               Harmonics_nodes_domain[:, :, 0], fmt='%.8f')
-    np.savetxt("harmonics_PHASE.txt",
-               Harmonics_nodes_domain[:, :, 1], fmt='%.4f')
+    # np.savetxt("harmonics_AMP.txt",
+    #            Harmonics_nodes_domain[:, :, 0], fmt='%.8f') # optional to turn on the output file
+    # np.savetxt("harmonics_PHASE.txt",
+    #            Harmonics_nodes_domain[:, :, 1], fmt='%.4f') # optional to turn on the output file
 
     ##########################################################################
     # --- Save the filtered nodes and attributes in the domain as a text file (domain_inputs.csv) ---
@@ -173,7 +143,6 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     print(inunT)
 
     print(" Read an tbathy (TB)")
-    inputElevation = "tbathy.txt"
     TB = np.loadtxt(inputElevation)
 
     # compare inundationtime and tbathy and Clean up values to only have 1 and
@@ -200,7 +169,7 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     TB[mask_outdomain, 3] = int(ndv)
 
     # Save the modified TB array to a file
-    np.savetxt("hydro_class.txt", TB, fmt='%d\t%.8f\t%.8f\t%d')
+    # np.savetxt("hydro_class.txt", TB, fmt='%d\t%.8f\t%.8f\t%d') # optional to turn on the output file
 
     # Reoder the columns of the DataFrame later Jin July 3, 2024
     df["HydroClass"] = TB[:, 3]

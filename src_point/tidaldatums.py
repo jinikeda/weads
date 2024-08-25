@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-# File: hydrodynamics.py
+# File: tidalDatums.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Aug 21, 2024
+# Last modified: Aug 22, 2024
 
 # ----------------------------------------------------------
 # F U N C T I O N    T I D A L D A T U M S
@@ -10,8 +10,11 @@
 # Computes tidal datums of mean low water (MLW),
 # mean sea level (MSL), and mean high water (MHW)
 # for all nodes hydraulically connected to the ocean.
-# result = function(inputHarmonicsReadMe,inputRasterHarmonics,inputRasterHyControl,outputRasterControl,tstep=900.0)
-
+# result = function(domainIOFile,
+#             inputHarmonicFreqFile,
+#             outputHarmonicsFile,
+#             tstep=1800.0)
+# tstep (OPTIONAL 900-3600 [sec] would be good, DEFAULT = 1800 SECONDS)
 
 ##########################################################################
 # --- Load internal modules ---
@@ -57,27 +60,42 @@ def mean_low_water(data):
 
 
 def tidaldatums(domainIOFile, inputHarmonicsFile,
-                outputHarmonicsFile, tstep=3600.0):
-    # --- Initialize code ---
+                outputHarmonicsFile, tstep=1800.0):
+
     start_time = time.time()
-    print("\n")
-    print("LAUNCH: Launching script!\n")
+
+    '''
+    print ("")
+    print ("")
+    print ("----------------------------------------------------")
+    print ("--- LAUNCHING HYDRO-MEM IN PYTHON - TIDAL DATUMS ---")
+    print ("----------------------------------------------------")
+    print ("")
+    '''
+
+    # --- GLOBAL PARAMETERS ---
+    ndv = -99999.0  # No data value (ndv) using ADCIRC convention
+    T = 30.0  # Tidal period [days]
+    dt = tstep  # Time step [seconds]
+    N = int((86400 * T / dt) + 1)  # Number of time steps
+    t = np.cumsum(dt * np.ones((N, 1), dtype=float), axis=0)  # Time vector
 
     ##########################################################################
     # --- Read harmonics (inputHarmonicsFile) ---
     ##########################################################################
     print("   Processing scatter points...\n")
+
     # Read the CSV file
     df = pd.read_csv(domainIOFile)
 
     # Print the DataFrame
     print(df.columns)
     print(df.shape)
+    numPoints = df.shape[0]  # Number of points within the domain
 
-    # --- Read harWmomics correspondent with scatter ---
+    # --- Read harmomics correspondent with scatter ---
     print("\n")
     print("   Processing harmonics...\n")
-    # inputHarmonicsFile = "harmonics_Freq.txt" # Read the harmonics file
     lines = read_text_file(inputHarmonicsFile)
 
     numHarm = len(lines)
@@ -90,24 +108,14 @@ def tidaldatums(domainIOFile, inputHarmonicsFile,
     print("\n")
     print("   Calculating tidal datums for wetted zones...\n")
 
-    numPoints = df.shape[0]  # Number of points within the domain
-
-    T = 30.0  # Tidal period [days]
-    dt = tstep  # Time step [seconds]
-    N = int((86400 * T / dt) + 1)  # Number of time steps
-    t = np.cumsum(dt * np.ones((N, 1), dtype=float), axis=0)  # Time vector
-    ndv = -99999.0  # No data value (ndv) using ADCIRC convention
-
     # Initialize mlw, msl, and mhw arrays with NoData values
     mlw = np.full((numPoints, 1), ndv, dtype=float)
     msl = np.full((numPoints, 1), ndv, dtype=float)
     mhw = np.full((numPoints, 1), ndv, dtype=float)
 
-    # Get the column index for 'inundationtime'
+    # Get the column index for 'inundationtime', 'STEADY_amp', and 'STEADY_phase'
     inundationtime_index = df.columns.get_loc('inundationtime')
-    # Get the column index for 'STEADY_amp'
     amp_index = df.columns.get_loc('STEADY_amp')
-    # Get the column index for 'STEADY_phase'
     phase_index = df.columns.get_loc('STEADY_phase')
     print('amp_index:', amp_index, 'phase_index:', phase_index)
 
@@ -138,7 +146,7 @@ def tidaldatums(domainIOFile, inputHarmonicsFile,
             mlw[j] = ndv
             mhw[j] = ndv
 
-    # Add 'msl', 'mlw', and 'mhw' to the DataFrame
+    # Add 'msl', 'mlw', and 'mhw' to the DataFrame (domain_inputs.csv)
     df['msl'] = msl.flatten()
     df['mlw'] = mlw.flatten()
     df['mhw'] = mhw.flatten()
@@ -151,7 +159,9 @@ def tidaldatums(domainIOFile, inputHarmonicsFile,
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    # Print the elapsed time
-    print("Done water level calculation")
-    print("Time to Compute: \t\t\t", elapsed_time, " seconds")
-    print("Job Finished ʕ •ᴥ•ʔ")
+    # --- PRINT TO SCREEN ---
+    print("\n----------------------------------------------------")
+    print("------------- COMPLETED - TIDAL DATUMS -------------")
+    print("----------------------------------------------------\n")
+    print(f"Time to Compute: {elapsed_time} seconds")
+    print("Job Finished ʕ •ᴥ•ʔ\n")

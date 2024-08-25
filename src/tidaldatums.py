@@ -1,16 +1,28 @@
 #!/usr/bin/python3
 # File: tidalDatums.py
-# Name: Peter Bacopoulos, Jin Ikeda
-# Last modified: March 8, 2024
+# Developer:  Peter Bacopoulos & Jin Ikeda
+# Last modified: Aug 22, 2024
+
+# ----------------------------------------------------------
+# F U N C T I O N    T I D A L D A T U M S
+# ----------------------------------------------------------
+#
+# Computes tidal datums of mean low water (MLW),
+# mean sea level (MSL), and mean high water (MHW)
+# for all nodes hydraulically connected to the ocean.
+# result = function(inputHarmonicsReadMe,inputRasterHarmonics,inputRasterHyControl,outputRasterControl,tstep=1800.0)
+# tstep (OPTIONAL 900-3600 [sec] would be good, DEFAULT = 1800 SECONDS)
+# ----------------------------------------------------------
+
 # Command line: python tidalDatums.py -i harmonics.README -s harmonics.img
 # -d HyControl.img -o tidalDatums.img
+
+##########################################################################
+# --- Load internal modules ---
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
 import src.basics
-
-
-# ----------------------------------------------------------
 
 def astronomic_tide_resynthesis(time, omega, phase, amplitude):
     nc = len(amplitude)
@@ -60,18 +72,11 @@ def mean_low_water(data):
     return MLW
 
 
-# ----------------------------------------------------------
-# F U N C T I O N    T I D A L D A T U M S
-# ----------------------------------------------------------
-#
-# Computes tidal datums of mean low water (MLW),
-# mean sea level (MSL), and mean high water (MHW)
-# for all nodes hydraulically connected to the ocean.
-# result = function(inputHarmonicsReadMe,inputRasterHarmonics,inputRasterHyControl,outputRasterControl,tstep=900.0)
-# tstep (OPTIONAL, DEFAULT = 900 SECONDS)
-# ----------------------------------------------------------
 def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics,
-                inputRasterHyControl, outputRasterControl, tstep=900.0):
+                inputRasterHyControl, outputRasterControl, tstep=1800.0):
+
+    start_time = time.time()
+
     # ----------------------------------------------------------
     # Check that input files exist
     # ----------------------------------------------------------
@@ -90,24 +95,12 @@ def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics,
 
     # --- GLOBAL PARAMETERS ---
     ndv = -99999.0  # No data value (ndv) using ADCIRC convention
-    tdfin = 15.0   # Total length of resynthesis in units of days
+    T = 30.0  # Tidal period [days]
+    dt = tstep  # Time step [seconds]
+    N = int((86400 * T / dt) + 1)  # Number of time steps
+    t = np.cumsum(dt * np.ones((N, 1), dtype=float), axis=0)  # Time vector
 
-    # --- READ INPUTS ---
-    #print ("")
-    #print ("Reading rasters")
-
-    # htdfin=int(tdfin*2)
-    nstep = int((86400 * tdfin / tstep) + 1)
-    # dww=int(24*3600/tstep)
-    # hdww=int(dww/2)
-    t = tstep * np.ones((nstep, 1), dtype=float)
-    t = np.cumsum(t, axis=0)
-
-    # --- INITIALIZE ARRAYS ---
-    # hdhlwt=np.zeros((hdww,1),dtype=float)
-    # hdhlwu=np.zeros((int(htdfin),1),dtype=float)
-    # hdhlwd=np.zeros((int(htdfin),1),dtype=float)
-
+    # Read Harmonic data
     harmonics = dict()
     f = open(inputHarmonicsReadMe, 'r')
     for line in f:
@@ -175,6 +168,7 @@ def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics,
         # (this part is time consuming)
         wl = astronomic_tide_resynthesis(
             t, omega, pha[kk, k, :], amp[kk, k, :])
+
         mlw[kk, k] = mean_low_water(wl)
         msl[kk, k] = np.average(wl)
         mhw[kk, k] = mean_high_water(wl)
@@ -210,15 +204,14 @@ def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics,
     #print ("  Output raster written successfully")
     #print ("")
 
-    # --- PRINT TO SCREEN ---
-    '''
-    print ("")
-    print ("----------------------------------------------------")
-    print ("--- COMPLETED HYDRO-MEM IN PYTHON - TIDAL DATUMS ---")
-    print ("----------------------------------------------------")
-    print ("")
-    print ("")
+    ##########################################################################
+    # Calculate the elapsed time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
 
-    print ("")
-    print ("")
-    '''
+    # --- PRINT TO SCREEN ---
+    print("\n----------------------------------------------------")
+    print("------------- COMPLETED - TIDAL DATUMS -------------")
+    print("----------------------------------------------------\n")
+    print(f"Time to Compute: {elapsed_time} seconds")
+    print("Job Finished ʕ •ᴥ•ʔ\n")

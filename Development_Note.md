@@ -28,15 +28,18 @@
 # To-do-list
 
 ## Development (mandatory)
+**src_point will be main source code and eliminate src_raster approach
+  - rasterize (elimiate sigularity image file)
 **src/mem.py**
   - ~~Read current wetland marsh/mangrove distributions (Jin).~~
   - ~~Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
   - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif NWI.py is a currently not elegant.
+
   
-- Pete must modify homogeneous calculation (bug of the codes.).
 
 ## Development (desirable)
 - Compare Morris's Excel VBA sheet (Pete: https://github.com/cekees/weads/tree/main/sandbox)
+- Modify average_horizontal_eddy_viscosity_in_sea_water_wrt_depth based on update fort.14
 - Consider the climate and catastrophic aspects of WEADS development (Shabnam starts climate analysis and literature review).
 - Pete and Shabnam work on soil cohorts using the NUMAR model approach.
 

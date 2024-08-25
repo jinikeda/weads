@@ -32,8 +32,8 @@ def main(argv):
     # Create an ArgumentParser instance
     parser = argparse.ArgumentParser(description="Running point-based WEADS simulation.")
 
-    rts = 3600.0
-    numIDWNeighbors = 12
+    tstep = 1800.0 # ime steps for tidal datum [seconds]
+    numIDWNeighbors = 12 # For idw interpolations
 
     # Add arguments
     parser.add_argument(
@@ -72,8 +72,8 @@ def main(argv):
     parser.add_argument(
         "--outputMEMFile",
         type=str,
-        default="mem",
-        help="Output MEM file:mem.csv")
+        default="ecology",
+        help="Output MEM file:ecology.csv")
     parser.add_argument(
         "--outputMeshFile",
         type=str,
@@ -103,7 +103,7 @@ def main(argv):
         type=str,
         help="Use inundationtime file for running inunT <inundationtime.63>")
     parser.add_argument(
-        "--InputvegetationFile",
+        "--inputvegetationFile",
         type=str,
         default=None,
         help="Path to vegetation file <*.tif>")
@@ -134,7 +134,7 @@ def main(argv):
     outEPSG = args.outEPSG
     deltaT = args.deltaT
     slr = args.slr
-    InputvegetationFile = args.InputvegetationFile
+    inputvegetationFile = args.inputvegetationFile
 
     inEPSG = int(inEPSG)
     outEPSG = int(outEPSG)
@@ -157,6 +157,7 @@ def main(argv):
     inputHarmonicFreqFile = "harmonics_Freq.txt"
     outputHarmonicsFile = "domain_tide.csv"
     interpolateHarmonicsFile = "tidal_prj.csv"
+    outputvegetationFile = 'domain_nwi.csv'
 
     if all_flag:
         preprocessing_flag = True
@@ -165,7 +166,7 @@ def main(argv):
         postprocessing_flag = True
 
     if preprocessing_flag:  # Read hydrodynamics
-        print('\n' + '\tReading input hydrodynamics...')
+        print('\nReading input hydrodynamics...')
 
         src_point.basics.fileexists(inputMeshFile)
         src_point.basics.fileexists(inputShapeFile)
@@ -191,7 +192,7 @@ def main(argv):
             domainIOFile,
             inputHarmonicFreqFile,
             outputHarmonicsFile,
-            rts)
+            tstep)
         src_point.tidaldatumsidw(
             outputHarmonicsFile,
             interpolateHarmonicsFile,
@@ -204,21 +205,20 @@ def main(argv):
 
         src_point.basics.fileexists(interpolateHarmonicsFile)
 
-        if InputvegetationFile:  # Organize vegetation file
+        if inputvegetationFile:  # Organize vegetation file
             print('\n' + '\tOrganizing vegetation file...')
-            src_point.basics.fileexists(InputvegetationFile)
+            src_point.basics.fileexists(inputvegetationFile)
             # First simulation
             skip_raster_extracting_Flag = False
             # After first simulation
             # skip_raster_extracting_Flag = True
             spread_flag = True
-            OutputvegetationFile = 'domain_nwi.csv'
 
             src_point.process_vegetation_file(
-                InputvegetationFile,
+                inputvegetationFile,
                 skip_raster_extracting_Flag,
                 spread_flag,
-                OutputvegetationFile,
+                outputvegetationFile,
                 inEPSG,
                 outEPSG,
                 deltaT=deltaT)
@@ -226,7 +226,7 @@ def main(argv):
             print('\n' + '\tUse vegetation mapping...')
             src_point.mem(
                 interpolateHarmonicsFile,
-                OutputvegetationFile,
+                outputvegetationFile,
                 outputMEMFile + '.csv',
                 inEPSG,
                 outEPSG,
@@ -236,7 +236,7 @@ def main(argv):
             print('\n' + '\tNo vegetation mapping references...')
             src_point.mem(
                 interpolateHarmonicsFile,
-                InputvegetationFile,
+                inputvegetationFile,
                 outputMEMFile + '.csv',
                 inEPSG,
                 outEPSG,

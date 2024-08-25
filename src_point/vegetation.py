@@ -1,13 +1,24 @@
 #!/usr/bin/python3
-# File: nwi.py
-# coding: utf-8
+# File: vegetation.py
 # Gdal reading,extract raster values,potential expansion, etc.
 # Developed by the Center for Computation & Technology and Center for Coastal Ecosystem Design Studio at Louisiana State University (LSU).
 # Developer: Jin Ikeda
-# Last modified July 15, 2024
+# Last modified Aug 24, 2024
 
-#######
-# Caution: Segmentation fault might happen when read a large tiff file
+########################################################################################################################
+### Caution: Segmentation fault might happen when read a large tiff file
+########################################################################################################################
+
+# ----------------------------------------------------------
+# F U N C T I O N    P R O C E S S V E G E T A T I O N F I L E
+# ----------------------------------------------------------
+#
+# Computes tidal datums of mean low water (MLW),
+# mean sea level (MSL), and mean high water (MHW)
+# for all nodes hydraulically connected to the ocean.
+# result = process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
+#                             spread_flag, outputvegetationFile, inEPSG, outEPSG, deltaT=5)
+# deltaT is user defined time on the argument file.
 
 # --- Load internal modules ---
 from .general_functions import *
@@ -22,7 +33,7 @@ print("----------------------------------------------------------------------\n"
 ndv = -99999.0  # No data value (ndv) using ADCIRC convention
 ndv_byte = 128
 
-### Function #############################################################
+### Functions #############################################################
 
 
 def extract_point_values(raster_path, points_gdf, points_path):
@@ -91,19 +102,20 @@ def apply_priority_order(df, indices_values, output_file):
     return df
 
 
-def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
-                            spread_flag, OutputvegetationFile, inEPSG, outEPSG, deltaT=5):
+def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
+                            spread_flag, outputvegetationFile, inEPSG, outEPSG, deltaT=5):
 
     start_time = time.time()
 
-    #OutputvegetationFile = 'domain_nwi.csv'
-    # potential expansion speed
-    speed = 40  # [m/year]
+    #outputvegetationFile = 'domain_nwi.csv'
+
+    ### potential expansion speed
+    speed = 40  # [m/year]   # User defined values
     radius = speed * deltaT  # [m per deltaT years calculation]
     print(
         'The allowable range of expansion speed per simulation is',
         radius,
-        '[m-5yrs]\n')
+        '[m-deltaT-yrs]\n')
 
     ### Step 2 ###########################################################
     print("\n----------------------------------------------------------------------")
@@ -111,11 +123,11 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
     print("----------------------------------------------------------------------\n")
     ######################################################################
 
-    # Input raster data
-    print(InputvegetationFile)
+    # Input raster data (.tiff)
+    print(inputvegetationFile)
 
     prj, rows, cols, transform, RV, _ = gdal_reading(
-        InputvegetationFile)  # Reading a raster file
+        inputvegetationFile)  # Reading a raster file
     print('row and cols: ', np.shape(RV))
 
     xy_list = ['x', 'y']
@@ -133,29 +145,29 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
         print("Step 3.: Reprojection for input points")
         print("----------------------------------------------------------------------\n")
         ######################################################################
-        # NEED to make a function later
 
         df = pd.read_csv("domain_inputs.csv")
         print(df.shape, df.columns, df.dtypes)
 
         df = df.loc[:, ['node', 'x', 'y', 'z']]
-        df['NWI'] = ndv_byte
+        df['NWI'] = ndv_byte # add no_values
 
         # Create a GeoDataFrame for filtering
         gdf_ADCIRC = create_df2gdf(df, xy_list, drop_list, crs_points, None)
-        points_prj = convert_gcs2coordinates(gdf_ADCIRC, PRJ, "Point")
+        points_prj = convert_gcs2coordinates(gdf_ADCIRC, PRJ, "Point") # Convert point-based datasets
         print(points_prj.head(20))
 
         process_file = 'domain_nwi_original.csv'
 
+        # extract values from raster file
         NWI_values, NWI_df = extract_point_values(
-            InputvegetationFile, points_prj, process_file)
+            inputvegetationFile, points_prj, process_file)
 
     else:
 
         # reading simulated mem file
-        df = pd.read_csv('previous_mem.csv')
-        df.rename(columns={'new_NWI': 'NWI'}, inplace=True)
+        df = pd.read_csv('previous_ecology.csv') # for sequential running
+        df.rename(columns={'new_NWI': 'NWI'}, inplace=True) # rename and use as original values
         NWI_values = df['NWI'].values
 
         ### Step 3 ###########################################################
@@ -163,7 +175,6 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
         print("Step 3.: Reprojection for input points")
         print("----------------------------------------------------------------------\n")
         ######################################################################
-        # NEED to make a function later
 
         NWI_df = df.loc[:, ['node', 'x', 'y', 'z', 'NWI']]
         print(NWI_df.columns)
@@ -174,7 +185,7 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
         points_prj = convert_gcs2coordinates(gdf_ADCIRC, PRJ, "Point")
         print(points_prj.head(20))
 
-    if spread_flag == True:
+    if spread_flag == True: # calculate vegetation expansions
 
         Point_x = points_prj[['x_prj']]
         Point_y = points_prj[['y_prj']]
@@ -203,10 +214,10 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
         # mask3 = (MG != 1) & (SRF != 1) & (SIRF == 1)
 
         NWI_df = apply_priority_order(NWI_df, [(SIRF_indices, 20), (SRF_indices, 8), (
-            MG_indices, 9)], OutputvegetationFile)  # order from low to high priority
+            MG_indices, 9)], outputvegetationFile)  # order from low to high priority and save as a single csv file
 
     if spread_flag == False:
-        shutil.copy(process_file, OutputvegetationFile)
+        shutil.copy(process_file, outputvegetationFile)
 
     print('The NWI data has been saved')
 
@@ -220,5 +231,5 @@ def process_vegetation_file(InputvegetationFile, skip_raster_extracting_Flag,
 
 ##########################################################################
 # internal command
-# process_vegetation_file('NWI_TX_wetlands4m.tif', False,True,deltaT=5.0) #process_vegetation_file(InputvegetationFile,skip_raster_extracting_Flag,spread_flag,deltaT=5):
+# process_vegetation_file('NWI_TX_wetlands4m.tif', False,True,deltaT=5.0) #process_vegetation_file(inputvegetationFile,skip_raster_extracting_Flag,spread_flag,deltaT=5):
 # process_vegetation_file('NWI_TX_wetlands.tif', False, True, deltaT=5.0) #

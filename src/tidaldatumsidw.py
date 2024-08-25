@@ -1,6 +1,6 @@
 #!/usr/bin/python3
-# File: tidalDatumsIDW.py
-# Name: Peter Bacopoulos, Matthew V. Bilskie
+# File: tidaldatumsidw.py
+# Developer: Peter Bacopoulos & Matthew V. Bilskie
 # Date: August 20, 2021
 # Command line: python tidalDatumsIDW.py -i HyControl.img -s
 # tidalDatums.img -o tidalDatumsIDW.img
@@ -26,13 +26,17 @@ from scipy.spatial import KDTree
 # result = function(inputRasterHyControl,inputRasterTidalDatums,\
 #                   outputRaster,numNeighbors = 12)
 # ----------------------------------------------------------
+
 def tidaldatumsidw(inputRasterHyControl, inputRasterTidalDatums,
                    outputRaster, numNeighbors=12):
+
+    start_time = time.time()
+
     '''
     print ("")
     print ("")
     print ("--------------------------------------------------------")
-    print ("--- LAUNCHING HYDRO-MEM IN PYTHON - TIDAL DATUMS IDW ---")
+    print ("-------------- LAUNCHING TIDAL DATUMS IDW --------------")
     print ("--------------------------------------------------------")
     print ("")
     '''
@@ -180,12 +184,13 @@ def tidaldatumsidw(inputRasterHyControl, inputRasterTidalDatums,
     #print ("  Output raster written successfully")
     #print ("")
 
+    ##########################################################################
+    # Calculate the elapsed time
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
     # --- PRINT TO SCREEN ---
-    '''
-    print ("")
-    print ("--------------------------------------------------------")
-    print ("--- COMPLETED HYDRO-MEM IN PYTHON - TIDAL DATUMS IDW ---")
-    print ("--------------------------------------------------------")
-    print ("")
-    print ("")
-    '''
+    print("\n----------------------------------------------------")
+    print("----------- COMPLETED - TIDAL DATUMS IDW -----------")
+    print("----------------------------------------------------\n")
+    print(f"Time to Compute: {elapsed_time} seconds")

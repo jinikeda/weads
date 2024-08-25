@@ -28,13 +28,10 @@
 # To-do-list
 
 ## Development (mandatory)
-**src_point will be main source code and eliminate src_raster approach
+**src_point will be main source code and eliminate src_raster approach**
   - rasterize (elimiate sigularity image file)
 **src/mem.py**
-  - ~~Read current wetland marsh/mangrove distributions (Jin).~~
-  - ~~Jin made a distribution mapping using src/nwi.py and completed a multi-species option on Sep 3.~~
   - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif NWI.py is a currently not elegant.
-
   
 
 ## Development (desirable)

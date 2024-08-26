@@ -195,16 +195,16 @@ def main(argv):
     if rasterize_flag:  # Create TIF images
         print('\n' + '\tCreating TIF images...')
 
-        src.basics.fileexists(inputMeshFile)
-        src.basics.fileexists(inputShapeFile)
-        src.basics.fileexists(inputEverdriedFile)
-        src.basics.fileexists(inputHarmonicsFile)
-        src.basics.fileexists(inputInundationTFile)
+        src_raster.basics.fileexists(inputMeshFile)
+        src_raster.basics.fileexists(inputShapeFile)
+        src_raster.basics.fileexists(inputEverdriedFile)
+        src_raster.basics.fileexists(inputHarmonicsFile)
+        src_raster.basics.fileexists(inputInundationTFile)
 
-        src.grd2dem(inputMeshFile, inputMeshFile, inputShapeFile,
+        src_raster.grd2dem(inputMeshFile, inputMeshFile, inputShapeFile,
                     'tbathy', inEPSG, outEPSG, gridSize, -1)
-        # src.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
-        src.grd2dem(
+        # src_raster.grd2dem(inputMeshFile,inputEverdriedFile,inputShapeFile,'everdried',inEPSG,outEPSG,gridSize,1,1,True)
+        src_raster.grd2dem(
             inputMeshFile,
             inputAttrFile,
             inputShapeFile,
@@ -213,7 +213,7 @@ def main(argv):
             outEPSG,
             gridSize,
             1)
-        src.grd2dem(
+        src_raster.grd2dem(
             inputMeshFile,
             inputHarmonicsFile,
             inputShapeFile,
@@ -222,7 +222,7 @@ def main(argv):
             outEPSG,
             gridSize,
             1)
-        src.grd2dem(
+        src_raster.grd2dem(
             inputMeshFile,
             inputInundationTFile,
             inputShapeFile,
@@ -236,8 +236,8 @@ def main(argv):
 
         if inundationdepthFile:  # Run Inundation calculation
             print('\n' + '\tMake a raster of maximum inundation depth...')
-            src.basics.fileexists(inundationdepthFile)
-            src.grd2dem(
+            src_raster.basics.fileexists(inundationdepthFile)
+            src_raster.grd2dem(
                 inputMeshFile,
                 inundationdepthFile,
                 inputShapeFile,
@@ -252,20 +252,20 @@ def main(argv):
     if hyconn_flag:  # Create TIF of hydraulically connected area
         print('\n' + '\tComputing hydraulic connectivity...')
 
-        src.basics.fileexists('tbathy.tif')
-        src.basics.fileexists('everdried.tif')
+        src_raster.basics.fileexists('tbathy.tif')
+        src_raster.basics.fileexists('everdried.tif')
 
-        src.hyconn('tbathy.tif', 'everdried.tif', 'hyconn.tif', False)
+        src_raster.hyconn('tbathy.tif', 'everdried.tif', 'hyconn.tif', False)
 
     if inunT_flag:  # Create TIF of hydraulically connected area
         print(
             '\n' +
             '\tComputing land classifcation and thier hydraulic connectivity...')
 
-        src.basics.fileexists('tbathy.tif')
-        src.basics.fileexists('inundationtime.tif')
+        src_raster.basics.fileexists('tbathy.tif')
+        src_raster.basics.fileexists('inundationtime.tif')
 
-        src.hydro_classify(
+        src_raster.hydro_classify(
             'tbathy.tif',
             'inundationtime.tif',
             'hydro_class.tif',
@@ -275,19 +275,19 @@ def main(argv):
 
         print('\n' + '\tComputing tidal datums...')
 
-        src.basics.fileexists('harmonics.tif')
-        src.basics.fileexists('hydro_class.tif')
+        src_raster.basics.fileexists('harmonics.tif')
+        src_raster.basics.fileexists('hydro_class.tif')
 
-        src.tidaldatums(
+        src_raster.tidaldatums(
             'harmonics.README',
             'harmonics.tif',
             'hydro_class.tif',
             'TidalDatums.tif',
             tstep)
 
-        src.basics.fileexists('TidalDatums.tif')
+        src_raster.basics.fileexists('TidalDatums.tif')
 
-        src.tidaldatumsidw(
+        src_raster.tidaldatumsidw(
             'hydro_class.tif',
             'TidalDatums.tif',
             'TidalDatums_IDW.tif',
@@ -296,14 +296,14 @@ def main(argv):
     if mem_flag:  # Run MEM
         print('\n' + '\tRunning MEM...')
 
-        src.basics.fileexists('tbathy.tif')
-        src.basics.fileexists('hydro_class.tif')
-        src.basics.fileexists('TidalDatums_IDW.tif')
+        src_raster.basics.fileexists('tbathy.tif')
+        src_raster.basics.fileexists('hydro_class.tif')
+        src_raster.basics.fileexists('TidalDatums_IDW.tif')
 
         if vegetationFile:  # Organize vegetation file
             print('\n' + '\tOrganizing vegetation file...')
-            src.basics.fileexists(vegetationFile)
-            src.nwi.read_tif(
+            src_raster.basics.fileexists(vegetationFile)
+            src_raster.nwi.read_tif(
                 vegetationFile,
                 outEPSG,
                 gridSize,
@@ -317,12 +317,12 @@ def main(argv):
                 print("Could not find " + Domain_raster)
                 sys.exit(1)
             else:
-                src.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif', Domain_raster,
+                src_raster.mem('hydro_class.tif', 'tbathy.tif', 'TidalDatums_IDW.tif', Domain_raster,
                         outputMEMRasterFile + '.tif', deltaT=deltaT)
 
         else:  # Run MEM without vegetation
             print('\n' + '\tNo vegetation mapping references...')
-            src.mem(
+            src_raster.mem(
                 'hydro_class.tif',
                 'tbathy.tif',
                 'TidalDatums_IDW.tif',
@@ -334,10 +334,10 @@ def main(argv):
     if adc2rast_flag:
         # 3 is the annual accreation rate on MEM (m/yr). Caution: -1 is the
         # multiplier (for ADCIRC file)
-        src.rast2adc(inputMeshFile, outputMeshFile,
+        src_raster.rast2adc(inputMeshFile, outputMeshFile,
                      outputMEMRasterFile + '.tif', inEPSG, 3, -deltaT)
         print('Finished new fort.14')
-        src.update_nodal_attributes(inputMeshFile, outputMEMRasterFile + '.tif',
+        src_raster.update_nodal_attributes(inputMeshFile, outputMEMRasterFile + '.tif',
                                     inputAttrFile, outputAttrFile,
                                     inEPSG, slr, 6)
         print('Finished new fort.13')

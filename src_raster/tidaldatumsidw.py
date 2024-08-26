@@ -115,7 +115,7 @@ def tidaldatumsidw(inputRasterHyControl, inputRasterTidalDatums,
         for kk in range(0, rasterHC.RasterYSize):
             # Only interpolate across the LAND (0) and intertidal (1) regions
             if (-0.5 <= hc[kk][k]) & (hc[kk][k] <= 1.5):
-                px, py = src.raster.pixel2coord(
+                px, py = src_raster.raster.pixel2coord(
                     k, kk, rasterHC)  # x,y we want to interpolate to
                 # Find the nearest neighbors
                 dd, ii = tree.query([px, py], numNeighbors)
@@ -130,7 +130,7 @@ def tidaldatumsidw(inputRasterHyControl, inputRasterTidalDatums,
 
                 for i in range(0, numNeighbors):
                     # Find the col,row for the ith nearest neighbor
-                    c, r = src.raster.coord2pixel(
+                    c, r = src_raster.raster.coord2pixel(
                         pts[ii[i]][0], pts[ii[i]][1], rasterTD)
 
                     # Get the value

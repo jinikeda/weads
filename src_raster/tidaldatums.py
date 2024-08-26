@@ -81,9 +81,9 @@ def tidaldatums(inputHarmonicsReadMe, inputRasterHarmonics,
     # ----------------------------------------------------------
     # Check that input files exist
     # ----------------------------------------------------------
-    src.basics.fileexists(inputHarmonicsReadMe)
-    src.basics.fileexists(inputRasterHarmonics)
-    src.basics.fileexists(inputRasterHyControl)
+    src_raster.basics.fileexists(inputHarmonicsReadMe)
+    src_raster.basics.fileexists(inputRasterHarmonics)
+    src_raster.basics.fileexists(inputRasterHyControl)
 
     '''
     print ("")

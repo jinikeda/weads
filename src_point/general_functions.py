@@ -154,7 +154,7 @@ def read_fort53(inputHarmonicsFile):
     Harmonics_nodes = np.zeros((nN, numHarm, 2), dtype=float)
 
     for i in range(nN):
-        #print('check',lines[skip_index3 + 1 + i * (numHarm + 1)].split())
+        # print('check',lines[skip_index3 + 1 + i * (numHarm + 1)].split())
         for ii in range(numHarm):
             # skip before EMAGT(k,j), PHASEDE(k,j) here number of node is
             # skipped.
@@ -162,7 +162,7 @@ def read_fort53(inputHarmonicsFile):
                                i * (numHarm + 1) + ii].split()
             Harmonics_nodes[i][ii][0] = float(AMP)
             Harmonics_nodes[i][ii][1] = float(PHASE)
-            #print(ii, Harmonics_nodes[i][ii][0], Harmonics_nodes[i][ii][1])
+            # print(ii, Harmonics_nodes[i][ii][0], Harmonics_nodes[i][ii][1])
 
     return Harmonics_nodes, nN, numHarm, tidal_frequncies, tidal_constitunents
 

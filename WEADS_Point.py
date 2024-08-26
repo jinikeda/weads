@@ -32,8 +32,8 @@ def main(argv):
     # Create an ArgumentParser instance
     parser = argparse.ArgumentParser(description="Running point-based WEADS simulation.")
 
-    tstep = 1800.0 # ime steps for tidal datum [seconds]
-    numIDWNeighbors = 12 # For idw interpolations
+    tstep = 1800.0  # Calculate time steps for tidal datum [seconds]
+    numIDWNeighbors = 12  # For idw interpolations
 
     # Add arguments
     parser.add_argument(

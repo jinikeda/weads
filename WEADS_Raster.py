@@ -9,7 +9,7 @@
 
 import os
 import argparse
-import src
+import src_raster
 import sys
 import time
 

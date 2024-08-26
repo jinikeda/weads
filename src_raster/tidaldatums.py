@@ -22,7 +22,8 @@
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
-import src.basics
+import src_raster.basics
+import time
 
 def astronomic_tide_resynthesis(time, omega, phase, amplitude):
     nc = len(amplitude)

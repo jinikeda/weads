@@ -12,10 +12,10 @@
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
-import src.raster
+import src_raster.raster
 import lidario as lio
 from scipy.spatial import KDTree
-
+import time
 
 # ----------------------------------------------------------
 # F U N C T I O N	T I D A L D A T U M S I D W

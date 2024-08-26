@@ -348,7 +348,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         # Create a mask for different vegetation types
         mask_salt_marsh = (RV_VG == 8)
         mask_mangrove = (RV_VG == 9)
-        mask_irregular = (RV_VG == 20) | (Point_VG == 8)  # Since overwrap by salt marshes, include mask_salt_marsh into this mask
+        mask_irregular = (RV_VG == 20) | (RV_VG == 8)  # Since overwrap by salt marshes, include mask_salt_marsh into this mask
 
         print('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 

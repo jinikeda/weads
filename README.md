@@ -84,6 +84,13 @@ Interactive job on SuperMike3
 5. Copy fort.13, fort.14, fort.53, everdried.63, domain shapfile(aaa.shp etc)
 6. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all"
 
+### Example: 100 years ADCIRC-WEADS simulation on Texas Coastal Bend 
+
+<video src="https://github.com/jinikeda/weads_dev/blob/main/Image/Vegetaion_evolution.mp4" width="600" controls>
+</video>
+
+<p style="text-align: left;"><strong>Figure.1</strong> 100 years ADCIRC-WEADS simulation under intermediate sea level rise scenario on the Coastal Texas Bend</p>
+
 ## Contributors
 * Jin Ikeda (LSU|Center for Computation and Technology)
 * Peter Bacopoulos (LSU|Coastal Ecosystem Design Studio)

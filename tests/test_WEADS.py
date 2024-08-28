@@ -1,6 +1,5 @@
 import os
 import shutil
-
 import numpy as np
 import pytest
 
@@ -10,12 +9,12 @@ from io import StringIO
 from click.testing import CliRunner
 from numpy import dtype
 
-from .general_functions import *
-from .tidaldatums import *
-from .tidaldatumsidw import *  # Import the interpolation function
-from .vegetation import *
-from .mem import *
-from .postprocessing_ADCIRC import *
+from src_point.general_functions import *
+from src_point.tidaldatums import *
+from src_point.tidaldatumsidw import *  # Import the interpolation function
+from src_point.vegetation import *
+from src_point.mem import *
+from src_point.postprocessing_ADCIRC import *
 
 # from src.click_main import discrete_subcommand
 

@@ -86,7 +86,8 @@ Interactive job on SuperMike3
 
 ### Example: 100 years ADCIRC-WEADS simulation on Texas Coastal Bend 
 
-<video src="https://github.com/jinikeda/weads_dev/blob/main/Image/Vegetaion_evolution.mp4" width="600" controls>
+<video src="https://github.com/jinikeda/weads_dev/Image/Vegetaion_evolution.mp4" width="600" controls>
+  Your browser does not support the video tag.
 </video>
 
 <p style="text-align: left;"><strong>Figure.1</strong> 100 years ADCIRC-WEADS simulation under intermediate sea level rise scenario on the Coastal Texas Bend</p>

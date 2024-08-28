@@ -31,7 +31,7 @@ def read_text_file(fileName):
     return lines
 
 
-def read_fort14(inputMeshFile):
+def read_fort14(inputMeshFile, output_Flag = False):
     print("Processing mesh...")
     with open(inputMeshFile, "r") as f:
         lines = f.readlines()
@@ -54,7 +54,8 @@ def read_fort14(inputMeshFile):
                       float((-1) * float(z))])  # output longitude [degree],latitude [degree], and topobathy h [m, NAVD88] # Caution: ADCIRC z value (water depth direction is positive)
 
     ADCIRC_nodes = np.array(nodes)
-    np.savetxt("mesh_original.txt", ADCIRC_nodes, fmt='%d\t%.8f\t%.8f\t%.8f')
+    if output_Flag:
+        np.savetxt("mesh_original.txt", ADCIRC_nodes, fmt='%d\t%.8f\t%.8f\t%.8f')
     return ADCIRC_nodes, nN, eN
 
 

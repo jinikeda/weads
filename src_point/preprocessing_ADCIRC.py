@@ -45,7 +45,7 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     ##########################################################################
     # --- Read mesh (inputMeshFile) ---
     ##########################################################################
-    ADCIRC_nodes, numNodes, numElements = read_fort14(inputMeshFile)
+    ADCIRC_nodes, numNodes, numElements = read_fort14(inputMeshFile, output_Flag = True)
 
     xy_list = ['x', 'y']
     drop_list = []

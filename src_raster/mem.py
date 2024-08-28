@@ -226,10 +226,12 @@ def calculate_vertical_accretion(
     Vorg = Kr * RRS * BTR * B / (100.0**2)  # organic matter
 
     # calculate tidal flood time (FIT)  (Vahsen et al., 2024).
-    FIT = np.zeros(D.shape)
-    FIT[D < 0] = 0
-    FIT[(D >= 0) & (D <= 1)] = D[(D >= 0) & (D <= 1)] / Dt[(D >= 0) & (D <= 1)]
-    FIT[D > 1] = 1
+    FIT = np.full(D.shape,1,dtype=float)
+    FIT[(D > 0) & (Dt > 0.0)] = D[(D > 0) & (Dt > 0.0)] / Dt[(D > 0) & (Dt > 0.0)]
+    FIT[(FIT>=1)] = 1.0  # Tidal range is less than few mm should not calculate the FIT
+    FIT[D <= 0] = 0
+    print(np.min (FIT), np.max(FIT))
+
     # Assert that all values in FIT should be range of 0 and 1
     assert np.all((FIT >= 0) & (FIT <= 1)), "Some values in FIT are not between 0 and 1"
 
@@ -492,7 +494,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     print(D[D_mask].min(), D[D_mask].max())
 
     Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
-    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = -0.0001
+    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = ndv
     print('Tidal range: min and max [cm]\t', Dt.min(), Dt.max())
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---

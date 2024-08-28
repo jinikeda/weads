@@ -1,8 +1,10 @@
 import os
 import shutil
-import pytest
-import pandas as pd
+
 import numpy as np
+import pytest
+
+
 from unittest import mock
 from io import StringIO
 from click.testing import CliRunner
@@ -11,17 +13,28 @@ from numpy import dtype
 from .general_functions import *
 from .tidaldatums import *
 from .tidaldatumsidw import *  # Import the interpolation function
-# from src.CRMS_Discrete_Hydrographic2subsets import *
-# from src.CRMS2Resample import *
-# from src.CRMS2Plot import *
+from .vegetation import *
+from .mem import *
+from .postprocessing_ADCIRC import *
+
 # from src.click_main import discrete_subcommand
 
+# Test ESPG
+Test_espg = 26914
+
+# Test no_value
+ndv = -99999.0 # ADCIRC no data
+ndv_byte = 128 # the upper limit for vegetation classification
 
 # Sample fort.13 file
 fort13_content = """\
 fort13
 6
-2
+3
+ sea_surface_height_above_geoid
+ m
+         1
+0
 primitive_weighting_in_continuity_equation
 1
 1
@@ -30,6 +43,8 @@ mannings_n_at_sea_floor
 1
 1
 .025000
+sea_surface_height_above_geoid
+         0
 primitive_weighting_in_continuity_equation
 2
 4 0.020000
@@ -38,21 +53,21 @@ mannings_n_at_sea_floor
 4
 1 0.030000
 2 0.030000
-3 0.030000
+4 0.030000
 6 0.030000
 """
 
 
-# Sample fort.14 file contents
+# Sample fort.14 file contents (Here negative is above ground in ADCIRC)
 fort14_content = """\
 grid
 4 6
-1  0.0  0.0  6.27
-2  1.0  0.0  7.13
-3  2.0  0.0  8.11
-4  0.0  1.0  9.09
-5  1.0  1.0  9.05
-6  2.0  1.0  0.00
+1  0.0  0.0  0.20
+2  0.5  0.0  -0.40
+3  2.0  0.0  0.30
+4  0.0  1.0  0.10
+5  1.0  1.0  0.10
+6  2.0  1.0  -0.50
 1  3  1  2  5
 2  3  2  3  6
 3  3  1  5  4
@@ -267,11 +282,12 @@ def test_read_fort13(mock_fort13_file):
     assert global_mann == 0.025
 
     # Assert that the mann_indices and local_mann_indices are read correctly
-    expected_mann_indices = [7, 15]
-    expected_local_mann_indices = [0, 1, 2, 5] # For Python index not ADCIRC
+    expected_mann_indices = [11, 21]
+    expected_local_mann_indices = [0, 1, 3, 5] # For Python index not ADCIRC
 
     assert mann_indices == expected_mann_indices
     assert local_mann_indices == expected_local_mann_indices
+
 
 @pytest.fixture
 def mock_fort14_file(tmp_path):
@@ -361,6 +377,8 @@ def test_read_inundationtime63(mock_inundation63_file):
         assert hydro_class[
                    node - 1] == expected_class, f"Node {node} should be in class {expected_class}, but got {hydro_class[node - 1]}"
 
+    print(f"Hydro class: {hydro_class}")
+
 
 @pytest.fixture
 def mock_fort53_file(tmp_path):
@@ -430,18 +448,20 @@ def test_mean_water_levels(mock_water_level_data):
     calculated_MSL = np.average(mock_water_level_data)
     assert np.isclose(calculated_MSL,expected_MSL), f"Expected {expected_MSL}, but got {calculated_MSL}"
 
+    print(f"MLW: {calculated_MLW},\tMSL: {calculated_MSL},\tMHW: {calculated_MHW} ")
+
 
 @pytest.fixture
 def mock_data():
     """Fixture to create a small dataset for testing."""
-    ndv = -99999.0  # No data value (ndv) using ADCIRC convention
     data = {
-        'node_id': [1, 2, 3, 4, 5, 6],
-        'x_prj': [0.0, 0.5, 2.0, 0.0, 1.0, 2.0],
-        'y_prj': [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
-        'msl': [2.27, ndv, 3.11, ndv, 0.50, ndv],
-        'mlw': [2.00, ndv, 3.00, ndv, 1.00, ndv],
-        'mhw': [2.50, ndv, 3.50, ndv, 1.50, ndv],
+        'node': [1, 2, 3, 4, 5, 6],
+        'x': [0.0, 0.5, 2.0, 0.0, 1.0, 2.0],
+        'y': [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+        'z': [-0.20, 0.40, -0.30, 0.10, -0.10, 0.50],
+        'msl': [0.20, ndv, 0.30, ndv, 0.10, ndv],
+        'mlw': [0.10, ndv, 0.05, ndv, -0.05, ndv],
+        'mhw': [0.25, ndv, 0.35, ndv, 0.15, ndv],
         'HydroClass': [2, 0, 2, 1, 2, 0]
 
     }
@@ -467,9 +487,9 @@ def test_idw_interpolation(mock_data):
 
     # Use a projected system
     scale_factor = 1  # scale factor for KDTree unit:
-    xy_base = tidal_prj[['x_prj', 'y_prj']
+    xy_base = tidal_prj[['x', 'y']
                         ].iloc[inverse_indices].to_numpy() / scale_factor
-    xy_interp = tidal_prj[['x_prj', 'y_prj']
+    xy_interp = tidal_prj[['x', 'y']
                           ].iloc[indices].to_numpy() / scale_factor
 
 
@@ -478,12 +498,12 @@ def test_idw_interpolation(mock_data):
     numNeighbors = 2  # Number of neighbors to use in interpolation
 
     # Perform interpolation for 'mlw'
-    z = tidal_prj['mlw'].values
+    z = tidal_prj['msl'].values
     invdisttree = Invdisttree(xy_base, z[inverse_indices], leafsize=leafsize, stat=0)
     interpol, weight_factors = invdisttree(xy_interp, nnear=numNeighbors, eps=0.0, p=power)
 
     # Assert that interpolated values are close to expected
-    expected_interpol = [1.833, 1.50, 2.00]
+    expected_interpol = [0.1833, 0.15, 0.20]
     assert np.allclose(interpol, expected_interpol, atol=0.01)
 
     print(f"Interpolated values for MLW: {interpol}")
@@ -491,8 +511,400 @@ def test_idw_interpolation(mock_data):
 ########################################################################################################################
 ### Vegetation Calculation
 ########################################################################################################################
+@pytest.fixture
+def mock_raster(tmp_path):
+    """
+    Fixture to create a temporary GeoTIFF raster file for testing.
+    """
+    data_array = np.array([[8, 40, 55], [40, 55, 40]])  # 8: salt marsh, 40: water , 55: land
+    # (this order is top to bottom and left to right with following gdal rules)
+    file_path = tmp_path / "temp_raster.tif"
+    top_left_x, top_left_y = -0.75, 1.5
+    pixel_size = 1.0
+    epsg_code = Test_espg
+    nodata_value = ndv
+
+    # Number of rows and columns
+    rows, cols = data_array.shape
+
+    # Set up the GeoTransform
+    transform = (top_left_x, pixel_size, 0, top_left_y, 0, -pixel_size)
+
+    # Set up the projection
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    projection = srs.ExportToWkt()
+
+    # Create a GeoTIFF file
+    driver = gdal.GetDriverByName('GTiff')
+    out_ds = driver.Create(str(file_path), cols, rows, 1, gdal.GDT_Int16)
+    out_ds.SetGeoTransform(transform)
+    out_ds.SetProjection(projection)
+
+    # Write the data
+    out_band = out_ds.GetRasterBand(1)
+    out_band.WriteArray(data_array)
+    if nodata_value is not None:
+        out_band.SetNoDataValue(nodata_value)
+
+    # Close the dataset to flush data to disk
+    out_ds = None
+
+    return file_path
+
+def test_raster_properties(mock_raster):
+    """
+    Test to verify raster properties.
+    """
+    ds = gdal.Open(str(mock_raster))
+    band = ds.GetRasterBand(1)
+
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 2
+    assert band.GetNoDataValue() == ndv
+
+    # Read data back from the raster
+    data = band.ReadAsArray()
+    expected_data = np.array([[8, 40, 55], [40, 55, 40]])
+    np.testing.assert_array_equal(data, expected_data)
+
+    ds = None  # Close dataset
 
 
+def test_extract_raster_values(mock_data,mock_raster,tmp_path):
+    """Test create_df2gdf function with mock data."""
+
+    xy_list = ['x', 'y']
+    drop_list = ['node', 'mlw']
+    crs = "EPSG:" + str (Test_espg)
+
+    # Call the function to create GeoDataFrame
+    gdf = create_df2gdf(mock_data, xy_list, drop_list, crs)
+
+    # Assertions to check correctness
+    assert isinstance(gdf, gpd.GeoDataFrame)
+    assert not gdf.empty
+    assert all(gdf.columns != 'node_id')  # 'node_id' should be dropped
+    assert all(gdf.columns != 'mlw')  # 'HydroClass' should be dropped
+    assert 'geometry' in gdf.columns  # Check if geometry column exists
+    assert gdf.crs == crs  # Check if CRS is set correctly
+
+    print("GeoDataFrame creation successful with CRS:", gdf.crs)
+
+    """Test extract_point_values function with mock data."""
+    points_path = tmp_path / "points.csv"
+
+    # Call the function to extract raster values at point locations
+    raster_values, updated_points = extract_point_values(str(mock_raster), gdf, points_path, ndv, ndv_byte)
+
+    # Assertions to check correctness
+    assert not updated_points.empty
+    assert 'Raster_id' in updated_points.columns
+    assert 'NWI' in updated_points.columns
+    assert np.allclose(raster_values, [40, 55, 40, 8, 40, 55])  # Adjust based on actual raster values
+
+    print("Raster values extracted successfully:", raster_values)
+
+
+def test_calculate_potential_expansion(mock_data):
+    """Test the calculate_potential_expansion function with mock data."""
+
+    tidal_prj = mock_data
+    NWI_values = np.array([40, 55, 40, 8, 40, 55])  # Example NWI values
+    radius = 1.5  # Example radius
+
+    # Extract x, y coordinates to create node positions
+    Point_x = tidal_prj[['x']]
+    Point_y = tidal_prj[['y']]
+    node_positions = np.column_stack((Point_x, Point_y))
+
+    # Assert that the number of points matches NWI values length
+    assert Point_x.shape[0] == len(NWI_values), 'The number of points and NWI values are not matched'
+
+    # Call the calculate_potential_expansion function
+    Potential_SRF, SRF_indices = calculate_potential_expansion(node_positions, NWI_values, 8, radius)
+
+    # Expected results (depends on radius and your definition)
+    # With a radius of 1.5, expect node 3 to infect nodes within 1.0 unit
+    expected_expansion = np.array([8, 8, 0, 8, 8, 0])
+    expected_indices = np.array([0, 1, 3, 4])
+
+    # Assertions to verify the correctness of the function
+    assert np.array_equal(Potential_SRF, expected_expansion), f"Expected {expected_expansion} but got {Potential_SRF}"
+    assert np.array_equal(SRF_indices, expected_indices), f"Expected indices {expected_indices} but got {SRF_indices}"
+
+    print("Potential expansion calculated successfully:", Potential_SRF)
+    print("Infected indices:", SRF_indices)
+
+########################################################################################################################
+### Ecological Equilibrium Model
+########################################################################################################################
+
+def test_calculate_ecology(mock_data):
+    """Test the ecological files' functions with mock data."""
+
+    tidal_prj = mock_data
+
+    # Example NWI values to test Salt Marsh
+    NWI_values = np.array([40, 55, 40, 8, 40, 55])
+    tidal_prj['NWI'] = NWI_values
+
+    # Parameters for Salt Marsh from vegetation_parameters
+    vegetation_parameters = {
+        "SaltMarsh": {
+            "Dmin": 2.0,
+            "Dmax": 46.0,
+            "Bmax": 2400.0,
+            "Dopt": 22.0,
+            "Kr": 0.1,
+            "RRS": 2.0,
+            "BTR": 0.5
+        }
+    }
+
+    vegetation_type = "SaltMarsh"
+    params = vegetation_parameters[vegetation_type]
+    Dmin_marsh = params["Dmin"]
+    Dmax_marsh = params["Dmax"]
+    Dopt_marsh = params["Dopt"]
+    Bmax_marsh = params["Bmax"]
+    kr_marsh = params["Kr"]
+    RRS_marsh = params["RRS"]
+    BTR_masrh = params["BTR"]
+
+    # Calculate coefficients
+    a1, b1, c1 = calculate_coefficients(Dmin_marsh, Dmax_marsh, Dopt_marsh, Bmax_marsh)
+    print('Check: SaltMarsh abc', a1, b1, c1)
+
+    # Expected results (calculate these manually or using a verified reference)
+    expected_a1 = ((Dmin_marsh * Bmax_marsh + Dmax_marsh * Bmax_marsh) / ((Dmin_marsh - Dopt_marsh) * (Dopt_marsh - Dmax_marsh)))
+    expected_b1 = -(Bmax_marsh / ((Dmin_marsh - Dopt_marsh) * (Dopt_marsh - Dmax_marsh)))
+    expected_c1 = -Dmin_marsh * Bmax_marsh * Dmax_marsh / ((Dmin_marsh - Dopt_marsh) * (Dopt_marsh - Dmax_marsh))
+
+    # Assertions to verify the correctness of the function
+    assert np.isclose(a1, expected_a1, rtol=1e-5), f"Expected {expected_a1}, but got {a1}"
+    assert np.isclose(b1, expected_b1, rtol=1e-5), f"Expected {expected_b1}, but got {b1}"
+    assert np.isclose(c1, expected_c1, rtol=1e-5), f"Expected {expected_c1}, but got {c1}"
+
+    print("Coefficient calculation successful for Salt Marsh")
+
+    # 'HydroClass' 0: land, 1: intertidal, 2: subtidal(water)
+    HC = tidal_prj['HydroClass']
+
+    # --- Read topo-bathymetry and water surface elevation ---
+    tb = tidal_prj['z']  # tb=-1.0*tb;
+    print('tb: min&max', np.min(tb), np.max(tb))
+
+    # The indices of interpolated areas (not fully wetted areas)
+    indices = np.where(HC < 2)
+    # The indices of fully wetted areas (base points)
+    inverse_indices = np.where(~(HC < 2))
+    print(
+        'Nodes of interpolation:\t', len(
+            indices[0]), ', Nodes of references:\t', len(
+            inverse_indices[0]))
+
+    # Use a projected system
+    scale_factor = 1  # scale factor for KDTree unit:
+    xy_base = tidal_prj[['x', 'y']
+                        ].iloc[inverse_indices].to_numpy() / scale_factor
+    xy_interp = tidal_prj[['x', 'y']
+                          ].iloc[indices].to_numpy() / scale_factor
+
+    # Initialize mlwIDW and mhwIDW as 1D arrays
+    mlwIDW = np.full(tidal_prj.shape[0], ndv, dtype=float) # here fully wet region should be ndv
+    mhwIDW = np.full(tidal_prj.shape[0], ndv, dtype=float)
+
+    leafsize = 1  # leafsize for KDTree
+    power = 2  # the power of the inverse distance
+    numNeighbors = 2  # Number of neighbors to use in interpolation
+
+    # Perform interpolation for 'mhw'
+    z = tidal_prj['mhw'].values
+    invdisttree = Invdisttree(xy_base, z[inverse_indices], leafsize=leafsize, stat=0)
+    interpol, weight_factors = invdisttree(xy_interp, nnear=numNeighbors, eps=0.0, p=power)
+
+    # Place interpolated values into the appropriate indices
+    mhwIDW[indices] = interpol
+
+    # For mlwIDW,
+    z_mlw = tidal_prj['mlw'].values
+    invdisttree_mlw = Invdisttree(xy_base, z_mlw[inverse_indices], leafsize=leafsize, stat=0)
+    interpol_mlw, _ = invdisttree_mlw(xy_interp, nnear=numNeighbors, eps=0.0, p=power)
+    mlwIDW[indices] = interpol_mlw
+
+    # Print the results for verification
+    # print("Interpolated values for MHW:", interpol)
+    # print("Interpolated values for MLW:", interpol_mlw)
+    # print("mhwIDW array:\n", mhwIDW)
+    # print("mlwIDW array:\n", mlwIDW)
+    # print("tb array:\n", tb)
+
+    # Make masks for fully wet and dried regions ---
+    land_mask = (-0.5 < HC) & (HC <= 0.5)  # land region (HC = 0.0)
+    water_mask = (1.5 < HC) & (HC < 2.5)  # fully wet region (HC = 2.0)
+    intertidal_mask = (0.5 < HC) & (HC < 1.5)  # intertidal region (HC = 1.0)
+    submergence_mask = water_mask | intertidal_mask | (2.5 < HC)
+    above_subtidal_zone = (mhwIDW != ndv)  # above subtidal zone ()
+
+    # Calculate depth
+    D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -ndv)
+    D[D > -ndv / 2] = ndv  # Relative depth [cm] re-modify to negative value for ndv
+
+    Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
+    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = -0.0001
+
+    expected_D = [-16.6667, 10.00, -25.00] # [cm]
+    expected_Dt = [-0.0001, 15.8333, -0.0001, 17.5, -0.0001, 25.00]
+
+    assert np.all(np.isclose(D[above_subtidal_zone], expected_D, rtol=1e-3)),\
+        f"Expected {expected_D}, but got {D[above_subtidal_zone]}"
+
+    assert np.all(np.isclose(Dt, expected_Dt, rtol=1e-3)),\
+        f"Expected {expected_Dt}, but got {Dt}"
+
+    print("Depth [cm]\t",D)
+    print('Tidal range: min and max [cm]\t', Dt)
+
+    qmax = 2.8
+    qmin = 1.0
+    SSC = 25.0
+    FF = 353.0
+    BDo = 0.085
+    BDi = 1.99
+    dt = 1  # Time step
+
+    # Salt marsh (8)
+    B1, PL1, PH1 = calculate_biomass_parabola(
+        D, Dopt_marsh, above_subtidal_zone, a1, b1, c1, a1, b1, c1)
+    print('Salt marsh ', 'PH = ', PH1, ', PL = ', PL1)
+
+    # Assertions
+    assert B1.shape == D.shape
+    assert all(B1[B1 != ndv] >= 0)  # Biomass should be non-negative where mask is True
+    assert PL1 < PH1  # Ensure PL is less than PH
+    print("Biomass parabola calculation successful. B:", B1, "PL:", PL1, "PH:", PH1)
+
+    # --- ACCRETION CALCULATIONS ---
+    tb_update, A1 = calculate_vertical_accretion(
+        qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, Dt, BDo, BDi, tb)
+
+    # Assertions
+    assert tb_update.shape == tb.shape
+    assert A1.shape == B1.shape
+    assert np.all(A1 >= 0) # A should not decrease
+    print("Vertical accretion calculation successful. tb_update:", tb_update, "A:", A1)
+
+    P = np.full(A1.shape, ndv_byte, dtype=int)  # Create an array of default values (ndv_byte)
+
+    # Create masks for different conditions
+    mask1 = (B1 > 0) & (B1 <= 1000)
+    mask2 = (B1 > PL1) & (B1 < 1800)
+    mask3 = (B1 >= 1800)
+
+    # Assign values based on conditions
+    # background raster
+    P[land_mask] = 55
+    P[submergence_mask] = 40
+
+    # Marsh productivity
+    P[mask1] = 16  # low productivity
+    P[mask2] = 23  # medium productivity
+    P[mask3] = 32  # high productivity
+
+    expected_P = [40, 55, 40, 23, 40, 55]
+
+    assert np.all(np.isclose(P, expected_P, rtol = 1e-5)), \
+        f"Expected {expected_P}, but got {P}"
+
+    print(f"Biomass Classification:\t {P}")
+
+    tidal_prj['P'] = P.flatten()
+    tidal_prj['manning'] = tidal_prj['P'].apply(calculate_manning)
+
+    # Expected output based on the 'P' values provided
+    expected_manning = [ndv, ndv, ndv, 0.05, ndv, ndv]  # Expected values based on 'P' values
+
+    assert np.all(np.isclose(tidal_prj['manning'].values, expected_manning, rtol = 1e-5)), \
+        f"Expected {expected_manning}, but got {tidal_prj['manning'].values}"
+
+    print(f"Update manning:\t {tidal_prj['manning'].values}")
+
+
+########################################################################################################################
+### Post-processing
+########################################################################################################################
+
+def test_postprocessing(mock_fort13_file, mock_fort14_file,mock_data, tmp_path):
+    """Test the ecological files' functions with mock data."""
+
+    df = mock_data
+    new_z = [-0.2, 0.4, -0.3, 0.10215532, -0.1, 0.5]  # tb_updates
+    df['manning'] = [ndv, ndv, ndv, 0.05, ndv, ndv]
+
+    node_id = df['node'].values
+    x = df['x'].values
+    y = df['y'].values
+
+    ####################################################################################################################
+    ### Update MeshFile
+    ####################################################################################################################
+
+    # Copy the original mesh file to the new file
+    outputMeshFile = tmp_path / "fort_new.14"
+    shutil.copy(mock_fort14_file, outputMeshFile)
+    update_ADCIRC_mesh(outputMeshFile, node_id, x, y, new_z)
+
+    # Read updated fort.14 file
+    updated_fort14_content = read_text_file(outputMeshFile)
+
+    skip_index = 1  # skip the first line
+    # eN:number of elemetns, #nN: number of nodes
+    eN, nN = updated_fort14_content[skip_index].split()
+    nN = int(nN)  # string to integer
+
+    ### Read new_z values
+    obtained_z = []
+    for i in range(nN):
+        nodeNum, x, y, z = updated_fort14_content[(skip_index + 1) + i].split()
+        obtained_z.append(-float(z))
+
+    assert np.all(np.isclose(obtained_z, new_z, rtol = 1e-5)), \
+        f"Expected {new_z}, but got {obtained_z}"
+
+    print(f"new z values:\t{obtained_z}")
+
+
+    ####################################################################################################################
+    ### Update Attribute file
+    ####################################################################################################################
+
+    # Copy the original mesh file to the new file
+    outputAttrFile = tmp_path / "fort_new.13"
+    # Copy the original attribute file to the new file
+    shutil.copy(mock_fort13_file, outputAttrFile)
+
+    # Filter out rows where 'manning' is equal to ndv
+    manning_df = df[df['manning'] != ndv]
+
+    # only keep the rows where 'manning' is not equal to ndv
+    print('update manning:\t', manning_df.shape)
+    manning_node = manning_df['node'].values  # update nodes
+    manning = manning_df['manning'].values  # update values
+    slr = 0  # [m, NAVD88]
+
+    update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning)
+
+    # Read updated fort.13 file
+    mann, mann_indices, local_mann_indices, global_mann = read_fort13(outputAttrFile)
+
+    expected_mann = [0.030000,0.030000,0.025000,0.050000,0.025000,0.030000]
+    assert np.all(np.isclose(mann.flatten(), expected_mann, rtol = 1e-5)), \
+        f"Expected {expected_mann}, but got {mann.flatten()}"
+
+    print(f"new z values:\t{mann.flatten()}")
+
+########################################################################################################################
 # Example usage
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

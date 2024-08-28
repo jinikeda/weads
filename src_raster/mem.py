@@ -102,11 +102,11 @@ print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly
 ##########################################################################
 
 # class Vegetation:
-#     def __init__(self, Dmin, Dmax, Bmax, Dopt, Kr, RRS, BTR):
+#     def __init__(self, Dmin, Dmax, Dopt, Bmax, Kr, RRS, BTR):
 #         self.Dmin = Dmin
+#         self.Dopt = Dopt
 #         self.Dmax = Dmax
 #         self.Bmax = Bmax
-#         self.Dopt = Dopt
 #         self.Kr = Kr
 #         self.RRS = RRS
 #         self.BTR = BTR
@@ -121,27 +121,27 @@ print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly
 vegetation_parameters = {
     "SaltMarsh": {
         "Dmin": 2.0,
+        "Dopt": 22.0,
         "Dmax": 46.0,
         "Bmax": 2400.0,
-        "Dopt": 22.0,
         "Kr": 0.1,
         "RRS": 2.0,
         "BTR": 0.5
     },
     "Mangrove": {
         "Dmin": 24.0,
+        "Dopt": 45.0,
         "Dmax": 66.0,
         "Bmax": 7800.0,
-        "Dopt": 45.0,
         "Kr": 0.1,
         "RRS": 1.8,
         "BTR": 0.25
     },
     "IrregularMarsh": {
         "Dmin": -70.0,  # -21.0 -> 0.5*std below the mean of the marsh
+        "Dopt": -40.0,  # 7.0 # modified based on tb and vegetation mapping
         "Dmax": -10.0,  # 35.0 -> 0.5*std above the mean of the marsh
         "Bmax": 1200.0,
-        "Dopt": -40.0,  # 7.0 # modified based on tb and vegetation mapping
         "Kr": 0.1,
         "RRS": 1.5,
         "BTR": 0.5
@@ -151,8 +151,8 @@ vegetation_parameters = {
     ##########################################################################
     # "juvenile_mangrove": {
     #     "Dmin": 26.0,
-    #     "Dmax": 47.0,
     #     "Dopt": 34.0,
+    #     "Dmax": 47.0,
     #     "Bmax": 1200.0,
     #     "Kr": 0.1,
     #     "RRS": 1.8,
@@ -230,6 +230,8 @@ def calculate_vertical_accretion(
     FIT[D < 0] = 0
     FIT[(D >= 0) & (D <= 1)] = D[(D >= 0) & (D <= 1)] / Dt[(D >= 0) & (D <= 1)]
     FIT[D > 1] = 1
+    # Assert that all values in FIT should be range of 0 and 1
+    assert np.all((FIT >= 0) & (FIT <= 1)), "Some values in FIT are not between 0 and 1"
 
     Vmin = 0.5 * FIT * q * SSC * FF * D / \
         (1000.0**2)  # inorganic matter q2 add FIT
@@ -352,7 +354,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
 
         print('The biomass parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 
-        # Salt marsh
+        # 1: Salt marsh (NWI = 8)
         vegetation_type = "SaltMarsh"
         params = vegetation_parameters[vegetation_type]
         Dmin_marsh = params["Dmin"]
@@ -367,7 +369,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
             Dmin_marsh, Dmax_marsh, Dopt_marsh, Bmax_marsh)  # 1: Salt marsh (NWI = 8)
         print('Check: SaltMarsh abc', a1, b1, c1)
 
-        # Mangrove
+        # 2: Mangrove (NWI = 9) (mangrove (mature))
         vegetation_type = "Mangrove"
         params = vegetation_parameters[vegetation_type]
         Dmin_matmang = params["Dmin"]
@@ -378,12 +380,11 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         RRS_matmang = params["RRS"]
         BTR_matmang = params["BTR"]
 
-        # 2: Mangrove (NWI = 9) (mangrove (mature))
         a2, b2, c2 = calculate_coefficients(
             Dmin_matmang, Dmax_matmang, Dopt_matmang, Bmax_matmang)
         print('Check: Mangrove abc', a2, b2, c2)
 
-        # Irregularly flooded marsh
+        # 3: Irregularly flooded marsh (NWI = 20)
         vegetation_type = "IrregularMarsh"
         params = vegetation_parameters[vegetation_type]
         Dmin_fmarsh = params["Dmin"]
@@ -394,7 +395,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         RRS_fmarsh = params["RRS"]
         BTR_fmarsh = params["BTR"]
 
-        # 3: Irregularly flooded marsh (NWI = 20)
         a3, b3, c3 = calculate_coefficients(
             Dmin_fmarsh, Dmax_fmarsh, Dopt_fmarsh, Bmax_fmarsh)
 
@@ -492,7 +492,8 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     print(D[D_mask].min(), D[D_mask].max())
 
     Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
-    Dt[Dt == 0] = 0.0001
+    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = -0.0001
+    print('Tidal range: min and max [cm]\t', Dt.min(), Dt.max())
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
     print("Starting Hydro-MEM Calculations")

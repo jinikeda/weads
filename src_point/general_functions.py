@@ -66,8 +66,8 @@ def read_fort13(inputMeshFile):
     skip_index = 1  # skip the first line
     nN = int(lines[skip_index].split()[0])  # nN: number of nodes
 
-    skip_index2 = 2  # read for the number of attributes
-    numAttributes = int(lines[skip_index2].split()[0])  # nN: number of nodes
+    # skip_index2 = 2  # read for the number of attributes
+    # numAttributes = int(lines[skip_index2].split()[0])  # number of attributes
 
     attribute = "mannings_n_at_sea_floor"
     mann_indices = []
@@ -80,19 +80,19 @@ def read_fort13(inputMeshFile):
             if not global_mann:  # if global_mann is not yet set
                 global_mann = float(lines[i + 3].split()[0])
                 print("global_manning\t", global_mann)
-                mann = np.full((nN, 1), global_mann, dtype=float)
+                mann = np.full((nN, 1), global_mann, dtype=float)  # initialize using a global value
             else:
                 local_mann_Num = int(lines[i + 1].split()[0])
                 print("local_manning_Num\t", local_mann_Num)
                 for j in range(local_mann_Num):
                     NN, value = map(float, lines[i + 2 + j].split())
                     local_mann_indices.append((int(NN) - 1))
-                    mann[int(NN) - 1][0] = value
+                    mann[int(NN) - 1][0] = value  # overwrite the value
 
     return mann, mann_indices, local_mann_indices, global_mann
 
 
-# Jin's comments. We may need to change the function to read netcdf file.
+# Jin's comments. We also need to change the function to read netcdf file.
 def read_inundationtime63(inputInundationTFile):
     with open(inputInundationTFile, "r") as f:
         lines = f.readlines()
@@ -108,7 +108,7 @@ def read_inundationtime63(inputInundationTFile):
 
     ##### Step.3 Output inundationtime ######
     # inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
-    # # node number, time of inundation (0: dry, 1: wet)
+    # node number, time of inundation (0: dry, 1: wet)
     inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
     for i in range(nN):
         # skip before inundation number
@@ -293,6 +293,42 @@ def create_raster(file, rasterdata, zarray, dtype,
     out_ds = None
 
     return
+
+def extract_point_values(raster_path, points_gdf, points_path, ndv,ndv_byte):
+    # Load the shapefile of points
+    points = points_gdf
+    # Load the DEM raster
+    dem = rasterio.open(raster_path)
+
+    # extract xy from point geometry
+    raster_id = np.zeros(len(points))
+    raster_values = np.full(len(points), ndv_byte)
+
+    array = dem.read(1)
+    for i, point in enumerate(points.geometry):
+        # print(point.xy[0][0],point.xy[1][0])
+        x = point.xy[0][0]
+        y = point.xy[1][0]
+        row, col = dem.index(x, y)
+
+        # Append the z value to the list of z values
+        if 0 <= row < array.shape[0] and 0 <= col < array.shape[1]:
+            raster_id[i] = row * array.shape[1] + col
+            raster_values[i] = array[row, col]
+        else:
+            raster_id[i] = ndv
+
+        # print("Point correspond to row, col: %d, %d"%(row,col))
+        # print(array[row, col])
+        # print("Raster value on point %.2f \n"%dem.read(1)[row,col])
+
+    points['Raster_id'] = raster_id
+    points['NWI'] = raster_values
+    # points.to_file(points_path, driver='ESRI Shapefile')
+    # Save the DataFrame to a CSV file with headers
+    points.to_csv(points_path, index=False)
+
+    return raster_values, points
 
 
 def expand_nodes(nodes_positions, node_states,

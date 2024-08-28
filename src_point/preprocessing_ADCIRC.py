@@ -153,16 +153,18 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
                 0: land, 1: intertidal, 2: subtidal """  # , 3: pond/lake"""
 
     # Create the masks
-    mask_land = (0 - accuracy < inunT) & (inunT < 0 + accuracy)
-    mask_intertidal = (accuracy < inunT) & (inunT < 1 - accuracy)
-    mask_water = (1 - accuracy < inunT) & (inunT < 1 + accuracy)
-    # Assuming the fourth column is at index 3
-    mask_outdomain = (TB[:, 3] == ndv)
+    mask_land = (0 - accuracy < inunT) & (inunT < 0 + accuracy)  # land mask
+    mask_intertidal = (accuracy < inunT) & (inunT < 1 - accuracy)  # intertidal mask
+    mask_water = (1 - accuracy < inunT) & (inunT < 1 + accuracy)  # water mask
+
+    # Forth column ("HydroClass")  on TB is at index 3
+    mask_outdomain = (TB[:, 3] == ndv)  # initialize the value
 
     # Update the fourth column of TB based on the masks
     TB[mask_land, 3] = int(0)  # fully dried (land) region
     TB[mask_intertidal, 3] = int(1)  # intertidal region
-    # temporary set to water region and will separate to ocean (subtidal zone)
+
+    # Temporary set to water region and may separate to ocean (subtidal zone)
     # and pond/lake
     TB[mask_water, 3] = int(2)
     # set nodata value to -99999.0 in the domain of inunT

@@ -99,7 +99,7 @@ def tidaldatumsidw(outputHarmonicsFile, interpolateHarmonicsFile,
             xy_base,
             z[inverse_indices],
             leafsize=leafsize,
-            stat=1)  # create i
+            stat=0)  # create i
 
         # interpolate tidal datums (MSL, MLW, MHW) using IDW
         interpol, weight_factors = invdisttree(

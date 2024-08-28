@@ -36,43 +36,6 @@ ndv_byte = 128
 ### Functions #############################################################
 
 
-def extract_point_values(raster_path, points_gdf, points_path):
-    # Load the shapefile of points
-    points = points_gdf
-    # Load the DEM raster
-    dem = rasterio.open(raster_path)
-
-    # extract xy from point geometry
-    raster_id = np.zeros(len(points))
-    raster_values = np.full(len(points), ndv_byte)
-
-    array = dem.read(1)
-    for i, point in enumerate(points.geometry):
-        # print(point.xy[0][0],point.xy[1][0])
-        x = point.xy[0][0]
-        y = point.xy[1][0]
-        row, col = dem.index(x, y)
-
-        # Append the z value to the list of z values
-        if 0 <= row < array.shape[0] and 0 <= col < array.shape[1]:
-            raster_id[i] = row * array.shape[1] + col
-            raster_values[i] = array[row, col]
-        else:
-            raster_id[i] = ndv
-
-        # print("Point correspond to row, col: %d, %d"%(row,col))
-        # print(array[row, col])
-        # print("Raster value on point %.2f \n"%dem.read(1)[row,col])
-
-    points['Raster_id'] = raster_id
-    points['NWI'] = raster_values
-    # points.to_file(points_path, driver='ESRI Shapefile')
-    # Save the DataFrame to a CSV file with headers
-    points.to_csv(points_path, index=False)
-
-    return raster_values, points
-
-
 def calculate_potential_expansion(
         node_positions, NWI_values, target_value, radius):
     Vegetation_mask = np.where(
@@ -83,7 +46,7 @@ def calculate_potential_expansion(
         node_positions,
         Vegetation_mask,
         target_value,
-        radius)  # refer general function
+        radius)  # refer to general_function.py
     indices = np.where(Potential_expansion == target_value)[0]
     return Potential_expansion, indices
 
@@ -161,7 +124,7 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
 
         # extract values from raster file
         NWI_values, NWI_df = extract_point_values(
-            inputvegetationFile, points_prj, process_file)
+            inputvegetationFile, points_prj, process_file, ndv, ndv_byte)
 
     else:
 

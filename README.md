@@ -1,47 +1,95 @@
-# pyHydroMEM
-Python Hydro-MEM code. This code needs a private module pyadcircmodules -> singularity image. Ask Jin
+# WEADS: Wetland Ecosystem and Accretion Dynamics Simulator
+Python code. There are two versions: raster-based (src_raster) and point-based WEADS
+This code needs ADCIRC input/output files such as fort.13, fort.14, fort.53, inundationtime.63.
+At this moment, raster-based WEADS need a private module pyadcircmodules -> singularity image. 
 
 ## Python Version
-This code is confirmed using Python 3.10 with GDAL3.4.1
+This code is confirmed above Python 3.10 using CI/CD pipeline (Github Action)
 
 ## Getting Started
+
+## §1. Install virtual conda env and activation
+Type: ***conda env create -f env.yml*** \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; autopep8 is used for Python code formatter, flack8 is a linter to check code, and pytest and mock are code testing tools. These packages are not mandatory for running WEADS.  
+
+## §2. Activate virtual env
+Type: ***conda activate WEADS_env***
+
+## §3 Create a package: WEADS
+Type: ***pip install -e .*** \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless use pip install .)
+
+## Contents of the package
+### Step 1. Auto-retrieve the original datasets
+
+## Running module in the WEADS package
+* ***WEADS_Point --help*** Show available commands:
+  
+* ***WEADS_Point*** for point-based WEADS: source codes is located on "src_point" folder
+
+usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessing] [--inputMeshFile INPUTMESHFILE] [--inputAttrFile INPUTATTRFILE]
+                   [--inputHarmonicsFile INPUTHARMONICSFILE] [--inputShapeFile INPUTSHAPEFILE] [--outputMEMFile OUTPUTMEMFILE] [--outputMeshFile OUTPUTMESHFILE]
+                   [--outputAttrFile OUTPUTATTRFILE] [--inEPSG INEPSG] [--outEPSG OUTEPSG] [--deltaT DELTAT] [--slr SLR]
+                   [--inputInundationtimeFile INPUTINUNDATIONTIMEFILE] [--inputvegetationFile INPUTVEGETATIONFILE] [--skipresample]
+
+  **Options:** 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     -h, --help            show this help message and exit
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --all                 Run all processing steps
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --preprocessing       Run preprocessing step
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --td                  Run tidal datum step
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --mem                 Run mem step
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --postprocessing      Run postprocessing step
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --inputMeshFile INPUTMESHFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                         Input mesh <fort.14 file>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputAttrFile INPUTATTRFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Input attribute <fort.13 file>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputHarmonicsFile INPUTHARMONICSFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Input harmonics <fort.53 file>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputShapeFile INPUTSHAPEFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Input domain shape file <*.shp>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --outputMEMFile OUTPUTMEMFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Output MEM file:ecology.csv
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --outputMeshFile OUTPUTMESHFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Output mesh file <fort_new.14>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --outputAttrFile OUTPUTATTRFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Output attribute file
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inEPSG INEPSG       Input EPSG code <inEPSGCode>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --outEPSG OUTEPSG     Output EPSG code <outEPSGCode>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --deltaT DELTAT       time step for WEADS simuiation in years
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --slr SLR             Sea level rise
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputInundationtimeFile INPUTINUNDATIONTIMEFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Use inundationtime file for running inunT <inundationtime.63>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputvegetationFile INPUTVEGETATIONFILE
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Path to vegetation file <*.tif>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --skipresample        Skip reprojection and resample to raster domain
+
+# Example of command for point-based WEADS
+WEADS_Point --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputShapeFile Cut_domain.shp --inEPSG 4269 --outEPSG 26914 --deltaT 25 --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_TX_wetlands.tif --all
+
+## Prerequisites for src_raster
+
+User needs to install singularity_image 
+
+* [ADCIRC Modules](https://github.com/zcobell/ADCIRCModules) -> **singularity image. chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/singularity_image_sm3/adcircmodules_docker_updated.sif**
+
+## Example of command for raster-based WEADS
 Interactive job on SuperMike3
 
 1. "srun -t 2:00:00 -n8 -N1 -A hpc_ceds2d_1hp -p single --pty /bin/bash" (singularity command is only available on work nodes)
-2. "singularity exec -B /home /project/jinikeda/adcircmodules_docker_updated.sif pip install --user -r requirement.txt" (Need to be confirmed)
+2. ""singularity exec -B /home /project/jinikeda/adcircmodules_docker_updated.sif conda env create -f env.yml"" (Need to be confirmed)
 3. Copy ADCIRCModules folder on your work directory (e.g., /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules)
 4. cd /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules/testing/python_tests
 5. Copy fort.13, fort.14, fort.53, everdried.63, domain shapfile(aaa.shp etc)
 6. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all"
 
-Example of command
-inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile PIE_bbox.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --all```
-
-```--all``` will run all (--rasterize, --td, and --mem)
-
-```--rasterize``` will only create the raster files from ADCIRC inputs
-
-```--td``` will only run the tidal datums calculation
-
-```--mem``` will only run mem
-
-## Prerequisites
-
-What things you need to install the software and how to install them
-
-* [ADCIRC Modules](https://github.com/zcobell/ADCIRCModules) -> **singularity image. chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/singularity_image_sm3/adcircmodules_docker_updated.sif**
-* See requirements.txt
-
 ## Contributors
-Christopher E Kees
-Peter Bacopoulos
-Jin Ikeda
+Jin Ikeda (LSU|CCT)
+Peter Bacopoulos (LSU|Coastal Ecosystem Design Studio)
+* [Christopher E Kees (LSU|Coastal Ecosystem Design Studio Director)](https://www.lsu.edu/ceds/)
 
 ## Acknolwedgements
-* [Karim Alizad (USGS)](https://www.usgs.gov/centers/spcmsc)
-* [Peter Bacopoulos (LSU)](https://www.lsu.edu/ccr/)
 * [Matthew V. Bilskie (UGA)](https://coast.engr.uga.edu/)
-* [Davina L. Passeri (USGS)](https://www.usgs.gov/staff-profiles/davina-l-passeri?qt-staff_profile_science_products=0#qt-staff_profile_science_products)
-* Eric Swanson (USGS)
-* [Scott C. Hagen (LSU)](https://www.lsu.edu/ccr/)
+* Scott C. Hagen (emeritus LSU)
+* Karim Alizad
 * [Zachary Cobell](https://thewaterinstitute.org/our-team/zachary-cobell)

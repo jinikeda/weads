@@ -14,14 +14,14 @@ from src_point.general_functions import *
 # F U N C T I O N    M A I N
 # ----------------------------------------------------------
 # Example:
-# python WEAD_Point.pyy python WEADS_Point.py --inputMeshFile fort.14 --inputAttrFile fort.13
+# python WEAD_Point.py python WEADS_Point.py --inputMeshFile fort.14 --inputAttrFile fort.13
 # --inputHarmonicsFile fort.53 --inputShapeFile Cut_domain.shp --inEPSG 4269 --outEPSG 26914
 # --deltaT 25 --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14
-# --inputInundationtimeFile inundationtime.63 --InputvegetationFile NWI_TX_wetlands.tif --all
+# --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_TX_wetlands.tif --all
 # ----------------------------------------------------------
 
 
-def main(argv):
+def main():
 
     startTime = time.time()
 
@@ -260,5 +260,5 @@ def main(argv):
 # ----------------------------------------------------------
 
 
-if __name__ == "__main__":
-    main((sys.argv[1:]))
+# if __name__ == "__main__":
+#     main((sys.argv[1:]))

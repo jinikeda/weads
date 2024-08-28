@@ -901,7 +901,7 @@ def test_postprocessing(mock_fort13_file, mock_fort14_file,mock_data, tmp_path):
     assert np.all(np.isclose(mann.flatten(), expected_mann, rtol = 1e-5)), \
         f"Expected {expected_mann}, but got {mann.flatten()}"
 
-    print(f"new z values:\t{mann.flatten()}")
+    print(f"Update manning values:\t{mann.flatten()}")
 
 ########################################################################################################################
 # Example usage

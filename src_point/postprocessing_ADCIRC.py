@@ -65,7 +65,7 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
     idx_manning = [i for i, line in enumerate(lines) if 'mannings_n_at_sea_floor' in line]
     print('idx_sshag:\t', idx_sshag, '\nidx_manning:\t', idx_manning)
 
-    # Global sea_surface_height_above_geoid and Manning's n
+    # Sea_surface_height_above_geoid
     if idx_sshag:
         global_SSH = float(lines[idx_sshag[0] + 3].split()[0])
         new_global_SSH = global_SSH + slr
@@ -93,6 +93,7 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
                       i] = "{0:>10}     {1:.6f}\n".format(local_ssh_idx, new_local_ssh)
                 lines[idx_sshag[1] + 2 + i] = "{0:>10}     {1:.6f}\n".format(local_ssh_idx, new_local_ssh)
 
+    # Manning's n
     if idx_manning:
         # Grobal manning
         global_mann = float(lines[idx_manning[0] + 3].split()[0])
@@ -131,6 +132,8 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
             i + 1, node_value_updated[i]) for i in range(nN)]
         # Insert all the lines at once
         lines[idx_manning[1] + 2: idx_manning[1] + 2] = new_lines
+
+    # Future add Average_horizontal_eddy_viscosity_in_sea_water_wrt_depth (Aug 28 2024)
 
     # Write the updated lines back to the ADCIRC attribute file
     with open(outputAttrFile, 'w') as file:

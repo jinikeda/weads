@@ -225,7 +225,9 @@ def calculate_vertical_accretion(
     FIT[(D > 0) & (Dt > 0.0)] = D[(D > 0) & (Dt > 0.0)] / Dt[(D > 0) & (Dt > 0.0)]
     FIT[(FIT>=1)] = 1.0  # Tidal range is less than few mm should not calculate the FIT
     FIT[D <= 0] = 0
-    print(np.min (FIT), np.max(FIT))
+    print(f" FIT min:\t{np.min (FIT)}, max\t{np.max(FIT)}")
+    print(f" Dt min:\t{np.min(Dt[(D > 0) & (Dt > 0.0)])}, max\t{np.max(Dt[(D > 0) & (Dt > 0.0)])}")
+    print(f" D min:\t{np.min(D[(D > 0) & (Dt > 0.0)])}, max\t{np.max(D[(D > 0) & (Dt > 0.0)])}")
 
     # Assert that all values in FIT should be range of 0 and 1
     assert np.all((FIT >= 0) & (FIT <= 1)), "Some values in FIT are not between 0 and 1"

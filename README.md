@@ -4,7 +4,7 @@ This code needs **ADCIRC input/output files** such as fort.13, fort.14, fort.53,
 Currently, raster-based WEADS need a private module, pyadcircmodules (see prerequisites for raster version). 
 
 ### Python Version
-This code is confirmed above Python 3.10 using CI/CD pipeline (Github Action)
+This code is confirmed above Python 3.9 using CI/CD pipeline (Github Action)
 
 ## Getting Started
 

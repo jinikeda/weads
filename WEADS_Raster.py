@@ -24,8 +24,7 @@ import time
 # --slr 1.1 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all
 # ----------------------------------------------------------
 
-
-def main(argv):
+def main():
 
     startTime = time.time()
 
@@ -349,6 +348,6 @@ def main(argv):
 
 # ----------------------------------------------------------
 
-
 if __name__ == "__main__":
-    main((sys.argv[1:]))
+    main()
+

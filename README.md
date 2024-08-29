@@ -21,7 +21,7 @@ Type: ***pip install -e .*** \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless using ***pip install .***)
 
 ## Contents of the package
-**WEADS_Point** for point-based WEADS (Recommended) \
+**WEADS_Point** for point-based WEADS (** highly Recommended**) \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source codes are located on "src_point" folder \
 **WEADS_Raster** for raster-based WEADS (Optional) \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source codes are located on "src_raster" folder

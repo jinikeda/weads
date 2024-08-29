@@ -8,6 +8,7 @@
 
 import os
 import argparse
+import src_raster
 from src_raster.basics import *
 import sys
 import time

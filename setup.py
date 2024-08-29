@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "A package for Wetland Ecosystem and Accretion Dynamics Simulator (WEADS)"
 long_description = open("README.md").read()
 url = "https://github.com/jinikeda/weads_dev"
-author = "Jin Ikeda, Peter Bacopoulos, Christopher Kees, and Matthew V. Bilskie (UGA)"
+author = "Jin Ikeda, Peter Bacopoulos, and Christopher Kees"
 license_type = "MIT License"
 install_requires = []
 install_requires = [
@@ -20,7 +20,6 @@ install_requires = [
     "scipy",
     "matplotlib",
     "basemap",
-    "rioxarray",
 ]
 
 # ## Determine the platform and make platform-specific adjustments
@@ -57,6 +56,7 @@ setup(
     entry_points={
         "console_scripts": [
             "WEADS_Point=WEADS_Point:main",
+            "WEADS_Raster=WEADS_Raster:main",
             # "CRMS2Map=src.click_main:click_main",
         ],
     },
@@ -71,5 +71,4 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    # python_requires=">=3.9",
 )

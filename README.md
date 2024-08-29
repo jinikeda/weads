@@ -1,10 +1,11 @@
 # WEADS: Wetland Ecosystem and Accretion Dynamics Simulator
 There are two versions: **raster-based** ("src_raster") and **point-based** ("src_point") **WEADS**. \
-This code needs **ADCIRC input/output files** such as fort.13, fort.14, fort.53, and inundationtime.63.
-Currently, raster-based WEADS need a private module, pyadcircmodules (see prerequisites for raster version). 
+This software will be required to run on High-performance computers or high-spec local machines (more than 8 cores CPU or equivalent with RAM = 16 GB).
+This software also needs **ADCIRC input/output files** such as fort.13, fort.14, fort.53, and inundationtime.63 on the root directory (the same directory as setup.py).
+Currently, raster-based WEADS need a dependency module, pyadcircmodules (https://github.com/zcobell/ADCIRCModules). For further details, see *prerequisites* for the raster version. 
 
 ### Python Version
-This code is confirmed above Python 3.9 using CI/CD pipeline (Github Action)
+The source codes are confirmed above Python 3.9 using CI/CD pipeline (Github Action)
 
 ## Getting Started
 
@@ -36,6 +37,19 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 
   **Options:** 
 
+### key commands
+
+```--all``` Run all procedure (--preprocessing, --td, --mem, and --postprocessing)
+
+```--preprocessing``` Create csv files from ADCIRC inputs
+
+```--td``` Calculation tidal datums calculation
+
+```--mem``` Run ecological equiliubum model  
+
+```--postprocessing``` Update ADCIRC input files (fort.13 and fort.14) from ecological productions 
+
+### all commands 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     -h, --help            show this help message and exit \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --all                 Run all processing steps \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     --preprocessing       Run preprocessing step \
@@ -69,20 +83,19 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 # Example of a command for point-based WEADS 
 ***WEADS_Point --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputShapeFile Cut_domain.shp --inEPSG 4269 --outEPSG 26914 --deltaT 25 --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_TX_wetlands.tif --all***
 
-## Prerequisites for WEADS_Point
-The user needs to download ***singularity_image*** 
+## Prerequisites for WEADS_Raster
+The user needs to download ***singularity_image.sif*** \
+The singularity image already installed GDAL 3.4.1, released 2021/12/27
 
 * [ADCIRC Modules](https://github.com/zcobell/ADCIRCModules) -> **singularity image. chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/singularity_image_sm3/adcircmodules_docker_updated.sif**
 
 ## Example of a command for raster-based WEADS
-Interactive job on SuperMike3
+Interactive job on SuperMike3 (LSU | HPC cluster) **Cautions** The work procedure strongly depends on your cluster environment. Please contact the cluster administrator.
 
-1. "srun -t 2:00:00 -n8 -N1 -A hpc_ceds2d_1hp -p single --pty /bin/bash" (singularity command is only available on work nodes)
-2. ""singularity exec -B /home /project/jinikeda/adcircmodules_docker_updated.sif conda env create -f env.yml"" (Need to be confirmed)
-3. Copy ADCIRCModules folder on your work directory (e.g., /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules)
-4. cd /work/jinikeda/ETC/TCB/WEAD/ADCIRCModules/testing/python_tests
-5. Copy fort.13, fort.14, fort.53, everdried.63, domain shapfile(aaa.shp etc)
-6. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all"
+1. "srun -t 2:00:00 -n8 -N1 -A your_allocation -p single --pty /bin/bash" (singularity command is only available on work nodes)
+2. Install other Python packages "singularity exec -B /target-path /singularity-image-path/adcircmodules_docker_updated.sif pip install --user -r requirements.txt" 
+3. Copy fort.13, fort.14, fort.53, .63, domain shapfile(aaa.shp etc)
+7. "singularity exec -B /work /project/jinikeda/adcircmodules_docker_updated.sif python3 hydromem.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputEverdriedFile everdried.63 --inputShapeFile Cut_grd.shp --inEPSG 4269 --outEPSG 26919 --gridSize 200 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --all"
 
 ### Example: 100 years ADCIRC-WEADS simulation on Texas Coastal Bend 
 
@@ -94,7 +107,7 @@ https://github.com/user-attachments/assets/8a179637-1f4e-40b4-a53c-53641dece49e
 * Peter Bacopoulos (LSU|Coastal Ecosystem Design Studio)
 * [Christopher E Kees (LSU|Coastal Ecosystem Design Studio Director)](https://www.lsu.edu/ceds/) 
 
-## Acknolwedgements
+## Acknowledgments
 * [Matthew V. Bilskie (UGA)](https://coast.engr.uga.edu/)
 * Scott C. Hagen (emeritus LSU)
 * Karim Alizad

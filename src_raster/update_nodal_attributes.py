@@ -10,9 +10,8 @@
 import pyadcircmodules
 import numpy as np
 from osgeo import gdal
-import src.basics
-from src.raster import get_numrowcol, \
-    get_nodatavalue, coord2pixel
+from src_raster.basics import *
+from src_raster.raster import *
 
 
 # ----------------------------------------------------------
@@ -28,9 +27,9 @@ def update_nodal_attributes(inputMeshFile, inputRasterFile,
     # ----------------------------------------------------------
     # Check that input files exist
     # ----------------------------------------------------------
-    src.basics.fileexists(inputMeshFile)
-    src.basics.fileexists(inputRasterFile)
-    src.basics.fileexists(inputAttrFile)
+    fileexists(inputMeshFile)
+    fileexists(inputRasterFile)
+    fileexists(inputAttrFile)
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 

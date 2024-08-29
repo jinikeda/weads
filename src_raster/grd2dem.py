@@ -16,7 +16,7 @@ from pyproj import Transformer
 import numpy as np
 from osgeo import gdal
 from osgeo import osr
-import src.basics
+from src_raster.basics import *
 import rasterio
 
 # ----------------------------------------------------------
@@ -41,8 +41,8 @@ def grd2dem(inputMeshFile, inputDataFile, inputShapefile,
     # ----------------------------------------------------------
     # Check that input files exist
     # ----------------------------------------------------------
-    src.basics.fileexists(inputMeshFile)
-    src.basics.fileexists(inputShapefile)
+    fileexists(inputMeshFile)
+    fileexists(inputShapefile)
     # ----------------------------------------------------------
 
     # ----------------------------------------------------------

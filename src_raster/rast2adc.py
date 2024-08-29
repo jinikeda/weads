@@ -10,8 +10,8 @@
 import pyadcircmodules
 import numpy as np
 from osgeo import gdal
-import src.basics
-from src.raster import get_numrowcol, get_boundingbox,\
+import src_raster.basics
+from src_raster.raster import get_numrowcol, get_boundingbox,\
     get_nodatavalue, isinraster, coord2pixel,\
     get_rastvalue
 
@@ -30,8 +30,8 @@ def rast2adc(inputMeshFile, outputMeshFile, inputRasterFile,
     # ----------------------------------------------------------
     # Check that input files exist
     # ----------------------------------------------------------
-    src.basics.fileexists(inputMeshFile)
-    src.basics.fileexists(inputRasterFile)
+    src_raster.basics.fileexists(inputMeshFile)
+    src_raster.basics.fileexists(inputRasterFile)
     # ----------------------------------------------------------
     # ----------------------------------------------------------
 

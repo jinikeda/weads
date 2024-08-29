@@ -565,18 +565,18 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         ##### Here check the elevation of mask irregularly flooded marsh ######
         # This part is for tuning the parameters for irregularly flooded marsh
         # (not mandatory
-        NWI_original = read_band_value(
-            '/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.tif',
-            1)  # Before dilation
-        mask_irregular_NWI = (NWI_original == 20)
-        irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
-        irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
-        print(
-            'Irregular_depth [cm], min, max, mean, std',
-            irregular_NWI_depth.min(),
-            irregular_NWI_depth.max(),
-            irregular_NWI_depth.mean(),
-            irregular_NWI_depth.std())
+        # NWI_original = read_band_value(
+        #     '/work/jinikeda/ETC/TCB/pyHydroMEM_dev/Resampled_raster_domain.tif',
+        #     1)  # Before dilation
+        # mask_irregular_NWI = (NWI_original == 20)
+        # irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
+        # irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
+        # print(
+        #     'Irregular_depth [cm], min, max, mean, std',
+        #     irregular_NWI_depth.min(),
+        #     irregular_NWI_depth.max(),
+        #     irregular_NWI_depth.mean(),
+        #     irregular_NWI_depth.std())
         #######################################################################
 
         # Create an array of default values (ndv)

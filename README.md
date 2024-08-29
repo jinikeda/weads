@@ -20,8 +20,12 @@ Type: ***conda activate WEADS_env***
 Type: ***pip install -e .*** \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless using ***pip install .***)
 
+### §4 Copy necessary files to run WEADS
+Mandatory: fort.13, fort.14, fort.53, inundationtime.63, domain shapefile \
+Optional: vegetation map file
+
 ## Contents of the package
-**WEADS_Point** for point-based WEADS (** highly Recommended**) \
+**WEADS_Point** for point-based WEADS (** Highly Recommended**) \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source codes are located on "src_point" folder \
 **WEADS_Raster** for raster-based WEADS (Optional) \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source codes are located on "src_raster" folder
@@ -93,7 +97,7 @@ Interactive job on SuperMike3 (LSU | HPC cluster) \
 
 1. *srun -t 2:00:00 -n8 -N1 -A your_allocation -p single --pty /bin/bash* (singularity command is only available on work nodes)
 2. Install other Python packages *singularity exec -B /target-path /singularity-image-path/adcircmodules_docker_updated.sif pip install --user -r requirements.txt* 
-3. Copy fort.13, fort.14, fort.53, .63, domain shapefile(aaa.shp etc)
+3. Copy fort.13, fort.14, fort.53, inundationtime.63, domain shapefile(aaa.shp etc)
 4. *singularity exec -B /work /singularity-image-path/adcircmodules_docker_updated.sif python3 WEADS_Raster.py --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputShapeFile Study_domain.shp --inEPSG 4269 --outEPSG 26914 --gridSize 100 --deltaT 25 --outputMEMRasterFile MEM --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_resample100.tif --all*
 
 For the details of the available command, type ***WEADS_Raster --help***

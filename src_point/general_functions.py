@@ -22,7 +22,9 @@ from pathlib import Path
 from osgeo import gdal, ogr, osr
 from osgeo.gdalconst import *
 import rasterio
+from rasterio.mask import mask
 gdal.UseExceptions()
+from KDTree_idw import Invdisttree
 
 
 def read_text_file(fileName):
@@ -269,32 +271,54 @@ def gdal_reading(file):  # 0 GA_ReadOnly or 1
     return prj, rows, cols, transform, RV, Rasterdata
 
 
-def create_raster(file, rasterdata, zarray, dtype,
-                  no_data_value, stats_flag=False):
-    # Create the output raster dataset
-    gtiff_driver = gdal.GetDriverByName('GTiff')
-    out_ds = gtiff_driver.Create(
-        file,
-        rasterdata.RasterXSize,
-        rasterdata.RasterYSize,
-        rasterdata.RasterCount,
-        dtype)  # dtype is e.g. gdal.GDT_Int32 and gdal.GDT_Float32
-    out_ds.SetProjection(rasterdata.GetProjection())
-    out_ds.SetGeoTransform(rasterdata.GetGeoTransform())
-    dst_band = out_ds.GetRasterBand(1)
-    dst_band.WriteArray(zarray)
-    dst_band.SetNoDataValue(no_data_value)  # Exclude nodata value
-    stats = dst_band.ComputeStatistics(0)
-    min_val, max_val, mean_val, std_dev_val = stats
-    if stats_flag:
-        print(
-            f'Made a raster file. Statistics:\n\tMinimum: {min_val}, Maximum: {max_val}, Mean: {mean_val}, Standard Deviation: {std_dev_val}')
-    else:
-        print('Made a raster file')
+def dummy_raster(xx, yy, epsg_code, nodata_value=None):
+    """
+    Creates a temporary GeoTIFF raster file for testing, using grid coordinates.
+
+    :param xx: 2D array of X coordinates.
+    :param yy: 2D array of Y coordinates.
+    :param epsg_code: EPSG code for the raster's spatial reference system.
+    :param nodata_value: Value to use for no-data pixels.
+    :return: File path to the created raster.
+    """
+    file_path = "dummy_raster.tif"
+
+    # Determine the number of rows and columns from the grid dimensions
+    rows, cols = xx.shape
+
+    # Calculate the top left coordinates and pixel size
+    top_left_x = xx[0, 0]
+    top_left_y = yy[-1, 0] # last row should be top
+    pixel_size_x = abs(xx[0, 1] - xx[0, 0])
+    pixel_size_y = abs(yy[0, 0] - yy[1, 0])
+
+    # Initialize data array with nodata_value
+    data_array = np.full((rows, cols), 10 ** -6, dtype=np.float32)
+
+    # Set up the GeoTransform
+    transform = (top_left_x, pixel_size_x, 0, top_left_y, 0, -pixel_size_y)
+
+    # Set up the projection
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg_code)
+    projection = srs.ExportToWkt()
+
+    # Create a GeoTIFF file
+    driver = gdal.GetDriverByName('GTiff')
+    out_ds = driver.Create(str(file_path), cols, rows, 1, gdal.GDT_Float32)
+    out_ds.SetGeoTransform(transform)
+    out_ds.SetProjection(projection)
+
+    # Write the data
+    out_band = out_ds.GetRasterBand(1)
+    out_band.WriteArray(data_array)
+    if nodata_value is not None:
+        out_band.SetNoDataValue(nodata_value)
+
+    # Close the dataset to flush data to disk
     out_ds = None
 
-    return
-
+    return file_path
 def extract_point_values(raster_path, points_gdf, points_path, ndv,ndv_byte):
     # Load the shapefile of points
     points = points_gdf
@@ -355,3 +379,220 @@ def expand_nodes(nodes_positions, node_states,
                 node_states[neighbor] = target_value
 
     return node_states
+
+
+# internal function of generate_grid
+def read_shp_extent(inputShapeFile, gcs2prj=False, inEPSG=None, outEPSG=None):
+
+    """
+    Reads the extent of a shapefile using geopandas and optionally converts the coordinate system.
+
+    :param inputShapeFile: Path to the shapefile.
+    :param gcs2prj: Flag to convert from GCS to projected coordinate system.
+    :param inEPSG: EPSG code of the input coordinate system (if known).
+    :param outEPSG: EPSG code of the output projected coordinate system (if gcs2prj is True).
+    :return: Tuple containing the extent and bounding box.
+    """
+
+    # Read the shapefile
+    gdf = read_domain(inputShapeFile)
+
+    # Reproject if necessary
+    if gcs2prj and inEPSG and outEPSG:
+        gdf = gdf.to_crs(epsg=outEPSG)
+
+    # Get the bounding box (extent)
+    extent = gdf.total_bounds
+    print("\tExtent of points id: %s", extent)
+
+    # Create bbox corners based on extent
+    bbox = [(extent[0], extent[1]), (extent[2], extent[1]), (extent[2], extent[3]), (extent[0], extent[3])]
+
+    # extent[0] = minx
+    # extent[1] = miny
+    # extent[2] = maxx
+    # extent[3] = maxy
+    # bbox = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy)]
+
+    return extent, bbox
+
+
+def generate_grid(inputShapeFile, resolution = 20, scale_factor = 1, gcs2prj=False,
+                                  inEPSG=None, outEPSG=None):
+    """
+    Generate a grid of X and Y coordinates based on the shapefile extent and desired resolution.
+
+    :param inputShapeFile: Path to the shapefile to read the extent.
+    :param resolution: Grid resolution (default is 20 meters).
+    :param scale_factor: Scale factor for the grid (default is 1).
+    :param gcs2prj: Boolean indicating if the coordinate system should be projected (default is False).
+    :param inEPSG: EPSG code of the input coordinate system (default is None).
+    :param outEPSG: EPSG code of the output projected coordinate system (default is None).
+    :return: X and Y coordinate grids.
+    """
+
+    # Read shapefile extent
+    extent, bbox = read_shp_extent(inputShapeFile, gcs2prj, inEPSG, outEPSG)
+    print(extent, bbox)
+
+    scale_factor = int(scale_factor)
+    gridx = np.arange(int(extent[0]*scale_factor-resolution/2), int(extent[2]*scale_factor+resolution/2), resolution) # draw region will be expanded
+    gridy = np.arange(int(extent[1]*scale_factor-resolution/2), int(extent[3]*scale_factor+resolution/2), resolution)
+
+    gridx = gridx / scale_factor
+    gridy = gridy / scale_factor
+
+    xx, yy = np.meshgrid(gridx,gridy) # grid_x and y
+
+    return xx, yy
+
+
+# innternal function for interpolated grid
+def write_clipped_raster(raster_open, raster, clip_file, transform, nodata_value=-99999.0):
+    out_meta = raster_open.meta.copy()
+    out_meta.update({
+        "height": raster.shape[1],
+        "width": raster.shape[2],
+        "transform": transform,
+        "nodata": nodata_value
+    })
+
+    # clip_file = f"{Outputspace}/{method_str}_train_{i}_{date}.tif"
+    with rasterio.open(clip_file, "w", **out_meta) as dest:
+        dest.write(raster)
+
+    return clip_file
+
+def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_file, idw_Flag=False, knn=12,
+                     dtype_list=None, nodata_value_list=None, reproject_flag=False, inEPSG=None, outEPSG=None):
+    """
+    Interpolates values and creates a single GeoTIFF raster file with multiple bands for the target strings.
+    :param xx: 2D numpy array of x coordinates.
+    :param yy: 2D numpy array of y coordinates.
+    :param df: DataFrame containing the input data with 'x', 'y', and target columns.
+    :param target_list: List of target strings (column names in df) to interpolate.
+    :param ref_tiff: Reference GeoTIFF file path for geotransform and projection.
+    :param output_files: List of output file paths for the resulting rasters.
+    :param idw_Flag: Boolean flag to use IDW interpolation or nearest neighbor.
+    :param knn: Number of nearest neighbors to use in interpolation.
+    :param dtype: Data type for the output raster.
+    :param nodata_value: Value to use for no-data pixels.
+    :param reproject_flag: Flag to reproject coordinates.
+    :param inEPSG: Input EPSG code if reprojection is needed.
+    :param outEPSG: Output EPSG code if reprojection is needed.
+    """
+
+    try:
+        # Check input parameters
+        assert isinstance(xx, np.ndarray) and isinstance(yy, np.ndarray), "xx and yy must be numpy arrays"
+        assert xx.shape == yy.shape, "xx and yy must have the same shape"
+        assert isinstance(df, pd.DataFrame), "df must be a pandas DataFrame"
+        assert isinstance(target_list, list), "target_list must be a list"
+        assert 'x' in df.columns and 'y' in df.columns, "df must contain 'x', 'y' columns"
+        assert isinstance(knn, int) and knn > 0, "knn must be a positive integer"
+
+        domain_shp = gpd.read_file(inputShapeFile)
+
+        # Interpolation using KDTree
+        if reproject_flag:
+            assert inEPSG is not None and outEPSG is not None, "Provide inEPSG and outEPSG"
+            crs = 'EPSG:' + str(inEPSG)
+            PRJ = int(outEPSG)
+            gdf = create_df2gdf(df, ['x', 'y'], [], crs, None)
+            gdf_proj = convert_gcs2coordinates(gdf, PRJ, "Point")
+            mask_shp = convert_gcs2coordinates(domain_shp, PRJ, "Polygon")
+            xy_base = gdf_proj[['x_prj', 'y_prj']].to_numpy()
+        else:
+            xy_base = df[['x', 'y']].to_numpy()
+            mask_shp = domain_shp.copy()
+
+        # Initialize a list to hold the interpolated grids for each target
+        interpolated_grids = []
+
+        for target_str in target_list:
+            assert target_str in df.columns, f"df must contain {target_str} column"
+
+            z_base = df[target_str].values
+            invdisttree = Invdisttree(xy_base, z_base, leafsize=10, stat=1)
+            interp_grids = np.transpose(np.vstack([xx.ravel(), yy.ravel()]))
+
+            if idw_Flag:
+                interpolated_values, _ = invdisttree(interp_grids, nnear=knn, eps=0.0, p=2)
+            else:
+                interpolated_values, _ = invdisttree(interp_grids, nnear=1, eps=0.0, p=2)
+
+            z_interp = np.reshape(interpolated_values, (xx.shape[0], xx.shape[1]))
+            interpolated_grids.append(z_interp)
+
+        # Stack all interpolated grids along the third dimension
+        raster_stack = np.dstack(interpolated_grids)
+
+        # Create a raster with all interpolated values as multiple bands
+        rasterdata = gdal.Open(ref_tiff, 0)
+        temp_file = "process.tif"
+        create_raster(temp_file, rasterdata, raster_stack, dtype_list, nodata_value_list)
+
+        # Open the TIFF file and clip using a polygon
+        print("clip raster file")
+
+        nodata_value = nodata_value_list[0] # only use first value
+        with rasterio.open(temp_file) as raster_open:
+            raster = raster_open.read(1)
+            transform = raster_open.transform
+
+            try:
+                if np.issubdtype(raster_open.dtypes[0], np.integer):
+                    raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
+                                             nodata=nodata_value)
+                else:
+                    raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
+                                             nodata=np.nan)
+
+            except Exception as e:
+                print(f"Error in mask: {e}")
+                return None
+
+                # Ensure nodata_value is consistent with the raster dtype when writing
+            if np.issubdtype(raster_open.dtypes[0], np.integer):
+                write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=int(nodata_value))
+            else:
+                write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=float(nodata_value))
+
+    except Exception as e:
+        print(f"Error in interpolate_grid: {e}")
+        return None
+
+def create_raster(file, rasterdata, zarray_stack, dtype_list, nodata_value_list):
+    """
+    Create a multi-band raster from stacked 2D arrays.
+    """
+    print(file)
+    gtiff_driver = gdal.GetDriverByName('GTiff')
+    num_bands = zarray_stack.shape[2]
+    print(f"number of band",num_bands)
+    out_ds = gtiff_driver.Create(
+        file,
+        rasterdata.RasterXSize,
+        rasterdata.RasterYSize,
+        num_bands,
+        dtype_list[0]  # Assuming all bands have the same dtype
+    )
+    out_ds.SetProjection(rasterdata.GetProjection())
+    out_ds.SetGeoTransform(rasterdata.GetGeoTransform())
+
+    print("start working")
+    for i in range(num_bands):
+        print(i)
+        band_data = zarray_stack[:, :, i]
+        dtype = dtype_list[0]
+        nodata_value = nodata_value_list[0]
+
+        out_band = out_ds.GetRasterBand(i + 1)
+        out_band.WriteArray(np.flipud(band_data))  # bottom row <-> top row due to origin of raster file
+        out_band.SetNoDataValue(nodata_value)
+
+        stats = out_band.ComputeStatistics(0)
+        print(f'Band {i+1} Statistics: Min: {stats[0]}, Max: {stats[1]}, Mean: {stats[2]}, StdDev: {stats[3]}')
+
+    out_ds = None
+

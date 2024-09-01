@@ -663,31 +663,31 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         # VM[(VM == 40)] = ndv_byte # 40 = water_mask
         df['new_NWI'] = VM.flatten()
 
-    df.to_csv(outputMEMFile, index=False)
 
-    # ####################################################################################################################
-    # print("\n----------------------------------------------------------------------")
-    # print("Create WATTE input files")
-    # print("----------------------------------------------------------------------\n")
-    # ####################################################################################################################
-    #
-    # # Output
-    # Watte_bio_level = P.copy()  # Create an array of default values (ndv) for WATTE
-    # Watte_ndv = 255  # No data value for WATTE
-    # Watte_bio_level[Watte_bio_level == ndv] = Watte_ndv  # 255 = No data value
-    # print('WATTE bio level min and max:', Watte_bio_level.min(), Watte_bio_level.max())
-    # create_raster('Productivity.tif', rasterHC, Watte_bio_level, gdal.GDT_Byte,
-    #               Watte_ndv)  # Productivity level gdal.GDT_Byte is unsigned 8 bit integer (0 to 255)
-    #
-    # # Inundation_depth = tb_update.copy()
-    # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update,
-    #                             0)  # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. However, this is an arbitary number! Need to consider further (Jin June 19, 2024)
-    # Inundation_depth[mhwIDW == ndv] = ndv
-    # # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
-    #
-    # create_raster('Inundation_depth.tif', rasterHC, Inundation_depth, gdal.GDT_Float32, ndv,
-    #               stats_flag=True)  # Inundation depth gdal.GDT_Float32 is 32 bit floating point
-    # ############################################################################################################
+
+    ####################################################################################################################
+    print("\n----------------------------------------------------------------------")
+    print("Create WATTE input files")
+    print("----------------------------------------------------------------------\n")
+    ####################################################################################################################
+
+    # Output
+    Watte_bio_level = VM.copy()  # Create an array of default values (ndv) for WATTE
+    Watte_ndv = 255  # No data value for WATTE
+    Watte_bio_level[Watte_bio_level == ndv] = Watte_ndv  # 255 = No data value
+    print('WATTE bio level min and max:', Watte_bio_level.min(), Watte_bio_level.max())
+
+    df['bio_level'] = Watte_bio_level.flatten()
+
+    # Inundation_depth = tb_update.copy()
+    Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update,
+                                0)  # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. However, this is an arbitary number! Need to consider further (Jin June 19, 2024)
+    Inundation_depth[mhwIDW == ndv] = ndv
+    # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
+    df['inu_depth'] = Inundation_depth.flatten()
+
+    df.to_csv(outputMEMFile, index=False)
+    ############################################################################################################
     '''
     print ("Output file written successfully")
     print ("")

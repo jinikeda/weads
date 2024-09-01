@@ -684,7 +684,7 @@ def mem(interpolateHarmonicsFile, vegetationFile,
                                 0)  # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. However, this is an arbitary number! Need to consider further (Jin June 19, 2024)
     Inundation_depth[mhwIDW == ndv] = ndv
     # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
-    df['inu_depth'] = Inundation_depth.flatten()
+    df['inun_depth'] = Inundation_depth.flatten()
 
     df.to_csv(outputMEMFile, index=False)
     ############################################################################################################

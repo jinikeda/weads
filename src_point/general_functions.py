@@ -464,7 +464,7 @@ def write_clipped_raster(raster_open, raster, clip_file, transform, nodata_value
     return clip_file
 
 def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_file, idw_Flag=False, knn=12,
-                     dtype_list=None, nodata_value_list=None, reproject_flag=False, inEPSG=None, outEPSG=None):
+                     dtype_list=None, nodata_value_list=None, reproject_flag=False, inEPSG=None, outEPSG=None, mask_flag=True):
     """
     Interpolates values and creates a single GeoTIFF raster file with multiple bands for the target strings.
     :param xx: 2D numpy array of x coordinates.
@@ -480,6 +480,7 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
     :param reproject_flag: Flag to reproject coordinates.
     :param inEPSG: Input EPSG code if reprojection is needed.
     :param outEPSG: Output EPSG code if reprojection is needed.
+    :param mask_flag: Flag to mask the raster using the shapefile. Defaults to True.
     """
 
     try:
@@ -536,27 +537,28 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
         print("clip raster file")
 
         nodata_value = nodata_value_list[0] # only use first value
-        with rasterio.open(temp_file) as raster_open:
-            raster = raster_open.read(1)
-            transform = raster_open.transform
+        if mask_flag:
+            with rasterio.open(temp_file) as raster_open:
+                raster = raster_open.read(1)
+                transform = raster_open.transform
 
-            try:
+                try:
+                    if np.issubdtype(raster_open.dtypes[0], np.integer):
+                        raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
+                                                 nodata=nodata_value)
+                    else:
+                        raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
+                                                 nodata=np.nan)
+
+                except Exception as e:
+                    print(f"Error in mask: {e}")
+                    return None
+
+                    # Ensure nodata_value is consistent with the raster dtype when writing
                 if np.issubdtype(raster_open.dtypes[0], np.integer):
-                    raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
-                                             nodata=nodata_value)
+                    write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=int(nodata_value))
                 else:
-                    raster, transform = mask(raster_open, mask_shp.geometry, crop=True, all_touched=True,
-                                             nodata=np.nan)
-
-            except Exception as e:
-                print(f"Error in mask: {e}")
-                return None
-
-                # Ensure nodata_value is consistent with the raster dtype when writing
-            if np.issubdtype(raster_open.dtypes[0], np.integer):
-                write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=int(nodata_value))
-            else:
-                write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=float(nodata_value))
+                    write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=float(nodata_value))
 
     except Exception as e:
         print(f"Error in interpolate_grid: {e}")
@@ -595,4 +597,20 @@ def create_raster(file, rasterdata, zarray_stack, dtype_list, nodata_value_list)
         print(f'Band {i+1} Statistics: Min: {stats[0]}, Max: {stats[1]}, Mean: {stats[2]}, StdDev: {stats[3]}')
 
     out_ds = None
+
+
+def delete_files(file_list):
+
+    # Delete file
+    print("\nDelete files\n")
+
+    for pattern in file_list:
+        for file in glob.glob(pattern):
+            try:
+                os.remove(file)
+                print(f"{file} has been deleted.")
+            except FileNotFoundError:
+                print(f"{file} not found.")
+            except PermissionError:
+                print(f"{file} cannot be deleted due to permission error.")
 

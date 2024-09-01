@@ -249,8 +249,13 @@ def main():
             outputMeshFile,
             outputAttrFile,
             outputMEMFile + '.csv',
-            slr)  # 3 is the annual accreation rate on MEM (m/yr). Caution: -1 is the multiplier (for ADCIRC file)
-        print('Finished new fort.14 and new fort.13')
+            slr,
+            inputShapeFile,
+            inEPSG,
+            outEPSG,
+            raster_resolution=100
+            )
+        print('Finished new fort.14, new fort.13 and rasterization')
 
     print('\n' + '#################################################')
     print('Point-based WEADS Complete!')

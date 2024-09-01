@@ -24,7 +24,7 @@ from osgeo.gdalconst import *
 import rasterio
 from rasterio.mask import mask
 gdal.UseExceptions()
-from KDTree_idw import Invdisttree
+from .KDTree_idw import Invdisttree
 
 
 def read_text_file(fileName):

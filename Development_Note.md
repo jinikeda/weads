@@ -15,7 +15,7 @@
 ## Development (mandatory)
 **src_point will be the main source code and eliminate the dependency of the src_raster approach**
   - rasterize (eliminate singularity image file)
-**src/mem.py**
+**src_raster/mem.py**
   - The only problem with reading vegetation classification is that a segmentation fault happens when reading a large tiff file with a docker.<br>input file: Folder Path/inputs/Wetlands_NWI_forMeshRefinement/Region3_NWI_LC_Reclassify_wetlandsOnly.tif,<br> output file: Folder Path/outputs/Domain_classification_distribution_resample100.tif NWI.py is a currently not elegant.
   
 ## Development (desirable)
@@ -31,10 +31,9 @@
 
 **Jin’s priority list**
 
-1. Develop nearest neighbor interpolation on point-based WEADS (this is only for visuallization purpose and does not affect simulation results).
-2. Read Netcdf outputs of ADCIRC
-3. Excluded **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
-4. Nanobind and parallelization
+1. Read Netcdf outputs of ADCIRC
+2. Excluded **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
+3. Nanobind and parallelization
 
 ## Main Python module/function files (src raster folders)
 - tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is still computationally expensive on Sep 12**)

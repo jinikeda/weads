@@ -51,7 +51,7 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 
 ```--mem``` Run ecological equiliubum model  
 
-```--postprocessing``` Update ADCIRC input files (fort.13 and fort.14) from ecological productions 
+```--postprocessing``` Update ADCIRC input files (fort.13 and fort.14) from ecological productions and rasterization using the nearest neighbor interpolation (only for visualization purposes, not impact entire calculation)
 
 ### all commands 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     -h, --help            show this help message and exit \
@@ -76,7 +76,7 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Output attribute file \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inEPSG INEPSG       Input EPSG code <inEPSGCode> \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --outEPSG OUTEPSG     Output EPSG code <outEPSGCode> \
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --deltaT DELTAT       time step for WEADS simuiation in years \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --deltaT DELTAT       time step for WEADS simulation in years \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --slr SLR             Sea level rise \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputInundationtimeFile INPUTINUNDATIONTIMEFILE \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Use inundationtime file for running inunT <inundationtime.63> \

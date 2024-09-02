@@ -31,9 +31,8 @@
 
 **Jin’s priority list**
 
-1. Read Netcdf outputs of ADCIRC
-2. Excluded **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
-3. Nanobind and parallelization
+1. Excluded **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
+2. Nanobind and parallelization
 
 ## Main Python module/function files (src raster folders)
 - tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is still computationally expensive on Sep 12**)

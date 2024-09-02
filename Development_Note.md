@@ -42,7 +42,6 @@
 
 ## Books
 - A Blue carbon primer: the state of coastal wetland carbon science, practice and policy
-- Another one is not sure
 
   
 NWI classification

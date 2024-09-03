@@ -5,6 +5,8 @@
 # Developer: Jin Ikeda, Peter Bacopoulos and Christopher E. Kees
 # Last modified Jul 13, 2024
 
+from netCDF4 import Dataset
+from .KDTree_idw import Invdisttree
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -25,8 +27,6 @@ from osgeo.gdalconst import *
 import rasterio
 from rasterio.mask import mask
 gdal.UseExceptions()
-from .KDTree_idw import Invdisttree
-from netCDF4 import Dataset
 
 
 def read_text_file(fileName):
@@ -35,7 +35,7 @@ def read_text_file(fileName):
     return lines
 
 
-def read_fort14(inputMeshFile, output_Flag = False):
+def read_fort14(inputMeshFile, output_Flag=False):
     print("Processing mesh...")
     with open(inputMeshFile, "r") as f:
         lines = f.readlines()
@@ -59,7 +59,10 @@ def read_fort14(inputMeshFile, output_Flag = False):
 
     ADCIRC_nodes = np.array(nodes)
     if output_Flag:
-        np.savetxt("mesh_original.txt", ADCIRC_nodes, fmt='%d\t%.8f\t%.8f\t%.8f')
+        np.savetxt(
+            "mesh_original.txt",
+            ADCIRC_nodes,
+            fmt='%d\t%.8f\t%.8f\t%.8f')
     return ADCIRC_nodes, nN, eN
 
 
@@ -72,7 +75,8 @@ def read_fort13(inputMeshFile):
     nN = int(lines[skip_index].split()[0])  # nN: number of nodes
 
     # skip_index2 = 2  # read for the number of attributes
-    # numAttributes = int(lines[skip_index2].split()[0])  # number of attributes
+    # numAttributes = int(lines[skip_index2].split()[0])  # number of
+    # attributes
 
     attribute = "mannings_n_at_sea_floor"
     mann_indices = []
@@ -85,7 +89,8 @@ def read_fort13(inputMeshFile):
             if not global_mann:  # if global_mann is not yet set
                 global_mann = float(lines[i + 3].split()[0])
                 print("global_manning\t", global_mann)
-                mann = np.full((nN, 1), global_mann, dtype=float)  # initialize using a global value
+                # initialize using a global value
+                mann = np.full((nN, 1), global_mann, dtype=float)
             else:
                 local_mann_Num = int(lines[i + 1].split()[0])
                 print("local_manning_Num\t", local_mann_Num)
@@ -102,14 +107,15 @@ def read_inundationtime63(inputInundationTFile):
     # Convert inputInundationTFile to string if it's a PosixPath
     if isinstance(inputInundationTFile, Path):
         inputInundationTFile = str(inputInundationTFile)
-        
+
     # Check if the input file is a NetCDF file
     if ".nc" in inputInundationTFile:
         # Open the NetCDF file
         ds = Dataset(inputInundationTFile, mode='r')
 
         # Check the contents of the file
-        # print(ds)  # if the user want to see the contents, turn on this command
+        # print(ds)  # if the user want to see the contents, turn on this
+        # command
 
         # Access specific variables
         time = ds.variables['time'][:]
@@ -118,12 +124,13 @@ def read_inundationtime63(inputInundationTFile):
         inun_time = ds.variables['inun_time'][:]
 
         nN = len(x)  # nN: number of nodes
-        max_time = float(time[0]) # maximum simulation time
+        max_time = float(time[0])  # maximum simulation time
 
         print("node number\t", nN, "max_time\t", max_time)
 
         # Initialize the array for inundation time
-        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
+        inundationtime = np.zeros(
+            nN, dtype=[('nodeNum', int), ('time', float)])
 
         # Assign node number to 'nodeNum' field
         inundationtime['nodeNum'] = np.arange(1, nN + 1)
@@ -150,8 +157,10 @@ def read_inundationtime63(inputInundationTFile):
 
         ##### Step.3 Output inundationtime ######
         # node number, time of inundation (0: dry, 1: wet)
-        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
-        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
+        inundationtime = np.zeros(
+            nN, dtype=[('nodeNum', int), ('time', float)])
+        inundationtime = np.zeros(
+            nN, dtype=[('nodeNum', int), ('time', float)])
         for i in range(nN):
             nodeNum, time = lines[(skip_index2 + 1) + i].split()
             inundationtime[i]['nodeNum'] = int(nodeNum)
@@ -237,7 +246,8 @@ def create_df2gdf(df, xy_list, drop_list, crs, output_file=None):
     return gdf
 
 
-def convert_gcs2coordinates(gdf, PRJ, Type_str): # Type_str means convert the type of vector data.
+# Type_str means convert the type of vector data.
+def convert_gcs2coordinates(gdf, PRJ, Type_str):
     gdf_proj = gdf.to_crs(PRJ)
     if Type_str == "Point":
         gdf_proj["x_prj"] = gdf_proj.geometry.apply(lambda point: point.x)
@@ -326,7 +336,7 @@ def dummy_raster(xx, yy, epsg_code, nodata_value=None):
 
     # Calculate the top left coordinates and pixel size
     top_left_x = xx[0, 0]
-    top_left_y = yy[-1, 0] # last row should be top
+    top_left_y = yy[-1, 0]  # last row should be top
     pixel_size_x = abs(xx[0, 1] - xx[0, 0])
     pixel_size_y = abs(yy[0, 0] - yy[1, 0])
 
@@ -357,7 +367,9 @@ def dummy_raster(xx, yy, epsg_code, nodata_value=None):
     out_ds = None
 
     return file_path
-def extract_point_values(raster_path, points_gdf, points_path, ndv,ndv_byte):
+
+
+def extract_point_values(raster_path, points_gdf, points_path, ndv, ndv_byte):
     # Load the shapefile of points
     points = points_gdf
     # Load the DEM raster
@@ -421,7 +433,6 @@ def expand_nodes(nodes_positions, node_states,
 
 # internal function of generate_grid
 def read_shp_extent(inputShapeFile, gcs2prj=False, inEPSG=None, outEPSG=None):
-
     """
     Reads the extent of a shapefile using geopandas and optionally converts the coordinate system.
 
@@ -444,7 +455,8 @@ def read_shp_extent(inputShapeFile, gcs2prj=False, inEPSG=None, outEPSG=None):
     print("\tExtent of points id: %s", extent)
 
     # Create bbox corners based on extent
-    bbox = [(extent[0], extent[1]), (extent[2], extent[1]), (extent[2], extent[3]), (extent[0], extent[3])]
+    bbox = [(extent[0], extent[1]), (extent[2], extent[1]),
+            (extent[2], extent[3]), (extent[0], extent[3])]
 
     # extent[0] = minx
     # extent[1] = miny
@@ -455,8 +467,8 @@ def read_shp_extent(inputShapeFile, gcs2prj=False, inEPSG=None, outEPSG=None):
     return extent, bbox
 
 
-def generate_grid(inputShapeFile, resolution = 20, scale_factor = 1, gcs2prj=False,
-                                  inEPSG=None, outEPSG=None):
+def generate_grid(inputShapeFile, resolution=20, scale_factor=1, gcs2prj=False,
+                  inEPSG=None, outEPSG=None):
     """
     Generate a grid of X and Y coordinates based on the shapefile extent and desired resolution.
 
@@ -474,19 +486,32 @@ def generate_grid(inputShapeFile, resolution = 20, scale_factor = 1, gcs2prj=Fal
     print(extent, bbox)
 
     scale_factor = int(scale_factor)
-    gridx = np.arange(int(extent[0]*scale_factor-resolution/2), int(extent[2]*scale_factor+resolution/2), resolution) # draw region will be expanded
-    gridy = np.arange(int(extent[1]*scale_factor-resolution/2), int(extent[3]*scale_factor+resolution/2), resolution)
+    gridx = np.arange(int(extent[0] *
+                          scale_factor -
+                          resolution /
+                          2), int(extent[2] *
+                                  scale_factor +
+                                  resolution /
+                                  2), resolution)  # draw region will be expanded
+    gridy = np.arange(int(extent[1] *
+                          scale_factor -
+                          resolution /
+                          2), int(extent[3] *
+                                  scale_factor +
+                                  resolution /
+                                  2), resolution)
 
     gridx = gridx / scale_factor
     gridy = gridy / scale_factor
 
-    xx, yy = np.meshgrid(gridx,gridy) # grid_x and y
+    xx, yy = np.meshgrid(gridx, gridy)  # grid_x and y
 
     return xx, yy
 
 
 # innternal function for interpolated grid
-def write_clipped_raster(raster_open, raster, clip_file, transform, nodata_value=-99999.0):
+def write_clipped_raster(raster_open, raster, clip_file,
+                         transform, nodata_value=-99999.0):
     out_meta = raster_open.meta.copy()
     out_meta.update({
         "height": raster.shape[1],
@@ -500,6 +525,7 @@ def write_clipped_raster(raster_open, raster, clip_file, transform, nodata_value
         dest.write(raster)
 
     return clip_file
+
 
 def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_file, idw_Flag=False, knn=12,
                      dtype_list=None, nodata_value_list=None, reproject_flag=False, inEPSG=None, outEPSG=None, mask_flag=True):
@@ -523,12 +549,14 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
 
     try:
         # Check input parameters
-        assert isinstance(xx, np.ndarray) and isinstance(yy, np.ndarray), "xx and yy must be numpy arrays"
+        assert isinstance(xx, np.ndarray) and isinstance(
+            yy, np.ndarray), "xx and yy must be numpy arrays"
         assert xx.shape == yy.shape, "xx and yy must have the same shape"
         assert isinstance(df, pd.DataFrame), "df must be a pandas DataFrame"
         assert isinstance(target_list, list), "target_list must be a list"
         assert 'x' in df.columns and 'y' in df.columns, "df must contain 'x', 'y' columns"
-        assert isinstance(knn, int) and knn > 0, "knn must be a positive integer"
+        assert isinstance(
+            knn, int) and knn > 0, "knn must be a positive integer"
 
         domain_shp = gpd.read_file(inputShapeFile)
 
@@ -556,11 +584,14 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
             interp_grids = np.transpose(np.vstack([xx.ravel(), yy.ravel()]))
 
             if idw_Flag:
-                interpolated_values, _ = invdisttree(interp_grids, nnear=knn, eps=0.0, p=2)
+                interpolated_values, _ = invdisttree(
+                    interp_grids, nnear=knn, eps=0.0, p=2)
             else:
-                interpolated_values, _ = invdisttree(interp_grids, nnear=1, eps=0.0, p=2)
+                interpolated_values, _ = invdisttree(
+                    interp_grids, nnear=1, eps=0.0, p=2)
 
-            z_interp = np.reshape(interpolated_values, (xx.shape[0], xx.shape[1]))
+            z_interp = np.reshape(
+                interpolated_values, (xx.shape[0], xx.shape[1]))
             interpolated_grids.append(z_interp)
 
         # Stack all interpolated grids along the third dimension
@@ -569,12 +600,17 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
         # Create a raster with all interpolated values as multiple bands
         rasterdata = gdal.Open(ref_tiff, 0)
         temp_file = "process.tif"
-        create_raster(temp_file, rasterdata, raster_stack, dtype_list, nodata_value_list)
+        create_raster(
+            temp_file,
+            rasterdata,
+            raster_stack,
+            dtype_list,
+            nodata_value_list)
 
         # Open the TIFF file and clip using a polygon
         print("clip raster file")
 
-        nodata_value = nodata_value_list[0] # only use first value
+        nodata_value = nodata_value_list[0]  # only use first value
         if mask_flag:
             with rasterio.open(temp_file) as raster_open:
                 raster = raster_open.read(1)
@@ -592,24 +628,37 @@ def interpolate_grid(xx, yy, df, target_list, inputShapeFile, ref_tiff, output_f
                     print(f"Error in mask: {e}")
                     return None
 
-                    # Ensure nodata_value is consistent with the raster dtype when writing
+                    # Ensure nodata_value is consistent with the raster dtype
+                    # when writing
                 if np.issubdtype(raster_open.dtypes[0], np.integer):
-                    write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=int(nodata_value))
+                    write_clipped_raster(
+                        raster_open,
+                        raster,
+                        output_file,
+                        transform,
+                        nodata_value=int(nodata_value))
                 else:
-                    write_clipped_raster(raster_open, raster, output_file, transform, nodata_value=float(nodata_value))
+                    write_clipped_raster(
+                        raster_open,
+                        raster,
+                        output_file,
+                        transform,
+                        nodata_value=float(nodata_value))
 
     except Exception as e:
         print(f"Error in interpolate_grid: {e}")
         return None
 
-def create_raster(file, rasterdata, zarray_stack, dtype_list, nodata_value_list):
+
+def create_raster(file, rasterdata, zarray_stack,
+                  dtype_list, nodata_value_list):
     """
     Create a multi-band raster from stacked 2D arrays.
     """
     print(file)
     gtiff_driver = gdal.GetDriverByName('GTiff')
     num_bands = zarray_stack.shape[2]
-    print(f"number of band",num_bands)
+    print(f"number of band", num_bands)
     out_ds = gtiff_driver.Create(
         file,
         rasterdata.RasterXSize,
@@ -628,11 +677,13 @@ def create_raster(file, rasterdata, zarray_stack, dtype_list, nodata_value_list)
         nodata_value = nodata_value_list[0]
 
         out_band = out_ds.GetRasterBand(i + 1)
-        out_band.WriteArray(np.flipud(band_data))  # bottom row <-> top row due to origin of raster file
+        # bottom row <-> top row due to origin of raster file
+        out_band.WriteArray(np.flipud(band_data))
         out_band.SetNoDataValue(nodata_value)
 
         stats = out_band.ComputeStatistics(0)
-        print(f'Band {i+1} Statistics: Min: {stats[0]}, Max: {stats[1]}, Mean: {stats[2]}, StdDev: {stats[3]}')
+        print(
+            f'Band {i+1} Statistics: Min: {stats[0]}, Max: {stats[1]}, Mean: {stats[2]}, StdDev: {stats[3]}')
 
     out_ds = None
 
@@ -651,4 +702,3 @@ def delete_files(file_list):
                 print(f"{file} not found.")
             except PermissionError:
                 print(f"{file} cannot be deleted due to permission error.")
-

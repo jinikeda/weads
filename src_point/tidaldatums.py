@@ -119,7 +119,7 @@ def tidaldatums(domainIOFile, inputHarmonicsFile,
     phase_index = df.columns.get_loc('STEADY_phase')
     print('amp_index:', amp_index, 'phase_index:', phase_index)
 
-    for j in range(numPoints):
+    for j in tqdm(range(numPoints)):
         if (df.iloc[j, inundationtime_index] >= 0.9999) & (df.iloc[j, inundationtime_index]
                                                            <= 1.0001):  # If inundationTime is 1.0, then the point is fully wetted
             # Tidal resynthesis

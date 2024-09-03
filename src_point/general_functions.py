@@ -14,6 +14,7 @@ import zipfile
 import shutil
 from scipy.spatial import KDTree
 from datetime import datetime
+from tqdm.auto import tqdm
 import time
 import glob
 from pathlib import Path
@@ -25,6 +26,7 @@ import rasterio
 from rasterio.mask import mask
 gdal.UseExceptions()
 from .KDTree_idw import Invdisttree
+from netCDF4 import Dataset
 
 
 def read_text_file(fileName):
@@ -97,32 +99,64 @@ def read_fort13(inputMeshFile):
 
 # Jin's comments. We also need to change the function to read netcdf file.
 def read_inundationtime63(inputInundationTFile):
-    with open(inputInundationTFile, "r") as f:
-        lines = f.readlines()
-    f.close()
+    # Check if the input file is a NetCDF file
+    if '.nc' in inputInundationTFile:
+        # Open the NetCDF file
+        ds = Dataset(inputInundationTFile, mode='r')
 
-    ##### Step.2 Get the number of nodes and maximum simulation time ######
-    skip_index = 1  # skip the first line
-    nN = int(lines[skip_index].split()[1])  # nN: number of nodes
-    skip_index2 = 2  # skip the first line
-    # max_time: maximum simulation time [s]
-    max_time = float(lines[skip_index2].split()[1])
-    print("node number\t", nN, "max_time\t", max_time)
+        # Check the contents of the file
+        # print(ds)  # if the user want to see the contents, turn on this command
 
-    ##### Step.3 Output inundationtime ######
-    # inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
-    # node number, time of inundation (0: dry, 1: wet)
-    inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
-    for i in range(nN):
-        # skip before inundation number
-        nodeNum, time = lines[(skip_index2 + 1) + i].split()
-        inundationtime[i][0] = int(nodeNum)
-        if float(time) >= 0:
-            # float(float(time) / max_time)  # time of inundation (0: dry, 1:
-            # wet)
-            inundationtime[i][1] = float(time) / max_time
-        else:
-            pass
+        # Access specific variables
+        time = ds.variables['time'][:]
+        x = ds.variables['x'][:]
+        y = ds.variables['y'][:]
+        inun_time = ds.variables['inun_time'][:]
+
+        nN = len(x)  # nN: number of nodes
+        max_time = float(time[0]) # maximum simulation time
+
+        print("node number\t", nN, "max_time\t", max_time)
+
+        # Initialize the array for inundation time
+        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
+
+        # Assign node number to 'nodeNum' field
+        inundationtime['nodeNum'] = np.arange(1, nN + 1)
+
+        # Assign inundationtime to 'time' field
+        inundationtime['time'] = inun_time / max_time
+
+        # Close the NetCDF file
+        ds.close()
+
+    else:
+        # Open and read the text file
+        with open(inputInundationTFile, "r") as f:
+            lines = f.readlines()
+        f.close()
+
+        ##### Step.2 Get the number of nodes and maximum simulation time ######
+        skip_index = 1  # skip the first line
+        nN = int(lines[skip_index].split()[1])  # nN: number of nodes
+        skip_index2 = 2  # skip the line
+        # max_time: maximum simulation time [s]
+        max_time = float(lines[skip_index2].split()[1])
+        print("node number\t", nN, "max_time\t", max_time)
+
+        ##### Step.3 Output inundationtime ######
+        # node number, time of inundation (0: dry, 1: wet)
+        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
+        inundationtime = np.zeros(nN, dtype=[('nodeNum', int), ('time', float)])
+        for i in range(nN):
+            nodeNum, time = lines[(skip_index2 + 1) + i].split()
+            inundationtime[i]['nodeNum'] = int(nodeNum)
+            if float(time) >= 0:
+                # float(float(time) / max_time)  # time of inundation (0: dry, 1:
+                # wet)
+                inundationtime[i]['time'] = float(time) / max_time
+            else:
+                inundationtime[i]['time'] = 0
 
     return inundationtime, nN, max_time
 

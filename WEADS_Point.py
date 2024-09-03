@@ -96,12 +96,12 @@ def main():
         "--deltaT",
         type=float,
         default=5,
-        help="time step for WEADS simuiation in years")
+        help="time step for WEADS simulation in years")
     parser.add_argument("--slr", type=float, help="Sea level rise")
     parser.add_argument(
         "--inputInundationtimeFile",
         type=str,
-        help="Use inundationtime file for running inunT <inundationtime.63>")
+        help="Use inundationtime file for running inunT <inundationtime.63 & .63.nc>")
     parser.add_argument(
         "--inputvegetationFile",
         type=str,

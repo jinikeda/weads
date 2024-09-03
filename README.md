@@ -19,7 +19,8 @@ Type: ***conda activate WEADS_env***
 ### §3 Create a package: WEADS
 Type: ***pip install -e .*** \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless using ***pip install .***) \
-Also, the user may need to set ***export PYTHONPATH=$PYTHONPATH:/path_dir*** and ***source ~/.bashrc** # or .bash_profile, .zshrc, etc* for the Path setting.
+Also, the user may need to set ***export PYTHONPATH=$PYTHONPATH:/path_dir_WEADS_xx.py*** and ***source ~/.bashrc** # or .bash_profile, .zshrc, etc* for the Path setting.
+(We may move the argument files into the source folders to be determined)
 
 ### §4 Copy necessary files to run WEADS
 Mandatory: fort.13, fort.14, fort.53, inundationtime.63, domain shapefile \
@@ -52,7 +53,7 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 
 ```--mem``` Run ecological equiliubum model  
 
-```--postprocessing``` Update ADCIRC input files (fort.13 and fort.14) from ecological productions and rasterization using the nearest neighbor interpolation (only for visualization purposes, not impact entire calculation)
+```--postprocessing``` Update ADCIRC input files (fort.13 and fort.14) from ecological productions and rasterization using the nearest neighbor interpolation (only for visualization purposes, not impact entire calculations)
 
 ### all commands 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;     -h, --help            show this help message and exit \

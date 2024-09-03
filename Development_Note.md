@@ -31,11 +31,11 @@
 
 **Jin’s priority list**
 
-1. Excluded **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
-2. Nanobind and parallelization
+1. Speed up tidal datum.py by using Nanobind and parallelization
+2. Exclude **pyadcircmodule** dependency (src_raster folder: This folder will be deleted/merged later)
 
 ## Main Python module/function files (src raster folders)
-- tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is still computationally expensive on Sep 12**)
+- tidaldatums.py (Calculate tidal datums in each pixel on ocean region. **This part is still computationally expensive on Sep 12, 2023**)
   
 
 # NOTE

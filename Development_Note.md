@@ -1,5 +1,5 @@
 
-# Development Note (Aug 28, 24 version)
+# Development Note (Sep 2, 24 version)
 
 -  **Discussed the development direction on Aug 28th**
 ---

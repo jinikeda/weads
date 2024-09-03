@@ -99,6 +99,10 @@ def read_fort13(inputMeshFile):
 
 # Jin's comments. We also need to change the function to read netcdf file.
 def read_inundationtime63(inputInundationTFile):
+    # Convert inputInundationTFile to string if it's a PosixPath
+    if isinstance(inputInundationTFile, Path):
+        inputInundationTFile = str(inputInundationTFile)
+        
     # Check if the input file is a NetCDF file
     if ".nc" in inputInundationTFile:
         # Open the NetCDF file

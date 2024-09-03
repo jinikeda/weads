@@ -18,7 +18,8 @@ Type: ***conda activate WEADS_env***
 
 ### §3 Create a package: WEADS
 Type: ***pip install -e .*** \
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless using ***pip install .***)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -e: editable mode (Preferred for package developers, unless using ***pip install .***) \
+Also, the user may need to set ***export PYTHONPATH=$PYTHONPATH:/path_dir*** and ***source ~/.bashrc** # or .bash_profile, .zshrc, etc* for the Path setting.
 
 ### §4 Copy necessary files to run WEADS
 Mandatory: fort.13, fort.14, fort.53, inundationtime.63, domain shapefile \

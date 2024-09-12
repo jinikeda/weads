@@ -108,9 +108,13 @@ def main():
         default=None,
         help="Path to vegetation file <*.tif>")
     parser.add_argument(
-        "--skipresample",
+        "--skip_extracting_raster",
+        action="store_false",
+        help="Skip extract original raster values")
+    parser.add_argument(
+        "--no_spread_flag",
         action="store_true",
-        help="Skip reprojection and resample to raster domain")
+        help="Turn off spread flag for vegetation mapping")
 
     # Parse the command line arguments
     args = parser.parse_args()
@@ -135,6 +139,8 @@ def main():
     deltaT = args.deltaT
     slr = args.slr
     inputvegetationFile = args.inputvegetationFile
+    skip_extracting_raster_Flag = args.skip_extracting_raster
+    spread_flag = args.no_spread_flag
 
     inEPSG = int(inEPSG)
     outEPSG = int(outEPSG)
@@ -208,15 +214,13 @@ def main():
         if inputvegetationFile:  # Organize vegetation file
             print('\n' + '\tOrganizing vegetation file...')
             src_point.basics.fileexists(inputvegetationFile)
-            # First simulation
-            skip_raster_extracting_Flag = False
-            # After first simulation
-            # skip_raster_extracting_Flag = True
-            spread_flag = True
+            # First simulation # --skip_extracting_raster_Flag = False
+            # After first simulation # skip_extracting_raster_Flag = True
+            #spread_flag = True
 
             src_point.process_vegetation_file(
                 inputvegetationFile,
-                skip_raster_extracting_Flag,
+                skip_extracting_raster_Flag,
                 spread_flag,
                 outputvegetationFile,
                 inEPSG,

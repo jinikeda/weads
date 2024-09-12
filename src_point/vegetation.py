@@ -86,22 +86,24 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
     print("----------------------------------------------------------------------\n")
     ######################################################################
 
-    # Input raster data (.tiff)
-    print(inputvegetationFile)
+    process_file = 'domain_nwi_original.csv'
 
-    prj, rows, cols, transform, RV, _ = gdal_reading(
-        inputvegetationFile)  # Reading a raster file
-    print('row and cols: ', np.shape(RV))
+    if skip_raster_extracting_Flag == False: # Read raster file and extract values
 
-    xy_list = ['x', 'y']
-    drop_list = []
-    raster_prj = prj.split(
-        '],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
-    PRJ = 'EPSG:' + raster_prj.replace('"', '')
-    print('Raster projection is', PRJ)
-    crs_points = 'EPSG:' + str(inEPSG)
+        # Input raster data (.tiff)
+        print(inputvegetationFile)
 
-    if skip_raster_extracting_Flag == False:
+        prj, rows, cols, transform, RV, _ = gdal_reading(
+            inputvegetationFile)  # Reading a raster file
+        print('row and cols: ', np.shape(RV))
+
+        xy_list = ['x', 'y']
+        drop_list = []
+        raster_prj = prj.split(
+            '],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
+        PRJ = 'EPSG:' + raster_prj.replace('"', '')
+        print('Raster projection is', PRJ)
+        crs_points = 'EPSG:' + str(inEPSG)
 
         ### Step 3 ###########################################################
         print("\n----------------------------------------------------------------------")
@@ -120,8 +122,6 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
         points_prj = convert_gcs2coordinates(gdf_ADCIRC, PRJ, "Point") # Convert point-based datasets
         print(points_prj.head(20))
 
-        process_file = 'domain_nwi_original.csv'
-
         # extract values from raster file
         NWI_values, NWI_df = extract_point_values(
             inputvegetationFile, points_prj, process_file, ndv, ndv_byte)
@@ -130,7 +130,8 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
 
         # reading simulated mem file
         df = pd.read_csv('previous_ecology.csv') # for sequential running
-        df.rename(columns={'new_NWI': 'NWI'}, inplace=True) # rename and use as original values
+        df.drop(columns=['z'], inplace=True) # remove z values (previous values)'])
+        df.rename(columns={'tb_update': 'z','new_NWI': 'NWI'}, inplace=True) # rename and use as original values
         NWI_values = df['NWI'].values
 
         ### Step 3 ###########################################################

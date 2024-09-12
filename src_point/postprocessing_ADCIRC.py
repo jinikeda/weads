@@ -154,7 +154,6 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     # --- GLOBAL PARAMETERS ---
     ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
     Watte_ndv = 255  # No data value for WATTE
-    # slr = 0.0 # Sea level rise [m]
 
     # --- READ INPUTS ---
     # Read the mem file

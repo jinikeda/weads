@@ -33,13 +33,13 @@ Optional: vegetation map file
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source codes are located on "src_raster" folder
 ## Running module in the WEADS package
 
-* ***WEADS_Point --help***  Show available commands: \
+* ***WEADS_Point --help***  Show available commands: 
 
 
 usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessing] [--inputMeshFile INPUTMESHFILE] [--inputAttrFile INPUTATTRFILE]
                    [--inputHarmonicsFile INPUTHARMONICSFILE] [--inputShapeFile INPUTSHAPEFILE] [--outputMEMFile OUTPUTMEMFILE] [--outputMeshFile OUTPUTMESHFILE]
                    [--outputAttrFile OUTPUTATTRFILE] [--inEPSG INEPSG] [--outEPSG OUTEPSG] [--deltaT DELTAT] [--slr SLR]
-                   [--inputInundationtimeFile INPUTINUNDATIONTIMEFILE] [--inputvegetationFile INPUTVEGETATIONFILE] [--skipresample]
+                   [--inputInundationtimeFile INPUTINUNDATIONTIMEFILE] [--inputvegetationFile INPUTVEGETATIONFILE] [--skip_extracting_raster] [--no_spread_flag]
 
   **Options:** 
 
@@ -84,7 +84,10 @@ usage: WEADS_Point [-h] [--all] [--preprocessing] [--td] [--mem] [--postprocessi
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Use inundationtime file for running inunT <inundationtime.63> \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --inputvegetationFile INPUTVEGETATIONFILE \
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Path to vegetation file <*.tif> \
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --skipresample        Skip reprojection and resample to raster domain 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --skip_extracting_raster \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Skip extract original raster values \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  --no_spread_flag \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                        Turn off spread flag for vegetation mapping  
 
 # Example of a command for point-based WEADS 
 ***WEADS_Point --inputMeshFile fort.14 --inputAttrFile fort.13 --inputHarmonicsFile fort.53 --inputShapeFile Study_domain.shp --inEPSG 4269 --outEPSG 26914 --deltaT 25 --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14 --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_resample100.tif --all***

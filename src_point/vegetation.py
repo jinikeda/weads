@@ -88,22 +88,22 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
 
     process_file = 'domain_nwi_original.csv'
 
+    # Input raster data (.tiff)
+    print(inputvegetationFile)
+
+    prj, rows, cols, transform, RV, _ = gdal_reading(
+        inputvegetationFile)  # Reading a raster file
+    print('row and cols: ', np.shape(RV))
+
+    xy_list = ['x', 'y']
+    drop_list = []
+    raster_prj = prj.split(
+        '],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
+    PRJ = 'EPSG:' + raster_prj.replace('"', '')
+    print('Raster projection is', PRJ)
+    crs_points = 'EPSG:' + str(inEPSG)
+
     if skip_raster_extracting_Flag == False: # Read raster file and extract values
-
-        # Input raster data (.tiff)
-        print(inputvegetationFile)
-
-        prj, rows, cols, transform, RV, _ = gdal_reading(
-            inputvegetationFile)  # Reading a raster file
-        print('row and cols: ', np.shape(RV))
-
-        xy_list = ['x', 'y']
-        drop_list = []
-        raster_prj = prj.split(
-            '],AUTHORITY["EPSG",')[-1].split(']]')[0]  # Get EPSG code
-        PRJ = 'EPSG:' + raster_prj.replace('"', '')
-        print('Raster projection is', PRJ)
-        crs_points = 'EPSG:' + str(inEPSG)
 
         ### Step 3 ###########################################################
         print("\n----------------------------------------------------------------------")
@@ -128,17 +128,17 @@ def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
 
     else:
 
-        # reading simulated mem file
-        df = pd.read_csv('previous_ecology.csv') # for sequential running
-        df.drop(columns=['z'], inplace=True) # remove z values (previous values)'])
-        df.rename(columns={'tb_update': 'z','new_NWI': 'NWI'}, inplace=True) # rename and use as original values
-        NWI_values = df['NWI'].values
-
         ### Step 3 ###########################################################
         print("\n----------------------------------------------------------------------")
         print("Step 3.: Reprojection for input points")
         print("----------------------------------------------------------------------\n")
         ######################################################################
+
+        # reading simulated mem file
+        df = pd.read_csv('previous_ecology.csv') # for sequential running
+        df.drop(columns=['z'], inplace=True) # remove z values (previous values)'])
+        df.rename(columns={'tb_update': 'z','new_NWI': 'NWI'}, inplace=True) # rename and use as original values
+        NWI_values = df['NWI'].values
 
         NWI_df = df.loc[:, ['node', 'x', 'y', 'z', 'NWI']]
         print(NWI_df.columns)

@@ -109,11 +109,11 @@ def main():
         help="Path to vegetation file <*.tif>")
     parser.add_argument(
         "--skip_extracting_raster",
-        action="store_false",
+        action="store_true",
         help="Skip extract original raster values")
     parser.add_argument(
         "--no_spread_flag",
-        action="store_true",
+        action="store_false",
         help="Turn off spread flag for vegetation mapping")
 
     # Parse the command line arguments

@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 # File: postprocessing.py
 # Developer: Jin Ikeda
-# Last modified: Aug 27, 2024
-
+# Last modified: Oct 15, 2024
 ##########################################################################
 # --- Load internal modules ---
 from .general_functions import *
@@ -41,7 +40,7 @@ def update_ADCIRC_mesh(outputMeshFile, node_id, x, y, new_z):
     print(f"Updated ADCIRC file '{output_path}' with new node data from mem results")
 
 
-def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
+def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning, EVC_node=None, EVC_value=None, land_value=None):
     """
     Updates sea_surface_height_above_geoid and Manning's n values in an ADCIRC attribute file.
 
@@ -50,8 +49,13 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
     - slr (float): Sea level rise to be added to the sea surface height.
     - manning_node (array-like): Array of node indices for updating Manning's n.
     - manning (array-like): Array of new Manning's n values corresponding to manning_node.
+    - EVC_node (array-like, optional): Array of node indices for updating horizontal eddy viscosity.
+    - EVC_value (array-like, optional): Array of new horizontal eddy viscosity values corresponding to EVC_node.
     """
-    print("   Processing attributes...\n")
+    print("Processing attributes...\n")
+    assert (EVC_value is None and EVC_node is None and land_value is None) or (
+                EVC_value is not None and EVC_node is not None and land_value is not None), \
+        "EVC_node, EVC_value, and local must all be provided or all be None"
 
     with open(outputAttrFile, 'r') as file:
         lines = file.readlines()
@@ -63,7 +67,11 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
 
     idx_sshag = [i for i, line in enumerate(lines) if 'sea_surface_height_above_geoid' in line]
     idx_manning = [i for i, line in enumerate(lines) if 'mannings_n_at_sea_floor' in line]
-    print('idx_sshag:\t', idx_sshag, '\nidx_manning:\t', idx_manning)
+    idx_EVC = [i for i, line in enumerate(lines) if 'average_horizontal_eddy_viscosity_in_sea_water_wrt_depth' in line]
+    if idx_EVC:
+        print('idx_sshag:\t', idx_sshag, '\nidx_manning:\t', idx_manning, '\nidx_EVC:\t', idx_EVC)
+    else:
+        print('idx_sshag:\t', idx_sshag, '\nidx_manning:\t', idx_manning)
 
     # Sea_surface_height_above_geoid
     if idx_sshag:
@@ -93,7 +101,7 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
                       i] = "{0:>10}     {1:.6f}\n".format(local_ssh_idx, new_local_ssh)
                 lines[idx_sshag[1] + 2 + i] = "{0:>10}     {1:.6f}\n".format(local_ssh_idx, new_local_ssh)
 
-    # Manning's n
+    # Manning's n (Future work: make functions for each attribute)
     if idx_manning:
         # Grobal manning
         global_mann = float(lines[idx_manning[0] + 3].split()[0])
@@ -133,7 +141,51 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning):
         # Insert all the lines at once
         lines[idx_manning[1] + 2: idx_manning[1] + 2] = new_lines
 
-    # Future add Average_horizontal_eddy_viscosity_in_sea_water_wrt_depth (Aug 28 2024)
+    # Average_horizontal_eddy_viscosity_in_sea_water_wrt_depth
+    if idx_EVC:
+        # Global EVC
+        global_EVC = float(lines[idx_EVC[0] + 3].split()[0])
+        # number of local EVC
+        num_local_EVC = int(lines[idx_EVC[1] + 1].split()[0])
+        print(f"\nglobal EVC value:\t{global_EVC}\nnum_local_EVC:\t{num_local_EVC}")
+
+        # Update EVC values
+        node_value_updated = np.full(nN, global_EVC, dtype=float)
+
+        if num_local_EVC != 0:
+            for i in range(num_local_EVC):
+                local_node, local_value = lines[idx_EVC[1] + 2 + i].split()
+                local_node = int(local_node)
+                local_value = float(local_value)
+
+                if local_value != global_EVC:
+                    node_value_updated[local_node - 1] = local_value
+        else:
+            pass
+
+        print('size of node_value_updated:\t', len(node_value_updated))
+
+        # Update the EVC for the ADCIRC mesh based on the MEM results
+        for i in range(len(EVC_node)):
+            if EVC_value[i] == land_value:
+                node_value_updated[int(EVC_node[i]) - 1] = land_value
+            else:
+                node_value_updated[int(EVC_node[i]) - 1] = global_EVC
+
+        if num_local_EVC != 0:
+            # delete the local EVC
+            del lines[idx_EVC[1] + 2: idx_EVC[1] + 2 + num_local_EVC]
+        else:
+            pass
+
+        # Update the number of local EVC
+        lines[idx_EVC[1] + 1] = "{0:>10}\n".format(nN)
+
+        # Create all the lines to be inserted
+        new_lines = ["{0:>10}      {1:.6f}\n".format(
+            i + 1, node_value_updated[i]) for i in range(nN)]
+        # Insert all the lines at once
+        lines[idx_EVC[1] + 2: idx_EVC[1] + 2] = new_lines
 
     # Write the updated lines back to the ADCIRC attribute file
     with open(outputAttrFile, 'w') as file:
@@ -153,7 +205,10 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     ##########################################################################
     # --- GLOBAL PARAMETERS ---
     ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
+    water_value = 40  # Water value
     Watte_ndv = 255  # No data value for WATTE
+    land_horizontal_eddy = 20.0  # Set the horizontal eddy viscosity value for water regions
+    ##########################################################################
 
     # --- READ INPUTS ---
     # Read the mem file
@@ -189,8 +244,13 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     manning_node = manning_df['node'].values  # update nodes
     manning = manning_df['manning'].values  # update values
 
-    update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning)
+    # Find the node indices where the horizontal eddy viscosity are to be updated
+    # Create a new column 'eddy' based on 'bio_level' values # water region = 5.0, land region = 20.0
+    df['eddy'] = np.where(df['bio_level'] == water_value, 5.0, land_horizontal_eddy)  # 5.0 is dummy, modify based on global value in fort.13Set the horizontal eddy viscosity value for water regions
+    horizontal_eddy_viscosity_node = df['node'].values
+    horizontal_eddy_viscosity = df['eddy'].values
 
+    update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning, EVC_node = horizontal_eddy_viscosity_node, EVC_value = horizontal_eddy_viscosity, land_value = land_horizontal_eddy)
 
     ####################################################################################################################
     ### Make raster files, which doesn't affect WEADS Simulation

@@ -208,6 +208,7 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     water_value = 40  # Water value
     Watte_ndv = 255  # No data value for WATTE
     land_horizontal_eddy = 20.0  # Set the horizontal eddy viscosity value for water regions
+    print(f"next sea Level rise is {slr}")
     ##########################################################################
 
     # --- READ INPUTS ---
@@ -265,15 +266,19 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     print(f"Dummy raster created at: {dummy_tiff}")
 
 
+    # Note: Inundation_depth is interpolated Mean High water tidal datums using IDW
+    #       Max_inundation_depth is ADCIRC output for the maximum inundation depth
+
+
     # Output tiff file lists
-    csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv']
-    tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif']
+    csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv','Max_inundation_depth.csv']
+    tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif','Max_inundation_depth.tif']
     target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW'],
-                       ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning'], ['bio_level'], ['inun_depth']]
-    idw_Flag_list = [False, False, False, False]
+                       ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass'], ['bio_level'], ['inun_depth'],['depth']]
+    idw_Flag_list = [False, False, False, False, False]
     dtype_list = [['gdal.GDT_Float32'],
-                  ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32']]
-    nodata_value_list = [[ndv], [ndv], [Watte_ndv], [ndv]]
+                  ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32'], ['gdal.GDT_Float32']]
+    nodata_value_list = [[ndv], [ndv], [Watte_ndv], [ndv], [ndv]]
 
     for csv_file, tiff_file, target_str, idw_Flag, dtypes, nodata_values in zip(csv_file_list, tiff_file_list,
                                                                                 target_str_list, idw_Flag_list,

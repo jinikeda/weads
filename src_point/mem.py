@@ -253,6 +253,10 @@ def calculate_manning(P):
         return 0.05
     elif 28 <= P < 38:  # 32 high productivitiy
         return 0.07
+    elif 100 <= P < 110:  # 109 mangrove (juvenile)
+        return 0.07  # Estuarine Scrub/Shrub Wetland 0.07 (juvenile), Estuarine Forested Wetland n =0.15 (mature), Passeri et al 2018
+    elif 120 <= P < 130:  # 120 irregularly flooded marsh
+        return 0.07 # Estuarine Scrub/Shrub Wetland 0.07
     else:
         return ndv
 
@@ -506,21 +510,21 @@ def mem(interpolateHarmonicsFile, vegetationFile,
 
     else:
 
-        ##### Here check the elevation of mask irregularly flooded marsh ######
-        # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
-        # # Before dilation
-        df_VG_Org = pd.read_csv('domain_nwi_original.csv')  # Before dilation
-        NWI_original = df_VG_Org['NWI'].values
-        mask_irregular_NWI = (NWI_original == 20)
-        irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
-        irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
-        print(
-            'Irregular_depth [cm], min, max, mean, std',
-            irregular_NWI_depth.min(),
-            irregular_NWI_depth.max(),
-            irregular_NWI_depth.mean(),
-            irregular_NWI_depth.std())
-        ######################################################################
+        # ##### Here check the elevation of mask irregularly flooded marsh ######
+        # # This part is for tuning the parameters for irregularly flooded marsh (not mandatory
+        # # # Before dilation
+        # df_VG_Org = pd.read_csv('domain_nwi_original.csv')  # Before dilation
+        # NWI_original = df_VG_Org['NWI'].values
+        # mask_irregular_NWI = (NWI_original == 20)
+        # irregular_elevation = tb[mask_irregular_NWI & above_subtidal_zone]
+        # irregular_NWI_depth = D[mask_irregular_NWI & above_subtidal_zone]
+        # print(
+        #     'Irregular_depth [cm], min, max, mean, std',
+        #     irregular_NWI_depth.min(),
+        #     irregular_NWI_depth.max(),
+        #     irregular_NWI_depth.mean(),
+        #     irregular_NWI_depth.std())
+        # ######################################################################
 
         P = np.full((df.shape[0], 1), ndv,
                     dtype=float)  # Create an array of default values (ndv)

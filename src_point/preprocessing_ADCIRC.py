@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: preprocessing.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Jul 15, 2024
+# Last modified: Oct 21, 2024
 
 # Development Notes:
 """ This script is used to preprocess the input files for the WEAD project. The input files are the ADCIRC mesh file (fort.14), the attributes file (fort.13), the inundation time file (inundationtime.63), and the harmonics file (fort.53). The script reads the input files and filters the nodes within the domain shapefile (Cut_domain.shp). The script outputs the filtered nodes and attributes in the domain as a text file (domain_inputs.csv). The script is used in the WEAD project."""
@@ -86,7 +86,24 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     inundationtime_domain_2d = np.column_stack(
         [inundationtime_domain[name] for name in inundationtime_domain.dtype.names])
     np.savetxt("inundationtime.txt", inundationtime_domain_2d, fmt='%d\t%.4f')
+
     ##########################################################################
+    # --- Read max Inundation depth (optional) ---
+
+    Max_inundation_depth = "maxinundepth.63.nc"
+    fmt = '%d\t%.8f\t%.8f\t%.8f'  # Format for saving the inundationdepth array to a text file
+
+    if Max_inundation_depth:
+        inundationdepth = read_max_inundationdepth63(Max_inundation_depth)
+
+    inundationdepth_domain = inundationdepth[true_indices]
+
+    # Convert the structured numpy array to a pandas DataFrame
+    df = pd.DataFrame(inundationdepth_domain)
+
+    # Save the DataFrame to a CSV file
+    df.to_csv("Max_inundation_depth.csv", index=False)
+
     ##########################################################################
     # --- Read harmonics (inputHarmonicsFile) ---
     ##########################################################################
@@ -130,7 +147,7 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
 
     df = pd.DataFrame(merged_array, columns=header_list)
     df.drop(dummy_node, axis=1, inplace=True)
-    #df.to_csv("domain_inputs.csv", index=None)
+    #df.vto_cs("domain_inputs.csv", index=None)
 
     ##########################################################################
     # --- Processing hydro_class based on inputMeshFile and inputInundationtimeFile ---

@@ -174,6 +174,51 @@ def read_inundationtime63(inputInundationTFile):
     return inundationtime, nN, max_time
 
 
+def read_max_inundationdepth63(inputMaxdepthFile):
+    """
+    Reads the max inundation depth from a NetCDF file and returns an array with node number, longitude, latitude, and depth.
+
+    :param inputMaxdepthFile: Path to the NetCDF file.
+    :return: A structured numpy array with fields 'nodeNum', 'x', 'y', and 'depth'.
+    """
+    if isinstance(inputMaxdepthFile, Path):
+        inputInundationTFile = str(inputMaxdepthFile)
+
+    # Check if the input file is a NetCDF file
+    if ".nc" in inputMaxdepthFile:
+        # Open the NetCDF file
+        ds = Dataset(inputMaxdepthFile, mode='r')
+        # Check the contents of the file
+        #print(ds)  # if the user want to see the contents, turn on this command
+        x = ds.variables['x'][:]
+        y = ds.variables['y'][:]
+        depth = ds.variables['inun_max'][:]
+        nN = len(x)
+        inundationdepth = np.zeros(
+            nN, dtype=[('nodeNum', int), ('x', float), ('y', float), ('depth', float)]
+        )
+
+        inundationdepth['nodeNum'] = np.arange(1, nN + 1)
+        inundationdepth['x'] = x
+        inundationdepth['y'] = y
+        inundationdepth['depth'] = depth
+
+        ds.close()
+
+    else:
+        with open(inputMaxdepthFile, "r") as f:
+            lines = f.readlines()
+        f.close()
+
+        ##### Step.2 Get the number of nodes and maximum inundation depth ######
+        skip_index = 1  # skip the first line
+        nN = int(lines[skip_index].split()[1])  # nN: number of nodes
+        skip_index2 = 2  # skip the line
+
+        print("Need to confirm the format of the text file (Jin 10/21/2024)")
+
+    return inundationdepth
+
 def read_fort53(inputHarmonicsFile):
     print("   Processing harmonics...\n")
     # Jin's note: We may need to change the function to read netcdf file.

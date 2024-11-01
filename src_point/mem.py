@@ -27,15 +27,14 @@ print("LAUNCH: Launching script!\n")
 # GLOSSARY OF VARIABLES #
 # ----------------------------------------------------------
 #
-# A: Accretion [cm]?
+# A: Annual Accretion [m yr -1]
 # B: Biomass density [g m-2 yr -1]
 # Bl: Biomass density left side
 # Br: Biomass density right side
-# tb_update: modified topo-bathy
-# P: Productivity
-# marsh: marsh classification
-# Dmin, Dmax, Dopt
-# Bmax
+# Bmax: Maximum biomass production [g m-2 yr -1]
+# tb_update: modified topo-bathy [m]
+# P: Productivity [-], 16: low, 23: medium, 32: high for tidal marsh
+# Dmin, Dmax, Dopt: Minimum, maximum, and optimal depth for biomass production in parabola equation
 
 # ----------------------------------------------------------
 # DATASETS Jin -> Pete Add States and Optimum March 7, 2024

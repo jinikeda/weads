@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: Ecology.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Aug 24, 2024
+# Last modified: Nov 1, 2024
 
 
 # ----------------------------------------------------------

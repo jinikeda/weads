@@ -3,7 +3,7 @@
 # Provide general functions for point-based WEADS
 # Developed by the Center for Computation & Technology and Center for Coastal Ecosystem Design Studio at Louisiana State University (LSU).
 # Developer: Jin Ikeda, Peter Bacopoulos and Christopher E. Kees
-# Last modified Jul 13, 2024
+# Last modified Nov 1, 2024
 
 from netCDF4 import Dataset
 from .KDTree_idw import Invdisttree

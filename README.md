@@ -1,7 +1,7 @@
 # WEADS: Wetland Ecosystem and Accretion Dynamics Simulator
 There are two versions: **raster-based** ("src_raster") and **point-based** ("src_point") **WEADS**. \
 This software will be required to run on High-performance computers or high-spec local machines (more than 8 cores CPU or equivalent with RAM = 16 GB).
-This software also needs **ADCIRC input/output files** such as fort.13, fort.14, fort.53, and inundationtime.63 on the root directory (the same directory as setup.py).
+This software also needs **ADCIRC input/output files** such as fort.13 (attributes), fort.14 (mesh), fort.53 (elevation harmonic constituents), and inundationtime.63 on the root directory (the same directory as setup.py).
 Currently, raster-based WEADS need a dependency module, pyadcircmodules (https://github.com/zcobell/ADCIRCModules). For further details, see *prerequisites* for the raster version. 
 
 ### Python Version

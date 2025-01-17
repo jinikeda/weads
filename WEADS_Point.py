@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # File: WEADS_Point.py
-# Modified: Aug 22, 2024 by Jin Ikeda
+# Modified: Jan 17, 2025 by Jin Ikeda
 
 # ----------------------------------------------------------
 # M O D U L E S
@@ -218,7 +218,7 @@ def main():
             # After first simulation # skip_extracting_raster_Flag = True
             #spread_flag = True
 
-            src_point.process_vegetation_file(
+            src_point.vegetation(
                 inputvegetationFile,
                 skip_extracting_raster_Flag,
                 spread_flag,

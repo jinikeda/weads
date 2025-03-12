@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 # File: tidalDatums.py
 # Developer: Jin Ikeda & Peter Bacopoulos
 # Last modified: Aug 22, 2024

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 # File: Ecology.py
 # Developer: Jin Ikeda & Peter Bacopoulos
 # Last modified: Nov 1, 2024

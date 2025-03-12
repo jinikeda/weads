@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 # File: preprocessing.py
 # Developer: Jin Ikeda & Peter Bacopoulos
 # Last modified: Oct 21, 2024
@@ -90,11 +90,12 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
     ##########################################################################
     # --- Read max Inundation depth (optional) ---
 
-    Max_inundation_depth = "maxinundepth.63.nc"
-    fmt = '%d\t%.8f\t%.8f\t%.8f'  # Format for saving the inundationdepth array to a text file
+    # Max_inundation_depth = "maxinundepth.63.nc"
+    Max_inundation_depth = "maxinundepth4plot_T0.63.nc"
 
     if Max_inundation_depth:
-        inundationdepth = read_max_inundationdepth63(Max_inundation_depth)
+        # inundationdepth = read_max_inundationdepth63(Max_inundation_depth)
+        inundationdepth = read_maxele(Max_inundation_depth)
 
     inundationdepth_domain = inundationdepth[true_indices]
 

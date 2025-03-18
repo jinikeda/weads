@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File: postprocessing.py
 # Developer: Jin Ikeda
-# Last modified: Oct 15, 2024
+# Last modified: Mar 18, 2025
 ##########################################################################
 # --- Load internal modules ---
 from .general_functions import *
@@ -196,7 +196,7 @@ def update_ADCIRC_attributes(outputAttrFile, slr, manning_node, manning, EVC_nod
 
 
 def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
-                          outputMeshFile, outputAttrFile, outputMEMFile, slr,inputShapeFile, inEPSG, outEPSG, raster_resolution=100):
+                          outputMeshFile, outputAttrFile, outputMEMFile, slr,inputShapeFile, inEPSG, outEPSG, raster_resolution=100, inputInundationMaxDFile=None):
 
     # --- Initialize code ---
     start_time = time.time()
@@ -269,23 +269,25 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
     # Note: Inundation_depth is interpolated Mean High water tidal datums using IDW
     #       Max_inundation_depth is ADCIRC output for the maximum inundation depth
 
+    if inputInundationMaxDFile is None:
+        # Output tiff file lists
+        csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv']
+        tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif']
+        target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW'],
+                           ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass'], ['bio_level'], ['inun_depth']]
+        idw_Flag_list = [False, False, False, False]
+        dtype_list = [['gdal.GDT_Float32'],
+                      ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32']]
+        nodata_value_list = [[ndv], [ndv], [Watte_ndv], [ndv]]
 
-    # Output tiff file lists
-    # csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv','Max_inundation_depth.csv']
-    # tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif','Max_inundation_depth.tif']
-    # target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW'],
-    #                    ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass'], ['bio_level'], ['inun_depth'],['depth']]
-    # idw_Flag_list = [False, False, False, False, False]
-    # dtype_list = [['gdal.GDT_Float32'],
-    #               ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32'], ['gdal.GDT_Float32']]
-    # nodata_value_list = [[ndv], [ndv], [Watte_ndv], [ndv], [ndv]]
-
-    csv_file_list = ['Max_inundation_depth.csv']
-    tiff_file_list = ['Max_inundation_depth.tif']
-    target_str_list = [['zeta_max']]
-    idw_Flag_list = [False]
-    dtype_list = [['gdal.GDT_Float32']]
-    nodata_value_list = [[ndv]]
+    else:
+        # Output tiff file lists (save time output only max inundation depth)
+        csv_file_list = ['Max_inundation_depth.csv']
+        tiff_file_list = ['Max_inundation_depth.tif']
+        target_str_list = [['zeta_max']]
+        idw_Flag_list = [False]
+        dtype_list = [['gdal.GDT_Float32']]
+        nodata_value_list = [[ndv]]
 
     for csv_file, tiff_file, target_str, idw_Flag, dtypes, nodata_values in zip(csv_file_list, tiff_file_list,
                                                                                 target_str_list, idw_Flag_list,

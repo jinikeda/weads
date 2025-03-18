@@ -656,19 +656,21 @@ def mem(interpolateHarmonicsFile, vegetationFile,
 
     ###### Renew vegetation map ####################
     print("Renew the vegetation map from the PRODUCTIVITY CALCULATIONS")
+    VM = P.copy()
     if vegetationFile is not None:
-        VM = P.copy()
         # 8 = salt marsh(regularly flooded) follow with tidal cycle
         VM[(VM == 16) | (VM == 23) | (VM == 32)] = 8
         VM[(VM == 109)] = 9  # 9 = mangrove
         VM[(VM == 120)] = 20  # 20 = irregularly flooded marsh
         # VM[(VM == 55)] = ndv_byte # 55 = land_mask
         # VM[(VM == 40)] = ndv_byte # 40 = water_mask
-        df['new_NWI'] = VM.flatten()
+
+    df['new_NWI'] = VM.flatten()
 
 
 
     ####################################################################################################################
+    # --- WRITE OUTPUTS (optional) ---
     print("\n----------------------------------------------------------------------")
     print("Create WATTE input files")
     print("----------------------------------------------------------------------\n")

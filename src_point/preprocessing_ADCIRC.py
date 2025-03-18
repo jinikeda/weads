@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File: preprocessing.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Oct 21, 2024
+# Last modified: Mar 18, 2025
 
 # Development Notes:
 """ This script is used to preprocess the input files for the WEAD project. The input files are the ADCIRC mesh file (fort.14), the attributes file (fort.13), the inundation time file (inundationtime.63), and the harmonics file (fort.53). The script reads the input files and filters the nodes within the domain shapefile (Cut_domain.shp). The script outputs the filtered nodes and attributes in the domain as a text file (domain_inputs.csv). The script is used in the WEAD project."""
@@ -13,7 +13,7 @@ from .general_functions import *
 
 
 def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
-                         inputHarmonicsFile, inputShapeFile, domainIOFile, inEPSG, outEPSG):
+                         inputHarmonicsFile, inputShapeFile, domainIOFile, inEPSG, outEPSG, inputInundationMaxDFile=None):
 
     #from src_point.general_functions import *
     # --- Initialize code ---
@@ -89,21 +89,19 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
 
     ##########################################################################
     # --- Read max Inundation depth (optional) ---
+    ##########################################################################
 
-    # Max_inundation_depth = "maxinundepth.63.nc"
-    Max_inundation_depth = "maxinundepth4plot_T0.63.nc"
+    if inputInundationMaxDFile is not None:
+        # inputInundationMaxDFile = "maxinundepth4plot_T0.63.nc" # optional to turn on the editted output file
+        inundationdepth = read_max_inundationdepth63(inputInundationMaxDFile)
 
-    if Max_inundation_depth:
-        # inundationdepth = read_max_inundationdepth63(Max_inundation_depth)
-        inundationdepth = read_maxele(Max_inundation_depth)
+        inundationdepth_domain = inundationdepth[true_indices]
 
-    inundationdepth_domain = inundationdepth[true_indices]
+        # Convert the structured numpy array to a pandas DataFrame
+        df = pd.DataFrame(inundationdepth_domain)
 
-    # Convert the structured numpy array to a pandas DataFrame
-    df = pd.DataFrame(inundationdepth_domain)
-
-    # Save the DataFrame to a CSV file
-    df.to_csv("Max_inundation_depth.csv", index=False)
+        # Save the DataFrame to a CSV file
+        df.to_csv("Max_inundation_depth.csv", index=False)
 
     ##########################################################################
     # --- Read harmonics (inputHarmonicsFile) ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # File: WEADS_Point.py
-# Modified: Jan 17, 2025 by Jin Ikeda
+# Modified: March 18, 2025 by Jin Ikeda
 
 # ----------------------------------------------------------
 # M O D U L E S
@@ -14,7 +14,7 @@ from src_point.general_functions import *
 # F U N C T I O N    M A I N
 # ----------------------------------------------------------
 # Example:
-# python WEAD_Point.py python WEADS_Point.py --inputMeshFile fort.14 --inputAttrFile fort.13
+# python WEADS_Point.py --inputMeshFile fort.14 --inputAttrFile fort.13
 # --inputHarmonicsFile fort.53 --inputShapeFile Cut_domain.shp --inEPSG 4269 --outEPSG 26914
 # --deltaT 25 --slr 0.0 --outputAttrFile fort_new.13 --outputMeshFile fort_new.14
 # --inputInundationtimeFile inundationtime.63 --inputvegetationFile NWI_TX_wetlands.tif --all
@@ -101,6 +101,13 @@ parser.add_argument(
     type=str,
     help="Use inundationtime file for running inunT <inundationtime.63 & .63.nc>")
 parser.add_argument(
+    "--inputMaxinundationdepthFile",
+    type=str,
+    default=None,
+    required=False,
+    help="Use ADCIRC MAx inundation depth file for plotting (e.g., maxinundepth.63 or maxinundepth.63.nc)"
+)
+parser.add_argument(
     "--inputvegetationFile",
     type=str,
     default=None,
@@ -128,6 +135,7 @@ inputMeshFile = args.inputMeshFile
 inputAttrFile = args.inputAttrFile
 inputHarmonicsFile = args.inputHarmonicsFile
 inputInundationTFile = args.inputInundationtimeFile
+inputInundationMaxDFile = args.inputMaxinundationdepthFile
 inputShapeFile = args.inputShapeFile
 outputMEMFile = args.outputMEMFile
 outputMeshFile = args.outputMeshFile
@@ -216,7 +224,7 @@ if mem_flag:  # Run MEM
         # After first simulation # skip_extracting_raster_Flag = True
         #spread_flag = True
 
-        src_point.vegetation(
+        src_point.vegetation.process_vegetation_file(
             inputvegetationFile,
             skip_extracting_raster_Flag,
             spread_flag,
@@ -255,8 +263,9 @@ if postprocessing_flag:
         inputShapeFile,
         inEPSG,
         outEPSG,
-        raster_resolution=100
-        )
+        raster_resolution=100,
+        inputInundationMaxDFile=inputInundationMaxDFile)
+
     print('Finished new fort.14, new fort.13 and rasterization')
 
 print('\n' + '#################################################')

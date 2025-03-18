@@ -284,7 +284,7 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
         # Output tiff file lists (save time output only max inundation depth)
         csv_file_list = ['Max_inundation_depth.csv']
         tiff_file_list = ['Max_inundation_depth.tif']
-        target_str_list = [['zeta_max']]
+        target_str_list = [['inun_max']]  # for eddited max_elevation, should be zeta_max
         idw_Flag_list = [False]
         dtype_list = [['gdal.GDT_Float32']]
         nodata_value_list = [[ndv]]

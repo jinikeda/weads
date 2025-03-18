@@ -222,7 +222,7 @@ def read_max_inundationdepth63(inputMaxdepthFile):
 def read_maxele(inputMaxeleFile):
     # Convert inputInundationTFile to string if it's a PosixPath
     if isinstance(inputMaxeleFile, Path):
-        inputInundationTFile = str(inputMaxeleFile)
+        inputMaxeleFile = str(inputMaxeleFile)
 
     # Check if the input file is a NetCDF file
     if ".nc" in inputMaxeleFile:

@@ -193,7 +193,8 @@ if preprocessing_flag:  # Read hydrodynamics
         inputShapeFile,
         domainIOFile,
         inEPSG,
-        outEPSG)
+        outEPSG,
+        inputInundationMaxDFile=inputInundationMaxDFile)
 
 if td_flag:  # Compute tidal datums
 

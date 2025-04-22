@@ -280,7 +280,7 @@ def mem(interpolateHarmonicsFile, vegetationFile,
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
+    global ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile is None:
         print('\nA monotypic species with no vegetation mapping\n')

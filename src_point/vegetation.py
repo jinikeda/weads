@@ -23,16 +23,6 @@
 # --- Load internal modules ---
 from .general_functions import *
 
-### Step 1 ###########################################################
-print("\n----------------------------------------------------------------------")
-print("Step 1.: Import modules")
-print("----------------------------------------------------------------------\n")
-######################################################################
-
-# --- GLOBAL PARAMETERS ---
-ndv = -99999.0  # No data value (ndv) using ADCIRC convention
-ndv_byte = 128
-
 ### Functions #############################################################
 
 
@@ -67,6 +57,17 @@ def apply_priority_order(df, indices_values, output_file):
 
 def process_vegetation_file(inputvegetationFile, skip_raster_extracting_Flag,
                             spread_flag, outputvegetationFile, inEPSG, outEPSG, deltaT=5):
+
+    # --- Initialize code ---
+    ### Step 1 ###########################################################
+    print("\n----------------------------------------------------------------------")
+    print("Step 1.: Import modules")
+    print("----------------------------------------------------------------------\n")
+    ######################################################################
+
+    # --- GLOBAL PARAMETERS ---
+    ndv = -99999.0  # No data value (ndv) using ADCIRC convention
+    ndv_byte = 128
 
     start_time = time.time()
 

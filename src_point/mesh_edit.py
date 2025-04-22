@@ -12,18 +12,18 @@ The script is used in the WEAD project."""
 
 ##########################################################################
 # --- Load internal modules ---
-import .general_functions as gfa
+from . import general_functions as gfa
+import pandas as pd
+import geopandas as gpd
+import numpy as np
+import shutil
 
 def mesh_edit(inputMeshFile, inputadjustFile, inEPSG):
 
     # --- GLOBAL PARAMETERS ---
     ndv = -99999.0
     inputEPSG = inEPSG  # Input EPSG code, e.g., 4269 for NAD83
-
-    # inEPSG = 4269  # NAD83
-    # inputMeshFile = "fort.14"
-    # outputMeshFile = "fort_updated.14"
-    # vector_path = "Thin_layer.geojson"  # Must be .geojson or .shp and # GeoJson's coordinate system is mostly GWGS84 (World Geodetic System 1984) : 4326
+    outputMeshFile = "fort_updated.14"
 
     # === Load Vector File ===
     if inputadjustFile.endswith((".shp", ".geojson")):

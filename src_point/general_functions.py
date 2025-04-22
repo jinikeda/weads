@@ -806,3 +806,37 @@ def delete_files(file_list):
                 print(f"{file} not found.")
             except PermissionError:
                 print(f"{file} cannot be deleted due to permission error.")
+
+
+def update_ADCIRC_mesh(outputMeshFile, node_id, x, y, new_z):
+    """
+    Updates the z-values in an ADCIRC mesh file based on input arrays.
+
+    Parameters:
+    - outputMeshFile (str): Path to the ADCIRC mesh file to be updated.
+    - node_id (array-like): Array of node indices.
+    - x (array-like): X-coordinates of the nodes.
+    - y (array-like): Y-coordinates of the nodes.
+    - new_z (array-like): New z-values to update in the mesh file.
+
+    """
+    # Read the entire file into a list of lines
+    lines = read_text_file(outputMeshFile)
+
+    # Update the z value for the ADCIRC mesh
+    for i in range(len(node_id)):
+        idx = int(node_id[i])
+        # Update the line corresponding to the node index
+        # Node indices in the file are assumed to start from line 2 (index 1 in Python)
+        lines[idx + 1] = "{0:>10}     {1:.6f}      {2:.6f} {3:.8E}\n".format(
+            idx, x[i], y[i], -new_z[i])
+
+    # Determine the output file path
+    output_path = outputMeshFile
+
+    # Write the updated lines back to the file
+    with open(output_path, 'w') as file:
+        file.writelines(lines)
+    file.close()
+
+    print(f"Updated ADCIRC file '{output_path}' with new node data from mem results")

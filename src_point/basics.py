@@ -1,15 +1,9 @@
 import os
 
-# ----------------------------------------------------------
-# F U N C T I O N   F I L E E X I S T S
-# ----------------------------------------------------------
-# Determine if a file exists
-# result = function(file)
-# ----------------------------------------------------------
-
-
 def fileexists(file):
+    if not isinstance(file, str) or not file.strip():
+        raise ValueError(f"Invalid file path: {file!r}")
+
     if not os.path.exists(file):
-        print(file + ' NOT FOUND.\tPROGRAM EXIT.')
-        exit()
+        raise FileNotFoundError(f"File not found: {file}")
 # ----------------------------------------------------------

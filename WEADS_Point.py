@@ -7,8 +7,10 @@
 # ----------------------------------------------------------
 
 import argparse
-import src_point
-from src_point.general_functions import *
+import time
+import sys
+# import src_point
+from src_point import basics, preprocessing_ADCIRC, tidaldatums, tidaldatumsidw, mem, vegetation, postprocessing_ADCIRC, mesh_edit
 
 # ----------------------------------------------------------
 # F U N C T I O N    M A I N
@@ -105,7 +107,7 @@ parser.add_argument(
     type=str,
     default=None,
     required=False,
-    help="Use ADCIRC MAx inundation depth file for plotting (e.g., maxinundepth.63 or maxinundepth.63.nc)"
+    help="Use ADCIRC Max inundation depth file for plots (e.g., maxinundepth.63 or maxinundepth.63.nc)"
 )
 parser.add_argument(
     "--inputvegetationFile",
@@ -124,7 +126,7 @@ parser.add_argument(
     "--z_adjustFile",
     type=str,
     default=None,
-    help="Path to vector file for z adjustment <*.shp> or <*.json> ")
+    help="Path to vector file for z adjustment <*.shp> or <*.geojson> Future tiff support")
 
 # Parse the command line arguments
 args = parser.parse_args()
@@ -155,9 +157,12 @@ skip_extracting_raster_Flag = args.skip_extracting_raster
 spread_flag = args.no_spread_flag
 
 inEPSG = int(inEPSG)
-outEPSG = int(outEPSG)
-deltaT = float(deltaT)
-slr = float(slr)
+if inputadjustFile:
+    pass
+else:
+    outEPSG = int(outEPSG)
+    deltaT = float(deltaT)
+    slr = float(slr)
 
 # ----------------------------------------------------------
 
@@ -180,10 +185,10 @@ outputvegetationFile = 'domain_nwi.csv'
 if inputadjustFile:
     print('\n' + '\tAdjusting z values in the mesh file...')
     try:
-        src_point.basics.fileexists(inputadjustFile)
-        src_point.basics.fileexists(inputMeshFile)
-        # src_point.basics.fileexists(inputAttrFile)  # not need now
-        src_point.mesh_edit(inputMeshFile, inputadjustFile, inEPSG)
+        basics.fileexists(inputadjustFile)
+        basics.fileexists(inputMeshFile)
+        # basics.fileexists(inputAttrFile)  # not need now
+        mesh_edit(inputMeshFile, inputadjustFile, inEPSG)
 
         print(f"""
             Z values adjusted successfully in the mesh file.
@@ -208,36 +213,41 @@ if all_flag:
     mem_flag = True
     postprocessing_flag = True
 
-if preprocessing_flag:  # Read hydrodynamics
+if preprocessing_flag:
     print('\nReading input hydrodynamics...')
 
-    src_point.basics.fileexists(inputMeshFile)
-    src_point.basics.fileexists(inputShapeFile)
-    src_point.basics.fileexists(inputHarmonicsFile)
-    src_point.basics.fileexists(inputInundationTFile)
+    # Validate file existence
+    for f in [inputMeshFile, inputShapeFile, inputHarmonicsFile, inputInundationTFile]:
+        basics.fileexists(f)
 
-    src_point.preprocessing_ADCIRC(
-        inputMeshFile,
-        inputAttrFile,
-        inputInundationTFile,
-        inputHarmonicsFile,
-        inputShapeFile,
-        domainIOFile,
-        inEPSG,
-        outEPSG,
-        inputInundationMaxDFile=inputInundationMaxDFile)
+    kwargs = dict(
+        inputMeshFile=inputMeshFile,
+        inputAttrFile=inputAttrFile,
+        inputInundationtimeFile=inputInundationTFile,
+        inputHarmonicsFile=inputHarmonicsFile,
+        inputShapeFile=inputShapeFile,
+        domainIOFile=domainIOFile,
+        inEPSG=inEPSG,
+        outEPSG=outEPSG
+    )
+
+    if inputInundationMaxDFile:
+        basics.fileexists(inputInundationMaxDFile)
+        kwargs["inputInundationMaxDFile"] = inputInundationMaxDFile
+
+    preprocessing_ADCIRC(**kwargs)
 
 if td_flag:  # Compute tidal datums
 
     print('\n' + '\tComputing tidal datums...')
-    src_point.basics.fileexists(inputHarmonicFreqFile)
+    basics.fileexists(inputHarmonicFreqFile)
 
-    src_point.tidaldatums(
+    tidaldatums(
         domainIOFile,
         inputHarmonicFreqFile,
         outputHarmonicsFile,
         tstep)
-    src_point.tidaldatumsidw(
+    tidaldatumsidw(
         outputHarmonicsFile,
         interpolateHarmonicsFile,
         inEPSG,
@@ -247,16 +257,16 @@ if td_flag:  # Compute tidal datums
 if mem_flag:  # Run MEM
     print('\n' + '\tRunning MEM...')
 
-    src_point.basics.fileexists(interpolateHarmonicsFile)
+    basics.fileexists(interpolateHarmonicsFile)
 
     if inputvegetationFile:  # Organize vegetation file
         print('\n' + '\tOrganizing vegetation file...')
-        src_point.basics.fileexists(inputvegetationFile)
+        basics.fileexists(inputvegetationFile)
         # First simulation # --skip_extracting_raster_Flag = False
         # After first simulation # skip_extracting_raster_Flag = True
         #spread_flag = True
 
-        src_point.vegetation.process_vegetation_file(
+        vegetation.process_vegetation_file(
             inputvegetationFile,
             skip_extracting_raster_Flag,
             spread_flag,
@@ -266,7 +276,7 @@ if mem_flag:  # Run MEM
             deltaT=deltaT)
 
         print('\n' + '\tUse vegetation mapping...')
-        src_point.mem(
+        mem(
             interpolateHarmonicsFile,
             outputvegetationFile,
             outputMEMFile + '.csv',
@@ -276,7 +286,7 @@ if mem_flag:  # Run MEM
 
     else:  # Run MEM without vegetation
         print('\n' + '\tNo vegetation mapping references...')
-        src_point.mem(
+        mem(
             interpolateHarmonicsFile,
             inputvegetationFile,
             outputMEMFile + '.csv',
@@ -285,18 +295,25 @@ if mem_flag:  # Run MEM
             deltaT=deltaT)
 
 if postprocessing_flag:
-    src_point.postprocessing_ADCIRC(
-        inputMeshFile,
-        inputAttrFile,
-        outputMeshFile,
-        outputAttrFile,
-        outputMEMFile + '.csv',
-        slr,
-        inputShapeFile,
-        inEPSG,
-        outEPSG,
-        raster_resolution=100,
-        inputInundationMaxDFile=inputInundationMaxDFile)
+    print("\n\tPostprocessing" + (" with inundation max depth..." if inputInundationMaxDFile else " without inundation max depth..."))
+
+    kwargs = dict(
+        inputMeshFile=inputMeshFile,
+        inputAttrFile=inputAttrFile,
+        outputMeshFile=outputMeshFile,
+        outputAttrFile=outputAttrFile,
+        outputMEMFile=outputMEMFile + '.csv',
+        slr=slr,
+        inputShapeFile=inputShapeFile,
+        inEPSG=inEPSG,
+        outEPSG=outEPSG,
+        raster_resolution=100
+    )
+
+    if inputInundationMaxDFile:
+        kwargs["inputInundationMaxDFile"] = inputInundationMaxDFile
+
+    postprocessing_ADCIRC(**kwargs)
 
     print('Finished new fort.14, new fort.13 and rasterization')
 

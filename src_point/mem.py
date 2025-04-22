@@ -182,7 +182,6 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
 
 
 def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
-    global ndv
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition

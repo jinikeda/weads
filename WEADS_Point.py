@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # File: WEADS_Point.py
-# Modified: March 18, 2025 by Jin Ikeda
+# Modified: April 22, 2025 by Jin Ikeda
 
 # ----------------------------------------------------------
 # M O D U L E S
@@ -120,6 +120,11 @@ parser.add_argument(
     "--no_spread_flag",
     action="store_false",
     help="Turn off spread flag for vegetation mapping")
+parser.add_argument(
+    "--z_adjustFile",
+    type=str,
+    default=None,
+    help="Path to vector file for z adjustment <*.shp> or <*.json> ")
 
 # Parse the command line arguments
 args = parser.parse_args()
@@ -131,6 +136,7 @@ td_flag = args.td
 mem_flag = args.mem
 postprocessing_flag = args.postprocessing
 
+inputadjustFile = args.z_adjustFile
 inputMeshFile = args.inputMeshFile
 inputAttrFile = args.inputAttrFile
 inputHarmonicsFile = args.inputHarmonicsFile
@@ -170,6 +176,31 @@ inputHarmonicFreqFile = "harmonics_Freq.txt"
 outputHarmonicsFile = "domain_tide.csv"
 interpolateHarmonicsFile = "tidal_prj.csv"
 outputvegetationFile = 'domain_nwi.csv'
+
+if inputadjustFile:
+    print('\n' + '\tAdjusting z values in the mesh file...')
+    try:
+        src_point.basics.fileexists(inputadjustFile)
+        src_point.basics.fileexists(inputMeshFile)
+        # src_point.basics.fileexists(inputAttrFile)  # not need now
+        src_point.mesh_edit(inputMeshFile, inputadjustFile, inEPSG)
+
+        print(f"""
+            Z values adjusted successfully in the mesh file.
+
+        #################################################
+        Z-adjustment Complete!
+        --- {time.time() - startTime:.2f} seconds ---
+        #################################################
+        """)
+
+        # Exit early after performing only the z adjustment
+        sys.exit(0)
+
+    except Exception as e:
+        print(f" Error during z adjustment: {e}")
+        sys.exit(1)  # Exit with error code
+
 
 if all_flag:
     preprocessing_flag = True

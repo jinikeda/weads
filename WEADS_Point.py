@@ -191,7 +191,7 @@ outputvegetationFile = 'domain_nwi.csv'
 if inputadjustFile:
     print('\n' + '\tAdjusting z values in the mesh file...')
     try:
-        if args.zv_adjust is None:
+        if args.zv is None:
             print("Error: Please provide a value for z adjustment using the --zv_adjust argument.")
             sys.exit(1)
         basics.fileexists(inputadjustFile)

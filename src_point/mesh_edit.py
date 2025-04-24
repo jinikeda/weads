@@ -7,7 +7,7 @@
 """ This script is used to preprocess the input files for the WEAD project. The input file is the ADCIRC mesh file (fort.14)
 For example, thin_layer.geojson, and the script reads the input file and adjusts the z values within the domain shapefile (Thin_layer.geojson).
 The script outputs the modified nodes and attributes in the model input.
-For thin layer replacement, we do not expect to change the attributes significantly, so we only modified the z values.
+For thin layer placement (TLP), we do not expect to change the attributes significantly, so we only modified the z values.
 The script is used in the WEADS project."""
 
 ##########################################################################

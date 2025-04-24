@@ -19,7 +19,7 @@
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
-
+global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 # ----------------------------------------------------------
 # GLOSSARY OF VARIABLES #
 # ----------------------------------------------------------
@@ -188,7 +188,7 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
 
 
 def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
-    global ndv
+    # global ndv
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
@@ -295,7 +295,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
+    # global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile is None:
         print('\nA monotypic species with no vegetation mapping\n')

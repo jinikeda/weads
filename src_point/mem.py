@@ -17,12 +17,7 @@
 ##########################################################################
 # --- Load internal modules ---
 from .general_functions import *
-
-global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference  # temporal solution
-# mem_config = MEMConfig(
-#     ndv=-99999.0,
-#     ndv_byte=128,
-#     qmax=2.8,  would be better.
+from dataclasses import dataclass, field
 
 # --- Initialize code ---
 start_time = time.time()
@@ -45,21 +40,8 @@ print("LAUNCH: Launching script!\n")
 # ----------------------------------------------------------
 # DATASETS Jin -> Pete Add States and Optimum March 7, 2024
 # ----------------------------------------------------------
-#
-# al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet, where?
-# ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet, where?
-#
-# al=1.975; bl=-0.987; cl=1999;   # Biomass curve coefficients LHS-Apalachicola, FL
-# ar=3.265; br=-1.633; cr=1998;   # Biomass curve coefficients RHS-Apalachicola, FL
-#
-# al=73.8; bl=-1.14; cl=1587.1;   # Biomass curve coefficients LHS-Weeks Bay, LA?
-# ar=73.8; br=-1.14; cr=1587.1;   # Biomass curve coefficients RHS-Weeks Bay, LA
-#
-# al=32; bl=-3.2; cl=1920;        # Biomass curve coefficients LHS-Grand Bay  Alizad et al. (2018)
-# ar=6.61; br=-0.661; cr=1983;    # Biomass curve coefficients RHS-Grand Bay
-#
-# al=24.96; bl=-0.193; cl=592.7;  # Biomass curve coefficients LHS-Plum Island
-# ar=24.96; br=-0.193; cr=592.7;  # Biomass curve coefficients RHS-Plum Island
+# Biomass curve coefficients Grand Bay  Alizad et al. (2018)
+
 
 interest_reference = "Texas_Coastal_Bend"
 
@@ -79,30 +61,10 @@ biomass_coefficients = {
 ##########################################################################
 print("Input parameters for MEM")
 ##########################################################################
-# --- GLOBAL PARAMETERS ---
-ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
-ndv_byte = 128
-qmax = 2.8    # Maximum capture coefficient (-)
-qmin = 1.0    # Minimum capture coefficient (-)
-# Suspended sediment concentration (mg/L) default 25.0: User can freely
-# change this value
-SSC = 25.0
-# Flooding frequency (1/year) default 353.0: User can freely change this value
-FF = 353.0
-BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
-BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-# Refractory fraction (g/g) default 0.1: User can freely change this value
-Kr = 0.1
-# Below Ground Bio to Shoot Ratio (g/g) default 2.0  User can freely
-# change this value
-RRS = 2.0
-# Below Ground turnover rate (/yr) default 0.5  User can freely change
-# this value
-BTR = 0.5
 
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
-print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
+# print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 
 ##########################################################################
 # Under consideration part Jin Aug 22, 2024
@@ -175,6 +137,23 @@ Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
 
 ##########################################################################
 
+@dataclass
+class MEMConfig:
+    ndv: float =  -99999.0  # No data value (ndv) using ADCIRC conversion
+    ndv_byte: int = 128
+    qmax: float =2.8     # Maximum capture coefficient (-)
+    qmin: float = 1.0    # Minimum capture coefficient (-)
+    SSC: float = 25.     # Suspended sediment concentration (mg/L) default 25.0
+    FF: float = 353.0    # Flooding frequency (1/year) default 353.0
+    BDo: float = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
+    BDi: float = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
+    Kr: float = 0.1      # Refractory fraction (g/g) default 0.1:
+    RRS: float = 2.0     # Below Ground Bio to Shoot Ratio (g/g) default 2.0
+    BTR: float = 0.5     # Below Ground turnover rate (/yr) default 0.5
+    biomass_coefficients: dict = field(default_factory=lambda: biomass_coefficients)
+    vegetation_parameters: dict = field(default_factory=lambda: vegetation_parameters)
+    interest_reference: str = interest_reference
+
 # ----------------------------------------------------------
 # F U N C T I O N
 # ----------------------------------------------------------
@@ -190,14 +169,16 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
 
 def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
 
+    config = MEMConfig()  # call the configuration class
+
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
     mask_left_parabora = (D <= Dopt) & mask
     mask_right_parabora = (Dopt < D) & mask
 
     # Perform the calculations only where the condition is true
-    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, ndv)
-    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, ndv)
+    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, config.ndv)
+    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, config.ndv)
 
     print('BL:', Bl.min(), Bl.max())
     print('BR:', Br.min(), Br.max())
@@ -207,7 +188,7 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     Br[Br < 0.0] = -0.001
 
     B = Bl + Br
-    B[B < 0] = ndv
+    B[B < 0] = config.ndv
 
     Bmax = B.max()
     print('B max and min', Bmax, B.min())
@@ -219,6 +200,8 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
 
 def calculate_vertical_accretion(
         qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF, D, Dt, BDo, BDi, tb):
+
+    config = MEMConfig()  # call the configuration class
 
     # --- ACCRETION CALCULATIONS ---
     q = qmin + (qmax - qmin) * B / Bmax
@@ -243,15 +226,18 @@ def calculate_vertical_accretion(
     # If we also evaluate the accretion rate for mineral matter, we will
     # change the code using mask such as (mhwIDW != ndv)
     Vmin[np.logical_or(B <= 0.0, D <= 0.0)] = 0.0
-    A = np.where(tb != ndv, ((Vorg / BDo) + (Vmin / BDi)) /
-                 100.0, ndv)  # accretion rate per year [m]
+    A = np.where(tb != config.ndv, ((Vorg / BDo) + (Vmin / BDi)) /
+                 100.0, config.ndv)  # accretion rate per year [m]
     # accretion thickness [m]
-    tb_update = np.where(tb != ndv, tb + (A * dt), ndv)
+    tb_update = np.where(tb != config.ndv, tb + (A * dt), config.ndv)
 
     return tb_update, A
 
 
 def calculate_manning(P):
+
+    config = MEMConfig()  # call the configuration class
+
     if 10 <= P < 20:  # 16: low productivity
         return 0.035
     elif 20 <= P < 28:  # 23 medium productivity
@@ -263,13 +249,15 @@ def calculate_manning(P):
     elif 120 <= P < 130:  # 120 irregularly flooded marsh
         return 0.07 # Estuarine Scrub/Shrub Wetland 0.07
     else:
-        return ndv
+        return config.ndv
 
 ##########################################################################
 
 
 def mem(interpolateHarmonicsFile, vegetationFile,
         outputMEMFile, inEPSG, outEPSG, deltaT=5):
+
+    config = MEMConfig()  # call the configuration class
 
     # define from WEADS_Point.py
     dt = deltaT  # Time step (yr)
@@ -442,21 +430,21 @@ def mem(interpolateHarmonicsFile, vegetationFile,
     # submergence region (hc = 1.0, 2.0, 3.0 including lake and pond) # these
     # values are not existed current point-based code
     submergence_mask = water_mask | intertidal_mask | (2.5 < hc)
-    above_subtidal_zone = (mhwIDW != ndv)  # above subtidal zone ()
+    above_subtidal_zone = (mhwIDW != config.ndv)  # above subtidal zone ()
     # np.savetxt('above_subtidal_zone.csv', above_subtidal_zone, delimiter=',')
 
     # Perform the calculation only where the condition is true
     # [cm] Relative depth at nan should be positive value in this case
-    D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -ndv)
-    D[D > -ndv / 2] = ndv  # Relative depth [cm] re-modify to negative value for ndv
+    D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -config.ndv)
+    D[D > -config.ndv / 2] = config.ndv  # Relative depth [cm] re-modify to negative value for ndv
     # Create a mask for the elements of D that are not equal to ndv
-    D_mask = (D != ndv)
+    D_mask = (D != config.ndv)
     # Print the minimum and maximum of the elements of D that are not equal to
     # ndv
     print(f"Depth Min:\t{D[D_mask].min()}, Max:\t{D[D_mask].max()}")
 
     Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
-    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = ndv
+    Dt[np.logical_or(mhwIDW == config.ndv, mlwIDW == config.ndv)] = config.ndv
     print('Tidal range: min and max [cm]\t', Dt.min(), Dt.max())
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
@@ -464,9 +452,9 @@ def mem(interpolateHarmonicsFile, vegetationFile,
 
     if vegetationFile is None:
 
-        P = np.full((df.shape[0], 1), ndv_byte,
+        P = np.full((df.shape[0], 1), config.ndv_byte,
                     dtype=int)  # Create an array of default values (ndv)
-        marsh = np.full((df.shape[0], 1), ndv, dtype=float)
+        marsh = np.full((df.shape[0], 1), config.ndv, dtype=float)
 
         # --- BIOMASS CALCULATIONS ---
         print("Biomass Calculations")
@@ -477,7 +465,7 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         # --- ACCRETION CALCULATIONS ---
         print("Accretion calculations")
         tb_update, A = calculate_vertical_accretion(
-            qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B, B.max(), config.Kr, config.RRS, config.BTR, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
@@ -530,11 +518,11 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         #     irregular_NWI_depth.std())
         # ######################################################################
 
-        P = np.full((df.shape[0], 1), ndv,
+        P = np.full((df.shape[0], 1), config.ndv,
                     dtype=float)  # Create an array of default values (ndv)
-        marsh = np.full((df.shape[0], 1), ndv, dtype=float)
-        mangrove = np.full((df.shape[0], 1), ndv, dtype=float)
-        irregular = np.full((df.shape[0], 1), ndv, dtype=float)
+        marsh = np.full((df.shape[0], 1), config.ndv, dtype=float)
+        mangrove = np.full((df.shape[0], 1), config.ndv, dtype=float)
+        irregular = np.full((df.shape[0], 1), config.ndv, dtype=float)
 
         # --- BIOMASS CALCULATIONS ---
         # Salt marsh (8)
@@ -554,11 +542,11 @@ def mem(interpolateHarmonicsFile, vegetationFile,
 
         # --- ACCRETION CALCULATIONS ---
         _, A1 = calculate_vertical_accretion(
-            qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
         _, A2 = calculate_vertical_accretion(
-            qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
         _, A3 = calculate_vertical_accretion(
-            qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions
@@ -619,10 +607,10 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         # Mask ndv values in the arrays
         # mask_marsh may compete with mangrove due to the dilution order, so
         # evaluate both masks here.
-        B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1, ndv)
-        B2_masked = np.where(mask_mangrove, B2, ndv)
+        B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1, config.ndv)
+        B2_masked = np.where(mask_mangrove, B2, config.ndv)
         B3_masked = np.where(
-            (mask_salt_marsh | mask_mangrove | mask_irregular), B3, ndv)
+            (mask_salt_marsh | mask_mangrove | mask_irregular), B3, config.ndv)
 
         # background of entire grid is set at 0 [m]
         A1_masked = np.where((mask_salt_marsh | mask_mangrove), A1, 0)
@@ -637,14 +625,14 @@ def mem(interpolateHarmonicsFile, vegetationFile,
         B = np.maximum.reduce([B1_masked, B2_masked, B3_masked])
         # Maximum accretion rate per year on each grid [m]
         A = np.maximum.reduce([A1_masked, A2_masked, A3_masked])
-        A[tb == ndv] = ndv  # Overwrite the outside domain as  the ndv values
+        A[tb == config.ndv] = config.ndv  # Overwrite the outside domain as  the ndv values
 
         # Update topo-bathy data
         tb_update = np.where(
             (mask_salt_marsh | mask_mangrove | mask_irregular), tb + (A * dt), tb)
         # update topo-bathy data due to some holes are existed inside the
         # domain
-        tb_update[tb == ndv] = ndv
+        tb_update[tb == config.ndv] = config.ndv
 
     ##########################################################################
     # --- WRITE OUTPUTS ---
@@ -684,15 +672,15 @@ def mem(interpolateHarmonicsFile, vegetationFile,
     # Output
     Watte_bio_level = VM.copy()  # Create an array of default values (ndv) for WATTE
     Watte_ndv = 255  # No data value for WATTE
-    Watte_bio_level[Watte_bio_level == ndv] = Watte_ndv  # 255 = No data value
+    Watte_bio_level[Watte_bio_level == config.ndv] = Watte_ndv  # 255 = No data value
     print('WATTE bio level min and max:', Watte_bio_level.min(), Watte_bio_level.max())
 
     df['bio_level'] = Watte_bio_level.flatten()
 
     # Inundation_depth = tb_update.copy()
-    Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update,
+    Inundation_depth = np.where((mhwIDW != config.ndv) & ((mhwIDW - tb_update) > 0) & (tb_update > -0.5), mhwIDW - tb_update,
                                 0)  # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. However, this is an arbitary number! Need to consider further (Jin June 19, 2024)
-    Inundation_depth[mhwIDW == ndv] = ndv
+    Inundation_depth[mhwIDW == config.ndv] = config.ndv
     # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) > 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region yields inundation depth so add (tb_update > -0.5) to remove some bugs. # Grand Bay
     df['inun_depth'] = Inundation_depth.flatten()
 

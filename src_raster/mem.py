@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # File: Ecology.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Aug 24, 2024
+# Last modified: April 24, 2025
 
 
 # ----------------------------------------------------------
@@ -19,39 +19,26 @@
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
-global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
+from dataclasses import dataclass, field
+
 # ----------------------------------------------------------
 # GLOSSARY OF VARIABLES #
 # ----------------------------------------------------------
 #
-# A: Accretion [cm]?
+# A: Annual Accretion [m yr -1]
 # B: Biomass density [g m-2 yr -1]
 # Bl: Biomass density left side
 # Br: Biomass density right side
-# tb_update: modified topo-bathy
-# P: Productivity
-# marsh: marsh classification
-# Dmin, Dmax, Dopt
-# Bmax
+# Bmax: Maximum biomass production [g m-2 yr -1]
+# tb_update: modified topo-bathy [m]
+# P: Productivity [-], 16: low, 23: medium, 32: high for tidal marsh
+# Dmin, Dmax, Dopt: Minimum, maximum, and optimal depth for biomass production in parabola equation
 
 # ----------------------------------------------------------
 # DATASETS Jin -> Pete Add States and Optimum March 7, 2024
 # ----------------------------------------------------------
-#
-# al=1000; bl=-3718; cl=1021;     # Biomass curve coefficients LHS-NorthInlet, where?
-# ar=1000; br=-3718; cr=1021;     # Biomass curve coefficients RHS-NorthInlet, where?
-#
-# al=1.975; bl=-0.987; cl=1999;   # Biomass curve coefficients LHS-Apalachicola, FL
-# ar=3.265; br=-1.633; cr=1998;   # Biomass curve coefficients RHS-Apalachicola, FL
-#
-# al=73.8; bl=-1.14; cl=1587.1;   # Biomass curve coefficients LHS-Weeks Bay, LA?
-# ar=73.8; br=-1.14; cr=1587.1;   # Biomass curve coefficients RHS-Weeks Bay, LA
-#
-# al=32; bl=-3.2; cl=1920;        # Biomass curve coefficients LHS-Grand Bay  Alizad et al. (2018)
-# ar=6.61; br=-0.661; cr=1983;    # Biomass curve coefficients RHS-Grand Bay
-#
-# al=24.96; bl=-0.193; cl=592.7;  # Biomass curve coefficients LHS-Plum Island
-# ar=24.96; br=-0.193; cr=592.7;  # Biomass curve coefficients RHS-Plum Island
+# Biomass curve coefficients Grand Bay  Alizad et al. (2018)
+
 
 interest_reference = "Texas_Coastal_Bend"
 
@@ -71,30 +58,9 @@ biomass_coefficients = {
 ##########################################################################
 print("Input parameters for MEM")
 ##########################################################################
-# --- GLOBAL PARAMETERS ---
-ndv = -99999.0  # No data value (ndv) using ADCIRC conversion
-ndv_byte = 128
-qmax = 2.8    # Maximum capture coefficient (-)
-qmin = 1.0    # Minimum capture coefficient (-)
-# Suspended sediment concentration (mg/L) default 25.0: User can freely
-# change this value
-SSC = 25.0
-# Flooding frequency (1/year) default 353.0: User can freely change this value
-FF = 353.0
-BDo = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
-BDi = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
-# Refractory fraction (g/g) default 0.1: User can freely change this value
-Kr = 0.1
-# Below Ground Bio to Shoot Ratio (g/g) default 2.0  User can freely
-# change this value
-RRS = 2.0
-# Below Ground turnover rate (/yr) default 0.5  User can freely change
-# this value
-BTR = 0.5
-
 # --- LOCAL ACCRETION PARAMETERS ---
 # when vegetationFile == True: modify the following part
-print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
+# print('The accretion parameters for salt marsh (8), mangrove (9) and irregularly flooded marsh (20)')
 
 ##########################################################################
 # Under consideration part Jin Aug 22, 2024
@@ -164,7 +130,25 @@ vegetation_parameters = {
 BTRmat = 0.22  # BG turnover rate (1/year) for mature mangroves
 BTRjuv = 0.67  # BG turnover rate (1/year) for juvenile mangroves
 Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
+
 ##########################################################################
+
+@dataclass
+class MEMConfig:
+    ndv: float =  -99999.0  # No data value (ndv) using ADCIRC conversion
+    ndv_byte: int = 128
+    qmax: float =2.8     # Maximum capture coefficient (-)
+    qmin: float = 1.0    # Minimum capture coefficient (-)
+    SSC: float = 25.     # Suspended sediment concentration (mg/L) default 25.0
+    FF: float = 353.0    # Flooding frequency (1/year) default 353.0
+    BDo: float = 0.085   # Organic inputs # # Bulk density of organic matter (g/cm3)
+    BDi: float = 1.99    # Mineral inputs # Bulk density of inorganic matter (g/cm3)
+    Kr: float = 0.1      # Refractory fraction (g/g) default 0.1:
+    RRS: float = 2.0     # Below Ground Bio to Shoot Ratio (g/g) default 2.0
+    BTR: float = 0.5     # Below Ground turnover rate (/yr) default 0.5
+    biomass_coefficients: dict = field(default_factory=lambda: biomass_coefficients)
+    vegetation_parameters: dict = field(default_factory=lambda: vegetation_parameters)
+    interest_reference: str = interest_reference
 
 # ----------------------------------------------------------
 # F U N C T I O N
@@ -188,7 +172,8 @@ def calculate_coefficients(Dmin, Dmax, Dopt, Bmax):
 
 
 def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
-    # global ndv
+
+    config = MEMConfig()  # call the configuration class
 
     # --- BIOMASS CALCULATIONS ---
     # Create a mask for the condition
@@ -196,8 +181,8 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     mask_right_parabora = (Dopt < D) & mask
 
     # Perform the calculations only where the condition is true
-    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, ndv)
-    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, ndv)
+    Bl = np.where(mask_left_parabora, al * D + bl * D * D + cl, config.ndv)
+    Br = np.where(mask_right_parabora, ar * D + br * D * D + cr, config.ndv)
 
     print('BL:', Bl.min(), Bl.max())
     print('BR:', Br.min(), Br.max())
@@ -207,7 +192,7 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
     Br[Br < 0.0] = -0.001
 
     B = Bl + Br
-    B[B < 0] = ndv
+    B[B < 0] = config.ndv
 
     Bmax = B.max()
     print('B max and min', Bmax, B.min())
@@ -219,6 +204,8 @@ def calculate_biomass_parabola(D, Dopt, mask, al, bl, cl, ar, br, cr):
 
 def calculate_vertical_accretion(
         qmin, qmax, dt, B, Bmax, Kr, RRS, BTR, SSC, FF, D, Dt, BDo, BDi, tb):
+
+    config = MEMConfig()  # call the configuration class
 
     # --- ACCRETION CALCULATIONS ---
     q = qmin + (qmax - qmin) * B / Bmax
@@ -243,10 +230,10 @@ def calculate_vertical_accretion(
     # If we also evaluate the accretion rate for mineral matter, we will
     # change the code using mask such as (mhwIDW != ndv)
     Vmin[np.logical_or(B <= 0.0, D <= 0.0)] = 0.0
-    A = np.where(tb != ndv, ((Vorg / BDo) + (Vmin / BDi)) /
-                 100.0, ndv)  # accretion rate per year [m]
+    A = np.where(tb != config.ndv, ((Vorg / BDo) + (Vmin / BDi)) /
+                 100.0, config.ndv)  # accretion rate per year [m]
     # accretion thickness [m]
-    tb_update = np.where(tb != ndv, tb + (A * dt), ndv)
+    tb_update = np.where(tb != config.ndv, tb + (A * dt), config.ndv)
 
     return tb_update, A
 
@@ -280,6 +267,8 @@ def create_raster(file, rasterHC, zarray, dtype,
 def mem(inputRasterHyControl, inputRasterTopoBathy,
         inputRasterTidalDatumsIDW, vegetationFile, outputRaster, deltaT=5):
 
+    config = MEMConfig()  # call the configuration class
+
     # define from WEADS_Raster.py
     dt = deltaT  # Time step (yr)
 
@@ -295,7 +284,6 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    # global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile is None:
         print('\nA monotypic species with no vegetation mapping\n')
@@ -483,20 +471,20 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     intertidal_mask = (0.5 < hc) & (hc < 1.5)  # intertidal region (hc = 1.0)
     # submergence region (hc = 1.0, 2.0, 3.0 including lake and pond)
     submergence_mask = water_mask | intertidal_mask | (2.5 < hc)
-    above_subtidal_zone = (mhwIDW != ndv)  # above subtidal zone ()
+    above_subtidal_zone = (mhwIDW != config.ndv)  # above subtidal zone ()
 
     # Perform the calculation only where the condition is true
     # [cm] Relative depth at nan should be positive value in this case
-    D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -ndv)
-    D[D > -ndv / 2] = ndv  # Relative depth [cm] re-modify to negative value for ndv
+    D = np.where(above_subtidal_zone, 100.0 * (mhwIDW - tb), -config.ndv)
+    D[D > -config.ndv / 2] = config.ndv  # Relative depth [cm] re-modify to negative value for ndv
     # Create a mask for the elements of D that are not equal to ndv
-    D_mask = (D != ndv)
+    D_mask = (D != config.ndv)
     # Print the minimum and maximum of the elements of D that are not equal to
     # ndv
     print(D[D_mask].min(), D[D_mask].max())
 
     Dt = 100.0 * (mhwIDW - mlwIDW)  # Tidal range [cm]
-    Dt[np.logical_or(mhwIDW == ndv, mlwIDW == ndv)] = ndv
+    Dt[np.logical_or(mhwIDW == config.ndv, mlwIDW == config.ndv)] = config.ndv
     print('Tidal range: min and max [cm]\t', Dt.min(), Dt.max())
 
     # --- PERFORM HYDRO-MEM CALCULATIONS ---
@@ -508,12 +496,12 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         P = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
         marsh = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
 
         # --- BIOMASS CALCULATIONS ---
@@ -525,7 +513,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         # --- ACCRETION CALCULATIONS ---
         print("Accretion calculations")
         tb_update, A = calculate_vertical_accretion(
-            qmin, qmax, dt, B, B.max(), Kr, RRS, BTR, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B, B.max(), config.Kr, config.RRS, config.BTR, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create masks for different conditions
@@ -583,22 +571,22 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         P = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
         marsh = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
         mangrove = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
         irregular = np.full(
             (rasterHC.RasterYSize,
              rasterHC.RasterXSize),
-            ndv,
+            config.ndv,
             dtype=float)
 
         # --- BIOMASS CALCULATIONS ---
@@ -619,11 +607,11 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
 
         # --- ACCRETION CALCULATIONS ---
         _, A1 = calculate_vertical_accretion(
-            qmin, qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B1, Bmax_marsh, kr_marsh, RRS_marsh, BTR_masrh, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
         _, A2 = calculate_vertical_accretion(
-            qmin, qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B2, Bmax_matmang, kr_matmang, RRS_matmang, BTR_matmang, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
         _, A3 = calculate_vertical_accretion(
-            qmin, qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, SSC, FF, D, Dt, BDo, BDi, tb)
+            config.qmin, config.qmax, dt, B3, Bmax_fmarsh, kr_fmarsh, RRS_fmarsh, BTR_fmarsh, config.SSC, config.FF, D, Dt, config.BDo, config.BDi, tb)
 
         # --- PRODUCTIVITY CALCULATIONS ---
         # Create a mask for different conditions
@@ -684,10 +672,10 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         # Mask ndv values in the arrays
         # mask_marsh may compete with mangrove due to the dilution order, so
         # evaluate both masks here.
-        B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1, ndv)
-        B2_masked = np.where(mask_mangrove, B2, ndv)
+        B1_masked = np.where((mask_salt_marsh | mask_mangrove), B1, config.ndv)
+        B2_masked = np.where(mask_mangrove, B2, config.ndv)
         B3_masked = np.where(
-            (mask_salt_marsh | mask_mangrove | mask_irregular), B3, ndv)
+            (mask_salt_marsh | mask_mangrove | mask_irregular), B3, config.ndv)
 
         # background of entire grid is set at 0 [m]
         A1_masked = np.where((mask_salt_marsh | mask_mangrove), A1, 0)
@@ -702,14 +690,14 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         B = np.maximum.reduce([B1_masked, B2_masked, B3_masked])
         # Maximum accretion rate per year on each grid [m]
         A = np.maximum.reduce([A1_masked, A2_masked, A3_masked])
-        A[tb == ndv] = ndv  # Overwrite the outside domain as  the ndv values
+        A[tb == config.ndv] = config.ndv  # Overwrite the outside domain as  the ndv values
 
         # Update topo-bathy data
         tb_update = np.where(
             (mask_salt_marsh | mask_mangrove | mask_irregular), tb + (A * dt), tb)
         # update topo-bathy data due to some holes are existed inside the
         # domain
-        tb_update[tb == ndv] = ndv
+        tb_update[tb == config.ndv] = config.ndv
 
     ##########################################################################
     # --- WRITE OUTPUTS ---
@@ -728,17 +716,17 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         dst_datatype)
     dst_ds.SetGeoTransform(dst_geot)
     dst_ds.SetProjection(dst_proj.ExportToWkt())
-    dst_ds.GetRasterBand(1).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(1).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(1).WriteArray(D)
-    dst_ds.GetRasterBand(2).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(2).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(2).WriteArray(B)
-    dst_ds.GetRasterBand(3).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(3).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(3).WriteArray(A)
-    dst_ds.GetRasterBand(4).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(4).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(4).WriteArray(tb_update)
-    dst_ds.GetRasterBand(5).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(5).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(5).WriteArray(marsh)
-    dst_ds.GetRasterBand(6).SetNoDataValue(ndv)
+    dst_ds.GetRasterBand(6).SetNoDataValue(config.ndv)
     dst_ds.GetRasterBand(6).WriteArray(P)
     dst_ds = None
 
@@ -753,7 +741,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         # VM[(VM == 40)] = ndv_byte # 40 = water_mask
 
         # ndv or ndv_byte which is better? Jin July 5, 2024
-        create_raster('new_NWI.tif', rasterHC, VM, gdal.GDT_Int32, int(ndv))
+        create_raster('new_NWI.tif', rasterHC, VM, gdal.GDT_Int32, int(config.ndv))
 
     ##########################################################################
     print("\n----------------------------------------------------------------------")
@@ -764,7 +752,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     # Output
     Watte_bio_level = P.copy()  # Create an array of default values (ndv) for WATTE
     Watte_ndv = 255  # No data value for WATTE
-    Watte_bio_level[Watte_bio_level == ndv] = Watte_ndv  # 255 = No data value
+    Watte_bio_level[Watte_bio_level == config.ndv] = Watte_ndv  # 255 = No data value
     print(
         'WATTE bio level min and max:',
         Watte_bio_level.min(),
@@ -782,7 +770,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
     # add (tb_update > -0.5) to remove some bugs. However, this is an arbitary
     # number! Need to consider further (Jin June 19, 2024)
     Inundation_depth = np.where(
-        (mhwIDW != ndv) & (
+        (mhwIDW != config.ndv) & (
             (mhwIDW -
              tb_update) > 0) & (
             tb_update > -
@@ -790,7 +778,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         mhwIDW -
         tb_update,
         0)
-    Inundation_depth[mhwIDW == ndv] = ndv
+    Inundation_depth[mhwIDW == config.ndv] = config.ndv
     # Inundation_depth = np.where((mhwIDW != ndv) & ((mhwIDW - tb_update) >
     # 0), mhwIDW - tb_update, 0) # due to rasterization even bathymetry region
     # yields inundation depth so add (tb_update > -0.5) to remove some bugs. #
@@ -801,7 +789,7 @@ def mem(inputRasterHyControl, inputRasterTopoBathy,
         rasterHC,
         Inundation_depth,
         gdal.GDT_Float32,
-        ndv,
+        config.ndv,
         stats_flag=True)  # Inundation depth gdal.GDT_Float32 is 32 bit floating point
     ##########################################################################
     '''

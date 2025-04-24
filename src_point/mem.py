@@ -18,6 +18,12 @@
 # --- Load internal modules ---
 from .general_functions import *
 
+global ndv, ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference  # temporal solution
+# mem_config = MEMConfig(
+#     ndv=-99999.0,
+#     ndv_byte=128,
+#     qmax=2.8,  would be better.
+
 # --- Initialize code ---
 start_time = time.time()
 print("\n")
@@ -166,6 +172,7 @@ vegetation_parameters = {
 BTRmat = 0.22  # BG turnover rate (1/year) for mature mangroves
 BTRjuv = 0.67  # BG turnover rate (1/year) for juvenile mangroves
 Tmat = 30  # Time for pioneer mangroves to fully mature (yr)
+
 ##########################################################################
 
 # ----------------------------------------------------------
@@ -279,7 +286,6 @@ def mem(interpolateHarmonicsFile, vegetationFile,
     # ----------------------------------------------------------
     # Read biomass calculation parameters
     # ----------------------------------------------------------
-    global ndv_byte, qmax, qmin, SSC, FF, BDo, BDi, Kr, biomass_coefficients, vegetation_parameters, interest_reference
 
     if vegetationFile is None:
         print('\nA monotypic species with no vegetation mapping\n')

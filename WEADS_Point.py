@@ -127,6 +127,12 @@ parser.add_argument(
     type=str,
     default=None,
     help="Path to vector file for z adjustment <*.shp> or <*.geojson> Future tiff support")
+parser.add_argument(
+    "--zv",
+    type=float,
+    default=None,
+    required=False,
+    help="Value of z adjustment [meters]. If not provided, the script will not perform z adjustment.")
 
 # Parse the command line arguments
 args = parser.parse_args()
@@ -185,10 +191,14 @@ outputvegetationFile = 'domain_nwi.csv'
 if inputadjustFile:
     print('\n' + '\tAdjusting z values in the mesh file...')
     try:
+        if args.zv_adjust is None:
+            print("Error: Please provide a value for z adjustment using the --zv_adjust argument.")
+            sys.exit(1)
         basics.fileexists(inputadjustFile)
         basics.fileexists(inputMeshFile)
         # basics.fileexists(inputAttrFile)  # not need now
-        mesh_edit(inputMeshFile, inputadjustFile, inEPSG)
+
+        mesh_edit(inputMeshFile, inputadjustFile, inEPSG, z_adjust=args.zv)
 
         print(f"""
             Z values adjusted successfully in the mesh file.

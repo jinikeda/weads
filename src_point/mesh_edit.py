@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # File: mesh_edit.py
 # Developer: Jin Ikeda
-# Last modified: Apri 22, 2025
+# Last modified: April 22, 2025
 
 # Development Notes:
 """ This script is used to preprocess the input files for the WEAD project. The input file is the ADCIRC mesh file (fort.14)
 For example, thin_layer.geojson, and the script reads the input file and adjusts the z values within the domain shapefile (Thin_layer.geojson).
 The script outputs the modified nodes and attributes in the model input.
 For thin layer replacement, we do not expect to change the attributes significantly, so we only modified the z values.
-The script is used in the WEAD project."""
+The script is used in the WEADS project."""
 
 ##########################################################################
 # --- Load internal modules ---
@@ -18,12 +18,13 @@ import geopandas as gpd
 import numpy as np
 import shutil
 
-def mesh_edit(inputMeshFile, inputadjustFile, inEPSG):
+def mesh_edit(inputMeshFile, inputadjustFile, inEPSG, z_adjust=0.05):
 
     # --- GLOBAL PARAMETERS ---
     ndv = -99999.0
     inputEPSG = inEPSG  # Input EPSG code, e.g., 4269 for NAD83
     outputMeshFile = "fort_updated.14"
+    backupMeshFile = inputMeshFile + ".bk"
 
     # === Load Vector File ===
     if inputadjustFile.endswith((".shp", ".geojson")):
@@ -46,7 +47,7 @@ def mesh_edit(inputMeshFile, inputadjustFile, inEPSG):
 
     # === Modify Elevation Within Polygon ===
     within_mask = gdf_ADCIRC.within(gdf_polygon.unary_union)
-    gdf_ADCIRC.loc[within_mask, "z"] += 0.5  # Increase Z by 0.5 meters
+    gdf_ADCIRC.loc[within_mask, "z"] += z_adjust  # Increase Z by 0.05 meters
 
     print(f" Modified {within_mask.sum()} points inside the polygon(s).")
 
@@ -66,4 +67,14 @@ def mesh_edit(inputMeshFile, inputadjustFile, inEPSG):
     )
 
     print(f" Updated mesh written to '{outputMeshFile}'")
+
+    # === Backup Original Mesh File ===
+    shutil.copy(inputMeshFile, backupMeshFile)
+    print(f"Backup created: {backupMeshFile}")
+
+    # Overwrite the original file with the updated file
+    shutil.move(outputMeshFile, inputMeshFile)
+    print(f"{outputMeshFile} has been moved to {inputMeshFile}")
+
+
 

@@ -8,7 +8,7 @@
 clc; clear;
 
 % --- 1. Add Delft3D MATLAB toolbox to the path
-addpath('./delft3d_matlab');  % Adjust this path as needed
+addpath(fullfile(fileparts(mfilename('fullpath')), 'delft3d_matlab'));
 
 % --- 2. Set model output name (base filename)
 name_output = '45x45';

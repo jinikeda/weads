@@ -1,0 +1,3 @@
+[submodule "utils/delft3d_matlab"]
+	path = utils/delft3d_matlab
+	url = git@github.com:shabnamm7/delft3d_matlab_scripts.git

@@ -37,7 +37,7 @@ for year in $(seq 1 $NUM_YEARS); do
     # Run MATLAB water level extraction
     echo "Running MATLAB script..."
     export PATH=/usr/local/MATLAB/R2024b/bin:$PATH
-    matlab -batch "run('${BASE_DIR}/utils/waterlevel_delft3d4.m')"
+    matlab -batch "run('${BASE_DIR}/src_delft3d4/waterlevel_delft3d4.m')"
 
     # Run WEADS Point Coupling for updated topo
     echo "Running WEADS_delft3d4.py..."
@@ -77,6 +77,6 @@ echo "All years complete. Outputs saved in yearly_outputs/"
 
 echo "plotting...saved in yearly_outputs/"
 conda activate WEADS_delft3d4_env
-python utils/plots_delft3d4.py
+python src_delft3d4/plots_delft3d4.py
 
 echo "Done"

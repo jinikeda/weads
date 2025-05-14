@@ -22,11 +22,11 @@ rm -f updated*.dep updated*.rgh
 rm -rf yearly_outputs
 
 # Restore original model files
-if [ -d "test_delft3d4" ]; then
-    echo "🔄 Restoring initial model files from 'test_delft3d4/'..."
-    cp -f test_delft3d4/* .
+if [ -d "example_delft3d4" ]; then
+    echo "🔄 Restoring initial model files from 'example_delft3d4/'..."
+    cp -f example_delft3d4/* .
 else
-    echo "⚠️  Warning: 'test_delft3d4/' folder not found!"
+    echo "⚠️  Warning: 'example_delft3d4/' folder not found!"
 fi
 
 echo "✅ Cleanup complete. Ready for a fresh run!"

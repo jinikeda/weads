@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
-from .basics_delft3d4 import fileexists
+from .basics import fileexists
 
 # --- Configuration and Constants ---
 

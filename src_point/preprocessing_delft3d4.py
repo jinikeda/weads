@@ -5,7 +5,7 @@
 import time
 import numpy as np
 import pandas as pd
-from .basics_delft3d4 import fileexists
+from .basics import fileexists
 import xarray as xr
 from scipy.spatial import cKDTree
 

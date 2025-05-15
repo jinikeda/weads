@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import shutil
 import os
-from .basics_delft3d4 import fileexists
+from .basics import fileexists
 
 def infer_grid_shape_from_dep(dep_file):
     with open(dep_file, 'r', encoding='utf-8') as f:

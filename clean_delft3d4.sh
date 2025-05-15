@@ -9,6 +9,9 @@ echo "🧹 Cleaning up files for a fresh run..."
 rm -f trim-*.dat trim-*.def trih-*.dat trih-*.def
 rm -f tri-diag.* tri-rst.* tri-ini.* tri-var.*
 
+# Remove TMP files
+rm -f TMP_45x45.*
+
 # Remove NetCDF and CSV outputs
 rm -f trim_*.nc water_level_extracted.csv grid_coords_extracted.csv tidal_metrics.csv
 

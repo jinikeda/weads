@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import shutil
 import os
+import math
 from .basics import fileexists
 from src_point.general_functions_delft3d4 import read_dep_file
 
@@ -14,9 +15,9 @@ def infer_grid_shape_from_dep(dep_file):
         values = [float(val) for line in f if line.strip() for val in line.strip().split()]
 
     total = len(values)
-    side = int(np.sqrt(total))
+    side = math.isqrt(total)
     if side * side != total:
-        raise ValueError(f"Grid not square: {total} values → {side}x{side} is invalid")
+        raise ValueError(f".dep file is not a square grid. {total} values → isqrt={side}")
 
     return side, side
 

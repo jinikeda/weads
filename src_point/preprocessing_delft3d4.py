@@ -8,6 +8,8 @@ import pandas as pd
 from .basics import fileexists
 import xarray as xr
 from scipy.spatial import cKDTree
+from src_point.general_functions_delft3d4 import read_dep_file
+
 
 def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
     """
@@ -36,12 +38,8 @@ def preprocessing_Delft3D(
     fileexists(inputWaterLevelCSV)
 
     # --- Load .dep file into flat z array ---
-    with open(inputBathymetryFile, 'r') as f:
-        z = []
-        for line in f:
-            if line.strip():
-                z.extend([float(val) for val in line.strip().split()])
-    z = np.array(z)
+    from .general_functions_delft3d4 import read_dep_file
+    z = read_dep_file(inputBathymetryFile)
     print(f"✔ Read {len(z)} bathymetry points from {inputBathymetryFile}")
 
     # --- Load tidal metrics from NetCDF or CSV ---

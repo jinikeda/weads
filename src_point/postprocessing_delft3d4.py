@@ -7,6 +7,7 @@ import numpy as np
 import shutil
 import os
 from .basics import fileexists
+from src_point.general_functions_delft3d4 import read_dep_file
 
 def infer_grid_shape_from_dep(dep_file):
     with open(dep_file, 'r', encoding='utf-8') as f:
@@ -121,9 +122,8 @@ def postprocessing_delft(inputDepFile, inputMdfFile, outputMEMFile,
     shutil.copy(inputDepFile, dep_out)
 
     # Load .dep values and create valid mask
-    with open(inputDepFile, 'r', encoding='utf-8') as f:
-        dep_vals = [float(val) for line in f if line.strip() for val in line.strip().split()]
-    dep_array = np.array(dep_vals)
+    from .general_functions_delft3d4 import read_dep_file
+    dep_array = read_dep_file(inputDepFile)
     valid_mask = dep_array != -999.0
 
     # Apply mask to tb_update

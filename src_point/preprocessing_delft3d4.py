@@ -23,10 +23,10 @@ def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
 def preprocessing_Delft3D(
     inputBathymetryFile,
     inputWaterLevelCSV,
-    inputShapeFile,  # not used yet
+    inputShapeFile,         # not used yet
     domainIOFile,
-    inEPSG,
-    outEPSG
+    inEPSG,                 # not used yet
+    outEPSG                 # not used yet
 ):
     start_time = time.time()
     print("\nLAUNCH: Running Delft3D Preprocessing Script with WEADS-style HydroClass + IDW Interpolation\n")

@@ -49,6 +49,7 @@ for year in $(seq 1 $NUM_YEARS); do
       --inputDepFile "$DEP_FILE" \
       --updatedRghFile updated_45x45.rgh \
       --inputMdfFile 45x45.mdf \
+      --wl_csv water_level_extracted.csv \
       --inEPSG 26914 \
       --outEPSG 26914 \
       --deltaT 1 \

@@ -41,6 +41,7 @@ parser.add_argument("--inputMdfFile", type=str, help="Delft3D mdf config file (*
 parser.add_argument("--inputvegetationFile", type=str, default=None, help="Vegetation raster file (*.tif)")
 
 # Output
+parser.add_argument("--wl_csv", type=str, default="water_level_extracted.csv", help="Extracted water level CSV file")
 parser.add_argument("--outputMEMFile", type=str, default="ecology.csv", help="Output MEM CSV file")
 parser.add_argument("--updatedDepFile", type=str, default="updated.dep", help="Updated .dep file name")
 
@@ -66,7 +67,7 @@ print("#################################################\n")
 # Step 1: Extract tidal datums from CSV
 print("Calculating tidal datums from extracted CSV...")
 tidal_csv = "tidal_metrics.csv"
-calculate_tidal_metrics_from_csv('water_level_extracted.csv', output_csv=tidal_csv)
+calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
 
 # Step 2: Preprocessing step
 if args.preprocessing:

@@ -1,4 +1,4 @@
-
+# File:README_dELFT3D4.md
 # Delft3D–WEADS Coupling Framework
 
 This project simulates eco-hydrological feedbacks using a grid-based coupling between **Delft3D4-FLOW** and a simplified WEADS ecological model. It is designed for multi-year simulations with yearly feedback of bathymetric and roughness updates based on MEM outputs.
@@ -9,30 +9,32 @@ This project simulates eco-hydrological feedbacks using a grid-based coupling be
 
 ```
 basespace/
-├── WEADS_delft3d4.py            # Main driver script (argument interface)
-├── run_delft3d4_loop.sh         # Bash loop for yearly simulation
-├── clean_run.sh                 # Resets everything for a clean run
-├── env_delft3d4.yml             # Conda environment file
-├── test_delft3d4/               # Contains original Delft3D input files (restored before each run)
-├── src_point/                   # Python module for preprocessing, MEM, and postprocessing
+├── WEADS_delft3d4.py                  # Main driver script (argument interface)
+├── run_delft3d4_loop.sh               # Bash loop for yearly simulation
+├── clean_delft3d4.sh                  # Resets everything for a clean run
+├── env_delft3d4.yml                   # Conda environment file
+├── example_delft3d4/                  # Contains original Delft3D input files (restored before each run)
+├── src_point/                         # Python module for preprocessing, MEM, and postprocessing
 │   ├── basics_delft3d4.py
 │   ├── preprocessing_delft3d4.py
 │   ├── mem_delft3d4.py
 │   ├── postprocessing_delft3d4.py
 │   └── tidaldatums_delft3d4.py
-└── utils/                       # Additional scripts and MATLAB tools
+└── src_delft3d4/                       # Additional scripts and MATLAB tools
     ├── plot_delft3d4.py
     ├── delft3d4_dep.py
     ├── delft3d4_rgh.py
     ├── waterlevel_delft3d4.m
-    └── delft3d_matlab/
+    └── delft3d_matlab/                 #a Git submodule
 ```
 
 ---
 
-## 📦 Initial Setup and Input Files
+## Initial Setup and requirments
 
-Before running the model, all required **Delft3D input files** must be placed in the `test_delft3d4/` folder. These include:
+## Input Files
+
+Before running the model, all required **Delft3D input files** must be placed in the `example_delft3d4/` folder. These include:
 
 - `45x45.grd` — grid file  
 - `45x45.enc` — enclosure  
@@ -40,9 +42,22 @@ Before running the model, all required **Delft3D input files** must be placed in
 - `45x45.mdf`, `45x45.bnd`, `45x45.bct`, `45x45.obs`, `45x45.url` — other configuration files  
 - `config_dflow2d3d.xml` — Delft3D runtime driver
 
-> ℹ️ Tip: You can use `/utils/delft3d4_dep.py` and `/utils/delft3d4_rgh.py` to generate structured `.dep` and `.rgh` files.
+> ℹ️ Tip: You can use `/src_delft3d4/delft3d4_dep.py` and `/src_delft3d4/delft3d4_rgh.py` to generate structured `.dep` and `.rgh` files.
 
 ---
+
+## MATLAB Submodule Setup
+This repository uses a Git submodule to include shared Delft3D MATLAB functions (e.g., vs_use.m) located in:
+
+src_delft3d4/delft3d_matlab/
+
+These scripts are required for water level extraction from .dat files.
+
+To ensure the submodule is initialized properly, run the following after cloning the repository:
+
+git submodule update --init --recursive
+
+    ✅ This step is mandatory before running the MATLAB script waterlevel_delft3d4.m.
 
 ## ⚙️ Step-by-Step Instructions
 
@@ -66,7 +81,7 @@ conda activate WEADS_delft3d4_env
 To ensure a clean rerun, execute:
 
 ```bash
-bash clean_run.sh
+bash clean_delft3d4.sh
 ```
 
 This will:
@@ -99,7 +114,7 @@ Each iteration will:
 At the end of the run, summary plots are automatically created:
 
 ```bash
-python utils/plots_delft3d4.py
+python src_delft3d4/plots_delft3d4.py
 ```
 
 Saved to:
@@ -135,9 +150,9 @@ basespace/
 
 ## ✅ Final Checklist
 
-- [x] Delft3D inputs exist in `test_delft3d4/`
+- [x] Delft3D inputs exist in `example_delft3d4/`
 - [x] Conda environment `WEADS_delft3d4_env` is created
-- [x] Run `clean_run.sh` before each simulation
+- [x] Run `clean_delft3d4.sh` before each simulation
 - [x] Run `run_delft3d4_loop.sh` to execute full coupling
 - [x] Plots automatically generated after the loop
 

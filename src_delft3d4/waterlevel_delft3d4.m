@@ -7,8 +7,9 @@
 
 clc; clear;
 
-% --- 1. Add Delft3D MATLAB toolbox to the path
-addpath(fullfile(fileparts(mfilename('fullpath')), 'src_delft3d', 'delft3d_matlab'));
+% --- 1. Add submodule Delft3D MATLAB toolbox to the path
+this_script_dir = fileparts(mfilename('fullpath'));
+addpath(genpath(fullfile(this_script_dir, 'delft3d_matlab')));
 
 
 % --- 2. Set model output name (base filename)

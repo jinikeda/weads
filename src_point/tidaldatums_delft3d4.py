@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # File: src_point/tidaldatums_delft3d4.py
-# Purpose: Compute MHW, MLW, and percent inundation from wide-format CSV using /Delft3D-MATLAB 
-# Updated: May 2025
+# Purpose: Compute MHW, MLW, and percent inundation from wide-format CSV using Delft3D-MATLAB 
+# Updated: July 2025 (Refactored grid_id assignment to use pt column)
 
 import pandas as pd
 import numpy as np
@@ -26,13 +26,11 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv='grid_coords_ex
 
     print(f"Reading grid node coordinates: {coords_csv}")
     coords_df = pd.read_csv(coords_csv)
+    coords_df = coords_df.set_index('pt')
 
     results = []
-    for i, col in enumerate(water_data.columns):
-        grid_id = i + 1  # pt1 → grid_id 1
+    for col in water_data.columns:
         wl = water_data[col].values
-
-        # Clean NaNs
         wl = wl[np.isfinite(wl)]
 
         if len(wl) < 3:
@@ -40,27 +38,20 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv='grid_coords_ex
             mlw = np.nan
             percent_inundation = np.nan
         else:
-            # Detect peaks and troughs
             mask_max = (wl[1:-1] > wl[:-2]) & (wl[1:-1] > wl[2:])
             mask_min = (wl[1:-1] < wl[:-2]) & (wl[1:-1] < wl[2:])
             maxima = wl[1:-1][mask_max]
             minima = wl[1:-1][mask_min]
 
-            if len(maxima) >= 3 and len(minima) >= 3:
-                mhw = np.mean(maxima)
-                mlw = np.mean(minima)
-            else:
-                # Fallback to max/min
-                mhw = np.nanmax(wl)
-                mlw = np.nanmin(wl)
-
+            mhw = np.mean(maxima) if len(maxima) >= 3 else np.nanmax(wl)
+            mlw = np.mean(minima) if len(minima) >= 3 else np.nanmin(wl)
             percent_inundation = np.sum(wl > threshold) / len(wl)
 
-        x = coords_df.iloc[i]['x'] if i < len(coords_df) else np.nan
-        y = coords_df.iloc[i]['y'] if i < len(coords_df) else np.nan
+        x = coords_df.at[col, 'x'] if col in coords_df.index else np.nan
+        y = coords_df.at[col, 'y'] if col in coords_df.index else np.nan
 
         results.append({
-            'grid_id': grid_id,
+            'grid_id': col,  # using column name like pt1, pt2
             'x': x,
             'y': y,
             'MHW': mhw,

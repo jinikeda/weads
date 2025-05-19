@@ -54,32 +54,24 @@ def update_delft3d_dep(original_dep_file, output_dep_file, tb_update_array, valu
 def update_delft3d_rgh(outputMEMFile, grid_shape, output_rgh_file):
     df = pd.read_csv(outputMEMFile)
 
-    class_to_chezy = {
-        55: 65.0,   # land / upland
-        40: 20.0,   # subtidal or water
-        16: 45.0,   # low productivity
-        23: 35.0,   # medium productivity
-        32: 25.0,   # high productivity
-        128: 65.0   # nodata default
-    }
+    if 'manning' not in df.columns:
+        raise KeyError("Column 'manning' not found in ecology file.")
 
-    if 'P' not in df.columns:
-        raise KeyError("Column 'P' not found in ecology file.")
-
-    chezy_vals = df['P'].map(class_to_chezy).fillna(65.0).values
+    manning_vals = df['manning'].values
 
     expected_size = grid_shape[0] * grid_shape[1]
-    if chezy_vals.size != expected_size:
-        raise ValueError(f"Mismatch: {chezy_vals.size} values vs grid size {expected_size}.")
+    if manning_vals.size != expected_size:
+        raise ValueError(f"Mismatch: {manning_vals.size} values vs grid size {expected_size}.")
 
-    chezy_grid = chezy_vals.reshape(grid_shape)
-    rgh_combined = np.vstack([chezy_grid, chezy_grid])
+    manning_grid = manning_vals.reshape(grid_shape)
+    rgh_combined = np.vstack([manning_grid, manning_grid])
 
     with open(output_rgh_file, 'w') as f:
         for row in rgh_combined:
             f.write("   ".join(f"{val:.4f}" for val in row) + "\n")
 
-    print(f"✅ .rgh file created: {output_rgh_file} (shape: {rgh_combined.shape})")
+    print(f"✅ .rgh file created using Manning n-values: {output_rgh_file} (shape: {rgh_combined.shape})")
+
 
 def update_delft3d_mdf(mdf_file, new_dep_file, new_rgh_file):
     fileexists(mdf_file)

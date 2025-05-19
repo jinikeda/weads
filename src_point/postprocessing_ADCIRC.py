@@ -274,7 +274,7 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
         csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv']
         tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif']
         target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW'],
-                           ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass'], ['bio_level'], ['inun_depth']]
+                           ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass','inundationtime'], ['bio_level'], ['inun_depth']]
         idw_Flag_list = [False, False, False, False]
         dtype_list = [['gdal.GDT_Float32'],
                       ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32']]

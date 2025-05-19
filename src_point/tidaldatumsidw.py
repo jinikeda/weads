@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File: tidaldatumsidw.py
 # Developer: Jin Ikeda & Peter Bacopoulos
-# Last modified: Aug 22, 2024
+# Last modified: May 9, 2025
 
 # ----------------------------------------------------------
 # F U N C T I O N	T I D A L D A T U M S I D W
@@ -51,6 +51,7 @@ def tidaldatumsidw(outputHarmonicsFile, interpolateHarmonicsFile,
                                      'y',
                                      'z',
                                      'HydroClass',
+                                     'inundationtime',
                                      'msl',
                                      'mlw',
                                      'mhw']],

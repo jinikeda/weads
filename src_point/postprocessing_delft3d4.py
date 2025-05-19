@@ -11,6 +11,9 @@ from .basics import fileexists
 from src_point.general_functions_delft3d4 import read_dep_file, infer_grid_shape_from_dep
 
 
+def get_spacing(val):
+    return '  ' if val < 0 else '   '
+
 def update_delft3d_dep(original_dep_file, output_dep_file, tb_update_array, values_per_line=12):
     fileexists(original_dep_file)
 
@@ -30,14 +33,13 @@ def update_delft3d_dep(original_dep_file, output_dep_file, tb_update_array, valu
         for row in updated_matrix:
             for j, val in enumerate(row):
                 val_str = f'{val:.7E}'
-                spacing = '  ' if val < 0 else '   '
+                spacing = get_spacing(val)
                 f.write(spacing + val_str)
                 if (j + 1) % values_per_line == 0 and j != len(row) - 1:
                     f.write('\n')
             f.write('\n')
 
     print(f"✅ Updated .dep file written in Quickin style: {output_dep_file}")
-
 
 def update_delft3d_rgh(outputMEMFile, grid_shape, output_rgh_file):
     df = pd.read_csv(outputMEMFile)

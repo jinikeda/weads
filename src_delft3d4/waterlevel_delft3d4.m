@@ -1,5 +1,5 @@
 % ------------------------------
-% File: utils/waterlevel_delft3d4.m
+% File: src_delft3d4/waterlevel_delft3d4.m
 % Purpose: Convert Delft3D trim output to NetCDF + CSV
 % Author: Shabnam
 % Modified: May 2025

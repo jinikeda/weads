@@ -22,7 +22,7 @@ basespace/
 │   ├── tidaldatums_delft3d4.py
 │   └── general_functions_delft3d4.py
 └── src_delft3d4/                       # Additional scripts and MATLAB tools
-    ├── plot_delft3d4.py
+    ├── plots_delft3d4.py
     ├── delft3d4_dep.py
     ├── delft3d4_rgh.py
     ├── waterlevel_delft3d4.m

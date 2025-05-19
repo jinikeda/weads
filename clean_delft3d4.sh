@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# File: clean_run.sh
+# File: clean_delft3d4.sh
 # Purpose: Delete all intermediate files to ensure a clean rerun
 
 echo "🧹 Cleaning up files for a fresh run..."

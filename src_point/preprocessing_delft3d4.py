@@ -83,8 +83,8 @@ def preprocessing_Delft3D(
     hydroclass_index[z <= mlw_array] = 2  # submerged
 
     hydroclass_label = np.array(['intertidal'] * len(z), dtype=object)
-    hydroclass_label[hydroclass_index == 0] = 'upland'
-    hydroclass_label[hydroclass_index == 2] = 'frequently'
+    hydroclass_label[hydroclass_index == 0] = 'land'
+    hydroclass_label[hydroclass_index == 2] = 'subtidal'
 
     # --- Fill manning and other values ---
     mannings_n = np.full_like(z, 0.035, dtype=float)

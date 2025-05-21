@@ -14,7 +14,7 @@ if SRC_POINT_PATH not in sys.path:
     sys.path.insert(0, SRC_POINT_PATH)
 
 from src_point import basics
-from src_point import preprocessing_delft3d4, mem_delft3d4, postprocessing_delft3d4
+from src_point import preprocessing_delft3d4, mem, postprocessing_delft3d4
 from src_point.tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
 
 startTime = time.time()

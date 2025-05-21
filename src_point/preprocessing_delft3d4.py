@@ -44,7 +44,7 @@ def preprocessing_Delft3D(
 
     # --- Load grid file into x, y arrays ---
     df, nx, ny = read_grid_file(inputGrdFile, output_Flag=True)
-    print(f"✔ Read  {df.shape()} grid file...")
+    print(f"✔ Read  {df.shape} grid file...")
 
     # --- Load .dep file into flat z array ---
     z = read_dep_file(inputDepthFile)

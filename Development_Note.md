@@ -1,11 +1,11 @@
 
-# Development Note (Sep 2, 24 version)
+# Development Note (May 21, 25 version)
 
--  **Discussed the development direction on Aug 28th**
+-  **coupling Delft3d4-WEADS discussed on April, 2025**
 ---
 
 ## Input/Output data storage 
-- Folder Path: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO -> publically available path (need to update)
+- Folder Path: chenier.cct.lsu.edu:/data/CCR_data/ACTIVE/ESLR2021TCB/WEAD/IO -> publicly available path (need to update)
 
 ## Running file
 - WEADS_Raster.py or WEADS_Point.py (Argument file to run WEAD)
@@ -13,6 +13,7 @@
 # To-do-list
 
 ## Development (mandatory)
+**Develop WEADS for a delft3d4 version**
 **src_point will be the main source code and eliminate the dependency of the src_raster approach**
   - rasterize (eliminate singularity image file)
 **src_raster/mem.py**

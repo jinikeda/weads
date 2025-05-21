@@ -65,7 +65,7 @@ print("#################################################\n")
 
 # # Step 1: Extract tidal datums from CSV
 # print("Calculating tidal datums from extracted CSV...")
-tidal_csv = "tidal_metrics.csv"
+tidal_csv = args.wl_csv
 # calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
 
 # Step 2: Preprocessing step

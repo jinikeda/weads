@@ -1,0 +1,22 @@
+# Delft3D output
+*.dep
+*.rgh
+*.dat
+*.def
+*.nc
+*.csv
+*.bch
+*.bnd
+*.obs
+*.url
+*.grd
+*.enc
+*.mdf
+*.xml
+*.png
+tri-diag.*
+tri-rst.*
+
+# Output folders
+yearly_outputs/
+__pycache__/

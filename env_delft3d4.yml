@@ -1,0 +1,24 @@
+name: WEADS_delft3d4_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - xarray
+  - geopandas
+  - matplotlib
+  - scipy
+  - gdal
+  - rasterio
+  - pip
+  - pip:
+      - lidario
+      - pyshp
+      - netCDF4
+      - tqdm
+      - autopep8
+      - flake8
+      - pytest
+      - pytest-mock

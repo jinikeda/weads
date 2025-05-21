@@ -23,16 +23,19 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv, output_csv='ti
     df = pd.read_csv(water_level_csv)
     time = df.iloc[:, 0]
     water_data = df.iloc[:, 1:]  # pt1, pt2, ...
+    print(water_data.columns)
 
     print(f"Reading grid node coordinates: {coords_csv}")
     coords_df = pd.read_csv(coords_csv)
-    coords_df = coords_df.set_index('pt')  # 'pt' is assumed to be an integer
+    z = coords_df['z'].values.T
+    print
+    # coords_df = coords_df.set_index('pt')  # 'pt' is assumed to be an integer
 
     results = []
-    for col in water_data.columns:
+    for i, col in enumerate(water_data.columns):
         wl = water_data[col].values
         wl = wl[np.isfinite(wl)]
-
+        z_local = z[i]  # z is a 1D array, so we can index it directly
         if len(wl) < 3:
             mhw = np.nan
             mlw = np.nan
@@ -45,27 +48,34 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv, output_csv='ti
 
             mhw = np.mean(maxima) if len(maxima) >= 3 else np.nanmax(wl)
             mlw = np.mean(minima) if len(minima) >= 3 else np.nanmin(wl)
-            percent_inundation = np.sum(wl > threshold) / len(wl)
+            
+            #################################
+            # wrong. # percent_inundation = np.sum(wl > z) / len(wl)
+            # percent_inundation = np.sum(wl > threshold) / len(wl)
+            percent_inundation = np.sum(wl > z_local) / len(wl)
+            #################################
 
-        # Fix: Convert column name 'pt1' -> 1 (int)
-        try:
-            pt_number = int(col.replace('pt', ''))
-            x = coords_df.at[pt_number, 'x']
-            y = coords_df.at[pt_number, 'y']
-        except (KeyError, ValueError):
-            x = np.nan
-            y = np.nan
+        # # Fix: Convert column name 'pt1' -> 1 (int)
+        # try:
+        #     pt_number = int(col.replace('pt', ''))
+        #     x = coords_df.at[pt_number, 'x']
+        #     y = coords_df.at[pt_number, 'y']
+        # except (KeyError, ValueError):
+        #     x = np.nan
+        #     y = np.nan
 
         results.append({
-            'grid_id': col,  # keep 'pt1', 'pt2', ...
-            'x': x,
-            'y': y,
+            # 'grid_id': col,  # keep 'pt1', 'pt2', ...
+            # 'x': x,
+            # 'y': y,
             'MHW': mhw,
             'MLW': mlw,
             'percent_inundation': percent_inundation
         })
 
-    df_out = pd.DataFrame(results)
+    df_out = coords_df.copy()
+    df_result  = pd.DataFrame(results)
+    df_out = pd.concat([df_out, df_result], axis=1)
     df_out.to_csv(output_csv, index=False)
     print(f"✓ Tidal metrics saved to: {output_csv}")
     return df_out

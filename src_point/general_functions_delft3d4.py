@@ -79,11 +79,35 @@ def read_grid_file(grd_file, output_Flag = False):
     x_array = np.array(x_data).reshape((ny, nx))
     y_array = np.array(y_data).reshape((ny, nx))
 
-    # Reshape x_array and y_array to (nx * ny, 2)
-    xy_array = np.column_stack(( y_array.ravel(), x_array.ravel()))  # row, column order
+    # Reshape x_array and y_array to cordinate system (nx * ny, 2)
+    xy_array = np.column_stack(( x_array.ravel(), y_array.ravel()))  # x first then y
+    print (xy_array[:5])
+   
+
+    # Reshape to 3D: (ny, nx, 2)
+    xy_rows = xy_array.reshape(ny, nx, 2)
+
+    # Prepare final list to collect rows + ghost rows
+    rows_with_ghosts = []
+    # add ghost cell in the first row
+    ghost = np.array([[0.0, 0.0]])  # shape (1, 2)
+
+    for i in range(ny):
+        # Add ghost cell to the end of each row
+        row = xy_rows[i]                 # shape (nx, 2)
+        rows_with_ghosts.append(np.vstack([row, ghost]))  # shape (nx+1, 2)        
+
+    # Add the last full row of ghost cells (nx+1 times [0, 0])
+    ghost_row = np.tile(np.array([[0.0, 0.0]]), (nx + 1, 1))
+    rows_with_ghosts.append(ghost_row)
+
+        # Stack all into final array
+    xy_final = np.vstack(rows_with_ghosts)
+    assert xy_final.shape[0] == (ny + 1) * (nx + 1), f"Final shape mismatch: {xy_final.shape[0]} != {(ny + 1) * (nx + 1)}"
 
     # Create DataFrame with columns 'x' and 'y'
-    df = pd.DataFrame(xy_array, columns=['x', 'y'])
+    df = pd.DataFrame(xy_final, columns=['x', 'y'])
+    # df = pd.DataFrame(xy_array, columns=['x', 'y'])
     df["node_id"] = df.index + 1
 
     # Reorder columns to put node_id first

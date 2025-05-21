@@ -47,8 +47,12 @@ def preprocessing_Delft3D(
     print(f"✔ Read  {df.shape} grid file...")
 
     # --- Load .dep file into flat z array ---
-    z = read_dep_file(inputDepthFile)
-    print(f"✔ Read {len(z)} depth values from {inputDepthFile}")
+    dep = read_dep_file(inputDepthFile)
+    print(f"✔ Read {len(dep)} depth values from {inputDepthFile}")
+
+    df['z'] = -dep
+    df.to_csv(inputGrdFile.replace(".grd", "_xy.csv"), index=False)
+    print(f"✔ Saved grid coordinates to {inputGrdFile.replace('.grd', '_xy.csv')}")
 
     # --- Load .rgh file into flat mannings n array ---  #rgh file is optional in delft3d4
     if inputRghFile is not None:
@@ -76,12 +80,15 @@ def preprocessing_Delft3D(
         ds = xr.open_dataset(tidal_csv)
         mhw_array = ds['MHW'].values
         mlw_array = ds['MLW'].values
+        hp_array = ds['percent_inundation'].values
 
     else:
         print("Detected CSV file input for water levels...")
         df_wl = pd.read_csv(tidal_csv)
         mhw_array = df_wl['MHW'].values
         mlw_array = df_wl['MLW'].values
+        hp_array = df_wl['percent_inundation'].values
+
 
     # --- Load shape file if provided ---
     # future implementation
@@ -89,8 +96,18 @@ def preprocessing_Delft3D(
     # --- convert to coordinate system if needed ---
     # future implementation
 
-    # --- Interpolate missing MHW/MLW using IDW ---
-    valid_mask = np.isfinite(mhw_array) & np.isfinite(mlw_array)
+
+
+    ########################################################################################################
+    # modify the following code to use the IDW function
+    # here if hp is less than 1 (not fully submerged), we need to interpolate mhw and mlw values
+    valid_mask = hp_array >= 1  # Boolean mask
+    print("Valid indices:", np.where(valid_mask)[0])  # Optional to see the index numbers
+    
+    # # --- Interpolate missing MHW/MLW using IDW ---
+    # valid_mask = np.isfinite(mhw_array) & np.isfinite(mlw_array)
+    np.savetxt("valid_mask.txt", valid_mask)
+    print(df.shape)
     x = df['x'].values
     y = df['y'].values
     x_known = x[valid_mask]
@@ -100,35 +117,43 @@ def preprocessing_Delft3D(
     x_missing = x[~valid_mask]
     y_missing = y[~valid_mask]
 
+
     if len(x_missing) > 0:
         print(f"Interpolating {len(x_missing)} missing MHW/MLW values using IDW...")
         mhw_interp = idw_interpolate(x_known, y_known, mhw_known, x_missing, y_missing)
         mlw_interp = idw_interpolate(x_known, y_known, mlw_known, x_missing, y_missing)
-        mhw_array[~valid_mask] = mhw_interp
-        mlw_array[~valid_mask] = mlw_interp
+        mhw_IDW_array = np.full_like(mhw_array, -9999.0)
+        mlw_IDW_array = np.full_like(mlw_array, -9999.0)
+        mhw_IDW_array[~valid_mask] = mhw_interp
+        mlw_IDW_array[~valid_mask] = mlw_interp
 
     # --- Check shape consistency ---
-    assert len(z) == len(mhw_array), f"Length mismatch: bathymetry={len(z)}, MHW={len(mhw_array)}"
+    assert len(dep) == len(mhw_array), f"Length mismatch: bathymetry={len(dep)}, MHW={len(mhw_array)}"
 
     # --- Compute HydroClass and assign labels ---
-    hydroclass_index = np.full_like(z, 1, dtype=int)  # default to intertidal
-    hydroclass_index[z > mhw_array] = 0  # dry
-    hydroclass_index[z <= mlw_array] = 2  # submerged
+    hydroclass_index = np.full_like(-dep, 1, dtype=int)  # default to intertidal
+    hydroclass_index[-dep > mhw_array] = 0  # dry
+    hydroclass_index[-dep <= mlw_array] = 2  # submerged
 
-    hydroclass_label = np.array(['intertidal'] * len(z), dtype=object)
+    hydroclass_label = np.array(['intertidal'] * len(dep), dtype=object)
     hydroclass_label[hydroclass_index == 0] = 'land'
     hydroclass_label[hydroclass_index == 2] = 'subtidal'
+    ############################################################################################################
 
 
     df_out = pd.DataFrame({
         'node_id': df['node_id'].values,
         'x': x,
         'y': y,
-        'z': z,
+        'z': -dep,
         'mann': mannings_n,
-        'MLW_IDW': mlw_array,
-        'MHW_IDW': mhw_array,
-        'HydroClass': hydroclass_label
+        'hp': hp_array,
+        'MLW': mlw_array,
+        'MHW': mhw_array,
+        'MLW_IDW': mlw_IDW_array,
+        'MHW_IDW': mhw_IDW_array,
+        'HydroClass': hydroclass_index,
+        'HydroLabel': hydroclass_label
     })
 
     # --- Save output ---

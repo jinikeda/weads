@@ -14,8 +14,9 @@ if SRC_POINT_PATH not in sys.path:
     sys.path.insert(0, SRC_POINT_PATH)
 
 from src_point import basics
-from src_point import preprocessing_delft3d4, mem, postprocessing_delft3d4
-from src_point.tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
+from src_point import preprocessing_delft3d4, postprocessing_delft3d4
+from src_point.mem import mem as MEM
+# from src_point.tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
 
 startTime = time.time()
 
@@ -85,8 +86,15 @@ if args.preprocessing:
 # Step 3: MEM step
 if args.mem:
     print("Running MEM Step...")
-    mem.mem(
-        domainIOFile=args.outputMEMFile,
+    # MEM(
+    #     domainIOFile=args.outputMEMFile,
+    #     vegetationFile=args.inputvegetationFile,
+    #     outputMEMFile=args.outputMEMFile,
+    #     inEPSG=args.inEPSG,
+    #     outEPSG=args.outEPSG,
+    #     deltaT=args.deltaT
+    # )
+    MEM(interpolateHarmonicsFile=args.outputMEMFile,
         vegetationFile=args.inputvegetationFile,
         outputMEMFile=args.outputMEMFile,
         inEPSG=args.inEPSG,

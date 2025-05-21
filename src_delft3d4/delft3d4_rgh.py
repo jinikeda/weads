@@ -1,44 +1,51 @@
-# File: utils/delft3d_rgh.py
+# File: src_delft3d4/delft3d4_rgh.py
 # Author: Shabnam
-# Modified: April 2025
+# Modified: May 2025
+# Purpose: Create a Manning's n .rgh file using .grd dimensions (for non-square grids)
+
 
 import numpy as np
+import os
 
-def create_rgh_from_dep(dep_filename, rgh_filename='output.rgh', roughness_value=22.0):
-    with open(dep_filename, 'r') as f:
+def read_grid_dimensions(grd_file):
+    """
+    Reads NX and NY from line 7 of the .grd file.
+    Returns number of nodes in X and Y directions (NX, NY).
+    """
+    with open(grd_file, 'r') as f:
         lines = f.readlines()
+    parts = lines[6].strip().split()
+    NX, NY = int(parts[0]), int(parts[1])
+    return NX, NY
 
-    # Extract all numbers into a flat list
-    numbers = []
-    for line in lines:
-        if line.strip() and not line.startswith('*'):
-            parts = line.strip().split()
-            numbers.extend([float(p) for p in parts])
+def create_rgh_from_grd(grd_file, roughness_value=0.02):
+    """
+    Creates a .rgh file using constant Manning’s n based on grid dimensions from .grd file.
+    
+    Parameters:
+    - grd_file: str, path to input .grd file
+    - roughness_value: float, constant Manning's n value to apply (default = 0.02)
+    """
+    NX, NY = read_grid_dimensions(grd_file)
 
-    total_values = len(numbers)
-    grid_size = int(np.sqrt(total_values))  # Assuming square grid
+    # Create output filename by replacing .grd with .rgh
+    base, _ = os.path.splitext(grd_file)
+    output_rgh_file = f"{base}.rgh"
 
-    if grid_size ** 2 != total_values:
-        raise ValueError(f"DEP file does not contain a square grid: {total_values} values found.")
+    # Each .rgh block is (NX+1) x (NY+1)
+    ncols = NX + 1
+    nrows = NY + 1
 
-    # Reshape into 2D array
-    grid_array = np.array(numbers).reshape((grid_size, grid_size))
-
-    N, M = grid_array.shape  # Rows (N), Columns (M)
-
-    # Create roughness arrays
-    rgh_M = np.full((N, M), roughness_value)
-    rgh_N = np.full((N, M), roughness_value)
-
-    # Stack for Delft3D format: M-direction first, then N-direction
+    rgh_M = np.full((nrows, ncols), roughness_value)
+    rgh_N = np.full((nrows, ncols), roughness_value)
     rgh_combined = np.vstack([rgh_M, rgh_N])
 
-    # Write .rgh file
-    with open(rgh_filename, 'w') as f:
+    with open(output_rgh_file, 'w') as f:
         for row in rgh_combined:
-            f.write(' '.join(f'{val:.4f}' for val in row) + '\n')
+            f.write(" ".join(f"{val:.4f}" for val in row) + "\n")
 
-    print(f"Roughness file '{rgh_filename}' created based on '{dep_filename}' with grid size {M}x{N}.")
+    print(f"? .rgh file written: {output_rgh_file}  ?  shape: {rgh_combined.shape} (M + N directions)")
 
-# Example usage
-create_rgh_from_dep('45x45.dep', rgh_filename='45x45.rgh', roughness_value=22.0)
+# Only runs when the script is executed directly
+if __name__ == "__main__":
+    create_rgh_from_grd("45x45.grd", roughness_value=0.02)

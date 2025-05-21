@@ -6,7 +6,7 @@
 import pandas as pd
 import numpy as np
 
-def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv='grid_coords_extracted.csv', output_csv='tidal_metrics.csv', threshold=0.0):
+def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv, output_csv='tidal_metrics.csv', threshold=0.0):
     """
     Compute MHW, MLW, and percent inundation per grid cell.
 

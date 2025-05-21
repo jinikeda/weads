@@ -63,10 +63,10 @@ print("\n#################################################")
 print("Running WEADS-Delft3D Coupling")
 print("#################################################\n")
 
-# Step 1: Extract tidal datums from CSV
-print("Calculating tidal datums from extracted CSV...")
-tidal_csv = "tidal_metrics.csv"
-calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
+# # Step 1: Extract tidal datums from CSV
+# print("Calculating tidal datums from extracted CSV...")
+# tidal_csv = "tidal_metrics.csv"
+# calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
 
 # Step 2: Preprocessing step
 if args.preprocessing:

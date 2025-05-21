@@ -9,6 +9,7 @@ from .basics import fileexists
 import xarray as xr
 from scipy.spatial import cKDTree
 from .general_functions_delft3d4 import read_grid_file, read_dep_file, read_rgh_file
+from .tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
 
 
 def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
@@ -42,7 +43,7 @@ def preprocessing_Delft3D(
     # fileexists(inputRghFile)  # intentionally not checked now when user does not provide rgh file
 
     # --- Load grid file into x, y arrays ---
-    df, nx, ny = read_grid_file(inputGrdFile)
+    df, nx, ny = read_grid_file(inputGrdFile, output_Flag=True)
     print(f"✔ Read  {df.shape()} grid file...")
 
     # --- Load .dep file into flat z array ---
@@ -63,15 +64,22 @@ def preprocessing_Delft3D(
         print("No roughness file provided. Using default value of 0.03 for all nodes...")
 
     # --- Load tidal metrics from NetCDF or CSV ---
-    if inputWaterLevelCSV.endswith('.nc'):
+    # Step 1: Extract tidal datums from CSV
+    print("Calculating tidal datums from extracted CSV...")
+    tidal_csv = "tidal_metrics.csv"
+    coords_csv = inputGrdFile.replace(".grd", "_xy.csv")
+    calculate_tidal_metrics_from_csv(inputWaterLevelCSV,coords_csv, output_csv=tidal_csv)
+
+
+    if tidal_csv.endswith('.nc'):
         print("✔ Detected NetCDF file input for water levels...")
-        ds = xr.open_dataset(inputWaterLevelCSV)
+        ds = xr.open_dataset(tidal_csv)
         mhw_array = ds['MHW'].values
         mlw_array = ds['MLW'].values
 
     else:
         print("Detected CSV file input for water levels...")
-        df_wl = pd.read_csv(inputWaterLevelCSV)
+        df_wl = pd.read_csv(tidal_csv)
         mhw_array = df_wl['MHW'].values
         mlw_array = df_wl['MLW'].values
 

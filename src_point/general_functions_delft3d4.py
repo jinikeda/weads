@@ -83,7 +83,6 @@ def read_grid_file(grd_file, output_Flag = False):
     xy_array = np.column_stack(( x_array.ravel(), y_array.ravel()))  # x first then y
     print (xy_array[:5])
    
-
     # Reshape to 3D: (ny, nx, 2)
     xy_rows = xy_array.reshape(ny, nx, 2)
 

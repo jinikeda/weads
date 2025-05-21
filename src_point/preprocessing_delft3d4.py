@@ -31,7 +31,7 @@ def preprocessing_Delft3D(
     inputShapeFile,         # not used yet
     domainIOFile,
     inEPSG,                 # not used yet
-    outEPSG,               # not used yet
+    outEPSG,                # not used yet
 ):
     start_time = time.time()
     print("\nLAUNCH: Running Delft3D Preprocessing Script with WEADS-style HydroClass + IDW Interpolation\n")
@@ -48,11 +48,14 @@ def preprocessing_Delft3D(
 
     # --- Load .dep file into flat z array ---
     dep = read_dep_file(inputDepthFile)
+    z = -dep  # negative depth values (elevation is a positive direction)
     print(f"✔ Read {len(dep)} depth values from {inputDepthFile}")
 
-    df['z'] = -dep
-    df.to_csv(inputGrdFile.replace(".grd", "_xy.csv"), index=False)
-    print(f"✔ Saved grid coordinates to {inputGrdFile.replace('.grd', '_xy.csv')}")
+    df['z'] = z
+    ouptutGrdFile = inputGrdFile.replace(".grd", "_xyz.grd")
+    df.to_csv(ouptutGrdFile, index=False)
+    print(f"✔ Saved grid coordinates to {ouptutGrdFile}")
+
 
     # --- Load .rgh file into flat mannings n array ---  #rgh file is optional in delft3d4
     if inputRghFile is not None:
@@ -71,7 +74,7 @@ def preprocessing_Delft3D(
     # Step 1: Extract tidal datums from CSV
     print("Calculating tidal datums from extracted CSV...")
     tidal_csv = "tidal_metrics.csv"
-    coords_csv = inputGrdFile.replace(".grd", "_xy.csv")
+    coords_csv = ouptutGrdFile
     calculate_tidal_metrics_from_csv(inputWaterLevelCSV,coords_csv, output_csv=tidal_csv)
 
 
@@ -80,14 +83,14 @@ def preprocessing_Delft3D(
         ds = xr.open_dataset(tidal_csv)
         mhw_array = ds['MHW'].values
         mlw_array = ds['MLW'].values
-        hp_array = ds['percent_inundation'].values
+        hp_array = ds['hydroperiod'].values
 
     else:
         print("Detected CSV file input for water levels...")
         df_wl = pd.read_csv(tidal_csv)
         mhw_array = df_wl['MHW'].values
         mlw_array = df_wl['MLW'].values
-        hp_array = df_wl['percent_inundation'].values
+        hp_array = df_wl['hydroperiod'].values
 
 
     # --- Load shape file if provided ---
@@ -97,15 +100,11 @@ def preprocessing_Delft3D(
     # future implementation
 
 
-
-    ########################################################################################################
-    # modify the following code to use the IDW function
-    # here if hp is less than 1 (not fully submerged), we need to interpolate mhw and mlw values
+    # --- interpolate MHW/MLW in subtidal and land regions ---
+    # Here if hp is less than 1 (not fully submerged), we need to interpolate mhw and mlw values
     valid_mask = hp_array >= 1  # Boolean mask
-    print("Valid indices:", np.where(valid_mask)[0])  # Optional to see the index numbers
+    # print("Valid indices:", np.where(valid_mask)[0])  # Optional to see the index numbers
     
-    # # --- Interpolate missing MHW/MLW using IDW ---
-    # valid_mask = np.isfinite(mhw_array) & np.isfinite(mlw_array)
     np.savetxt("valid_mask.txt", valid_mask)
     print(df.shape)
     x = df['x'].values
@@ -131,9 +130,9 @@ def preprocessing_Delft3D(
     assert len(dep) == len(mhw_array), f"Length mismatch: bathymetry={len(dep)}, MHW={len(mhw_array)}"
 
     # --- Compute HydroClass and assign labels ---
-    hydroclass_index = np.full_like(-dep, 1, dtype=int)  # default to intertidal
-    hydroclass_index[-dep > mhw_array] = 0  # dry
-    hydroclass_index[-dep <= mlw_array] = 2  # submerged
+    hydroclass_index = np.full_like(z, 1, dtype=int)  # default to intertidal
+    hydroclass_index[z > mhw_array] = 0  # dry
+    hydroclass_index[z <= mlw_array] = 2  # submerged
 
     hydroclass_label = np.array(['intertidal'] * len(dep), dtype=object)
     hydroclass_label[hydroclass_index == 0] = 'land'

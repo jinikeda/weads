@@ -49,28 +49,13 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv, output_csv='ti
             mhw = np.mean(maxima) if len(maxima) >= 3 else np.nanmax(wl)
             mlw = np.mean(minima) if len(minima) >= 3 else np.nanmin(wl)
             
-            #################################
-            # wrong. # percent_inundation = np.sum(wl > z) / len(wl)
-            # percent_inundation = np.sum(wl > threshold) / len(wl)
-            percent_inundation = np.sum(wl > z_local) / len(wl)
-            #################################
-
-        # # Fix: Convert column name 'pt1' -> 1 (int)
-        # try:
-        #     pt_number = int(col.replace('pt', ''))
-        #     x = coords_df.at[pt_number, 'x']
-        #     y = coords_df.at[pt_number, 'y']
-        # except (KeyError, ValueError):
-        #     x = np.nan
-        #     y = np.nan
+            # Calculate percent inundation (hydroperiod)
+            hydroperiod = np.sum(wl > z_local) / len(wl)
 
         results.append({
-            # 'grid_id': col,  # keep 'pt1', 'pt2', ...
-            # 'x': x,
-            # 'y': y,
             'MHW': mhw,
             'MLW': mlw,
-            'percent_inundation': percent_inundation
+            'hydroperiod': hydroperiod
         })
 
     df_out = coords_df.copy()

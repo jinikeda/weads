@@ -47,6 +47,7 @@ for year in $(seq 1 $NUM_YEARS); do
       --inputGrdFile 45x45.grd \
       --inputEncFile 45x45.enc \
       --inputDepFile "$DEP_FILE" \
+      --inputRghFile 45x45.rgh \
       --updatedRghFile updated_45x45.rgh \
       --inputMdfFile 45x45.mdf \
       --wl_csv water_level_extracted.csv \

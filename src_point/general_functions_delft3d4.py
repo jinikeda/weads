@@ -16,6 +16,20 @@ def read_dep_file(dep_file):
             if line.strip():
                 values.extend([float(val) for val in line.strip().split()])
     return np.array(values)
+    
+def read_rgh_file(rgh_file):
+    """
+    Reads a Delft3D .rgh file and returns a 1D array of Manning's n values.
+    Assumes the file has 2*N rows (M-direction + N-direction), where only one is needed.
+    """
+    values = []
+    with open(rgh_file, 'r') as f:
+        for line in f:
+            if line.strip():
+                values.extend([float(val) for val in line.strip().split()])
+    half = len(values) // 2
+    return np.array(values[:half])  # Return only M-direction values (first half)
+
 
 def read_grid_shape_from_grd(grd_file):
     """

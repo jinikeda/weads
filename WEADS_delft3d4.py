@@ -36,6 +36,7 @@ parser.add_argument("--inputEncFile", type=str, help="Delft3D enclosure file (*.
 parser.add_argument("--inputDepFile", type=str, help="Delft3D depth file (*.dep)")
 parser.add_argument("--updatedRghFile", type=str, default="updated.rgh", help="Updated .rgh file name")
 parser.add_argument("--inputMdfFile", type=str, help="Delft3D mdf config file (*.mdf)")
+parser.add_argument("--inputRghFile", type=str, default="45x45.rgh", help="Delft3D roughness file (*.rgh)")
 
 # Optional input
 parser.add_argument("--inputvegetationFile", type=str, default=None, help="Vegetation raster file (*.tif)")
@@ -78,7 +79,8 @@ if args.preprocessing:
         inputShapeFile=None,
         domainIOFile=args.outputMEMFile,
         inEPSG=args.inEPSG,
-        outEPSG=args.outEPSG
+        outEPSG=args.outEPSG,
+        inputRghFile=args.inputRghFile
     )
 
 # Step 3: MEM step

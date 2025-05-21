@@ -8,7 +8,7 @@ import pandas as pd
 from .basics import fileexists
 import xarray as xr
 from scipy.spatial import cKDTree
-from src_point.general_functions_delft3d4 import read_dep_file
+from src_point.general_functions_delft3d4 import read_dep_file, read_rgh_file
 
 
 def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
@@ -28,7 +28,8 @@ def preprocessing_Delft3D(
     inputShapeFile,         # not used yet
     domainIOFile,
     inEPSG,                 # not used yet
-    outEPSG                 # not used yet
+    outEPSG,                # not used yet
+    inputRghFile
 ):
     start_time = time.time()
     print("\nLAUNCH: Running Delft3D Preprocessing Script with WEADS-style HydroClass + IDW Interpolation\n")
@@ -87,7 +88,7 @@ def preprocessing_Delft3D(
     hydroclass_label[hydroclass_index == 2] = 'subtidal'
 
     # --- Fill manning and other values ---
-    mannings_n = np.full_like(z, 0.035, dtype=float)
+    mannings_n = read_rgh_file(inputRghFile)
 
     df_out = pd.DataFrame({
         'node': np.arange(1, len(z) + 1),

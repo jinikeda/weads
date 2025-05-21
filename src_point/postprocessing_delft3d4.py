@@ -8,17 +8,16 @@ import shutil
 import os
 import math
 from .basics import fileexists
-from src_point.general_functions_delft3d4 import read_dep_file, infer_grid_shape_from_dep
-
+from src_point.general_functions_delft3d4 import read_dep_file, infer_grid_shape_from_grd
 
 def get_spacing(val):
     return '  ' if val < 0 else '   '
 
-def update_delft3d_dep(original_dep_file, output_dep_file, tb_update_array, values_per_line=12):
+def update_delft3d_dep(original_dep_file, grd_file, output_dep_file, tb_update_array, values_per_line=12):
     fileexists(original_dep_file)
 
     dep_vals = read_dep_file(original_dep_file)
-    grid_shape = infer_grid_shape_from_dep(original_dep_file)
+    grid_shape = infer_grid_shape_from_grd(grd_file)
     z_matrix = dep_vals.reshape(grid_shape)
     z_flat = z_matrix.flatten()
 
@@ -93,7 +92,7 @@ def update_delft3d_mdf(mdf_file, new_dep_file, new_rgh_file):
     print(f"✔ Updated .mdf file to point to: {new_dep_file} and {new_rgh_file}")
 
 
-def postprocessing_delft(inputDepFile, inputMdfFile, outputMEMFile,
+def postprocessing_delft(inputDepFile, inputGrdFile, inputMdfFile, outputMEMFile,
                          dep_out='updated.dep', rgh_out='updated.rgh'):
     print("\nPOSTPROCESSING Delft3D-MEM Coupling...")
     fileexists(outputMEMFile)
@@ -101,14 +100,14 @@ def postprocessing_delft(inputDepFile, inputMdfFile, outputMEMFile,
     print(f"✔ Loaded MEM results: {outputMEMFile}  →  shape {df.shape}")
 
     tb_all = df['tb_update'].values
-    grid_shape = infer_grid_shape_from_dep(inputDepFile)
+    grid_shape = infer_grid_shape_from_grd(inputGrdFile)
     shutil.copy(inputDepFile, dep_out)
 
     dep_array = read_dep_file(inputDepFile)
     valid_mask = dep_array != -999.0
     tb_valid = tb_all[valid_mask]
 
-    update_delft3d_dep(inputDepFile, dep_out, tb_valid)
+    update_delft3d_dep(inputDepFile, inputGrdFile, dep_out, tb_valid)
     update_delft3d_rgh(outputMEMFile, grid_shape, rgh_out)
     update_delft3d_mdf(inputMdfFile, dep_out, rgh_out)
 

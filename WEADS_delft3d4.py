@@ -98,6 +98,7 @@ if args.postprocessing:
     print("Running Postprocessing...")
     postprocessing_delft3d4.postprocessing_delft(
         inputDepFile=args.inputDepFile,
+        inputGrdFile=args.inputGrdFile,
         inputMdfFile=args.inputMdfFile,
         outputMEMFile=args.outputMEMFile,
         dep_out=args.updatedDepFile,

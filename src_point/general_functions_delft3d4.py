@@ -17,25 +17,26 @@ def read_dep_file(dep_file):
                 values.extend([float(val) for val in line.strip().split()])
     return np.array(values)
 
-
-def infer_grid_shape_from_dep(dep_file):
+def read_grid_shape_from_grd(grd_file):
     """
-    Infers the shape (nx, ny) of the grid from the .dep file, assuming either a square
-    or rectangular layout. Tries to guess the shape based on total number of values.
+    Reads the number of grid lines in x (NX) and y (NY) from line 7 of a Delft3D .grd file.
+    Returns (NX+1, NY+1) for full node dimensions including boundary rows/cols.
     """
-    values = read_dep_file(dep_file)
-    total = len(values)
+    with open(grd_file, 'r') as f:
+        lines = f.readlines()
 
-    # First try perfect square
-    side = math.isqrt(total)
-    if side * side == total:
-        return side, side
+    if len(lines) < 7:
+        raise ValueError(f"Grid file {grd_file} is too short to read NX and NY.")
 
-    # Then try rectangular factors
-    for ny in range(1, total + 1):
-        if total % ny == 0:
-            nx = total // ny
-            if nx * ny == total:
-                return nx, ny
+    tokens = lines[6].strip().split()
+    if len(tokens) < 2:
+        raise ValueError(f"Line 7 of {grd_file} does not contain two integers.")
 
-    raise ValueError(f"Cannot infer grid shape from {dep_file} with {total} values.")
+    nx, ny = int(tokens[0]), int(tokens[1])
+    return nx + 1, ny + 1  # because .dep includes boundary nodes
+
+def infer_grid_shape_from_grd(grd_file):
+    """
+    Wrapper to read grid shape using the .grd file for use in .dep logic.
+    """
+    return read_grid_shape_from_grd(grd_file)

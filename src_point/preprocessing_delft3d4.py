@@ -1,5 +1,5 @@
 # File: src_point/preprocessing_delft3d4.py
-# Author: Shabnam
+# Author: Shabnam and Jin Ikeda
 # Modified: June 2025
 
 import time
@@ -8,7 +8,7 @@ import pandas as pd
 from .basics import fileexists
 import xarray as xr
 from scipy.spatial import cKDTree
-from src_point.general_functions_delft3d4 import read_dep_file, read_rgh_file
+from .general_functions_delft3d4 import read_grid_file, read_dep_file, read_rgh_file
 
 
 def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
@@ -23,25 +23,44 @@ def idw_interpolate(x_known, y_known, values, x_target, y_target, k=6, power=2):
     return interpolated
 
 def preprocessing_Delft3D(
-    inputBathymetryFile,
+    inputGrdFile,
+    inputDepthFile,
+    inputRghFile,
     inputWaterLevelCSV,
     inputShapeFile,         # not used yet
     domainIOFile,
     inEPSG,                 # not used yet
-    outEPSG,                # not used yet
-    inputRghFile
+    outEPSG,               # not used yet
 ):
     start_time = time.time()
     print("\nLAUNCH: Running Delft3D Preprocessing Script with WEADS-style HydroClass + IDW Interpolation\n")
 
     # --- Check required files ---
-    fileexists(inputBathymetryFile)
+    fileexists(inputGrdFile)
+    fileexists(inputDepthFile)
     fileexists(inputWaterLevelCSV)
+    # fileexists(inputRghFile)  # intentionally not checked now when user does not provide rgh file
+
+    # --- Load grid file into x, y arrays ---
+    df, nx, ny = read_grid_file(inputGrdFile)
+    print(f"✔ Read  {df.shape()} grid file...")
 
     # --- Load .dep file into flat z array ---
-    from .general_functions_delft3d4 import read_dep_file
-    z = read_dep_file(inputBathymetryFile)
-    print(f"✔ Read {len(z)} bathymetry points from {inputBathymetryFile}")
+    z = read_dep_file(inputDepthFile)
+    print(f"✔ Read {len(z)} depth values from {inputDepthFile}")
+
+    # --- Load .rgh file into flat mannings n array ---  #rgh file is optional in delft3d4
+    if inputRghFile is not None:
+        # Read the .rgh file
+        mannings_n = read_rgh_file(inputRghFile)
+        print(f"✔ Read {inputRghFile} for roughness values...")
+    else:
+        # If no .rgh file is provided, create a default array of 0.03 for all nodes
+        ########################################################################################################
+        # future implementation: read rgh file and assign mannings n from mdf file if rgh file is not provided #
+        ########################################################################################################
+        mannings_n = np.full(len(z), 0.03)
+        print("No roughness file provided. Using default value of 0.03 for all nodes...")
 
     # --- Load tidal metrics from NetCDF or CSV ---
     if inputWaterLevelCSV.endswith('.nc'):
@@ -49,18 +68,23 @@ def preprocessing_Delft3D(
         ds = xr.open_dataset(inputWaterLevelCSV)
         mhw_array = ds['MHW'].values
         mlw_array = ds['MLW'].values
-        x = ds['x'].values
-        y = ds['y'].values
+
     else:
         print("Detected CSV file input for water levels...")
-        df = pd.read_csv(inputWaterLevelCSV)
-        mhw_array = df['MHW'].values
-        mlw_array = df['MLW'].values
-        x = df['x'].values
-        y = df['y'].values
+        df_wl = pd.read_csv(inputWaterLevelCSV)
+        mhw_array = df_wl['MHW'].values
+        mlw_array = df_wl['MLW'].values
+
+    # --- Load shape file if provided ---
+    # future implementation
+
+    # --- convert to coordinate system if needed ---
+    # future implementation
 
     # --- Interpolate missing MHW/MLW using IDW ---
     valid_mask = np.isfinite(mhw_array) & np.isfinite(mlw_array)
+    x = df['x'].values
+    y = df['y'].values
     x_known = x[valid_mask]
     y_known = y[valid_mask]
     mhw_known = mhw_array[valid_mask]
@@ -87,11 +111,9 @@ def preprocessing_Delft3D(
     hydroclass_label[hydroclass_index == 0] = 'land'
     hydroclass_label[hydroclass_index == 2] = 'subtidal'
 
-    # --- Fill manning and other values ---
-    mannings_n = read_rgh_file(inputRghFile)
 
     df_out = pd.DataFrame({
-        'node': np.arange(1, len(z) + 1),
+        'node_id': df['node_id'].values,
         'x': x,
         'y': y,
         'z': z,

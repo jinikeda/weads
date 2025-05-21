@@ -68,7 +68,7 @@ parser.add_argument(
 parser.add_argument(
     "--inputShapeFile",
     type=str,
-    help="Input domain shape file <*.shp>")
+    help="Input domain shape file in a projected coordinate <*.shp>")
 parser.add_argument(
     "--outputMEMFile",
     type=str,

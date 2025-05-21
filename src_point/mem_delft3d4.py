@@ -10,35 +10,35 @@ from .basics import fileexists
 
 # --- Configuration and Constants ---
 
-interest_reference = "Texas_Coastal_Bend"
-
-biomass_coefficients = {
-    "Texas_Coastal_Bend": {
-        "al": 240.0, "bl": -5.0, "cl": -460.0,
-        "ar": 240.0, "br": -5.0, "cr": -460.0,
-        "Dopt": 22.0
-    },
-    "Texas_Coastal_Bend_mangrove": {
-        "al": 1600, "bl": -17.7, "cl": -28016.0,
-        "ar": 1600, "br": -17.7, "cr": -28016.0,
-        "Dopt": 45.0
-    }
-}
-
-vegetation_parameters = {
-    "SaltMarsh": {
-        "Dmin": 2.0, "Dopt": 22.0, "Dmax": 46.0,
-        "Bmax": 2400.0, "Kr": 0.1, "RRS": 2.0, "BTR": 0.5
-    },
-    "Mangrove": {
-        "Dmin": 24.0, "Dopt": 45.0, "Dmax": 66.0,
-        "Bmax": 7800.0, "Kr": 0.1, "RRS": 1.8, "BTR": 0.25
-    },
-    "IrregularMarsh": {
-        "Dmin": -70.0, "Dopt": -40.0, "Dmax": -10.0,
-        "Bmax": 1200.0, "Kr": 0.1, "RRS": 1.5, "BTR": 0.5
-    }
-}
+# interest_reference = "Texas_Coastal_Bend"
+#
+# biomass_coefficients = {
+#     "Texas_Coastal_Bend": {
+#         "al": 240.0, "bl": -5.0, "cl": -460.0,
+#         "ar": 240.0, "br": -5.0, "cr": -460.0,
+#         "Dopt": 22.0
+#     },
+#     "Texas_Coastal_Bend_mangrove": {
+#         "al": 1600, "bl": -17.7, "cl": -28016.0,
+#         "ar": 1600, "br": -17.7, "cr": -28016.0,
+#         "Dopt": 45.0
+#     }
+# }
+#
+# vegetation_parameters = {
+#     "SaltMarsh": {
+#         "Dmin": 2.0, "Dopt": 22.0, "Dmax": 46.0,
+#         "Bmax": 2400.0, "Kr": 0.1, "RRS": 2.0, "BTR": 0.5
+#     },
+#     "Mangrove": {
+#         "Dmin": 24.0, "Dopt": 45.0, "Dmax": 66.0,
+#         "Bmax": 7800.0, "Kr": 0.1, "RRS": 1.8, "BTR": 0.25
+#     },
+#     "IrregularMarsh": {
+#         "Dmin": -70.0, "Dopt": -40.0, "Dmax": -10.0,
+#         "Bmax": 1200.0, "Kr": 0.1, "RRS": 1.5, "BTR": 0.5
+#     }
+# }
 
 @dataclass
 class MEMConfig:

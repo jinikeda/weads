@@ -419,7 +419,7 @@ def mem(interpolateHarmonicsFile, vegetationFile,
     # --- Read interpolated tidal datums ---
 
     mlwIDW = df['MLW_IDW']
-    mslIDW = df['MSL_IDW']
+    # mslIDW = df['MSL_IDW']
     mhwIDW = df['MHW_IDW']
 
     # --- DEPTH CALCULATIONS ---")

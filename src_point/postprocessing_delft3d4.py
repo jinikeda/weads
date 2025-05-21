@@ -8,17 +8,17 @@ import shutil
 import os
 import math
 from .basics import fileexists
-from src_point.general_functions_delft3d4 import read_dep_file, infer_grid_shape_from_grd
+from .general_functions_delft3d4 import read_grid_file, read_dep_file
 
 def get_spacing(val):
     return '  ' if val < 0 else '   '
 
-def update_delft3d_dep(original_dep_file, grd_file, output_dep_file, tb_update_array, values_per_line=12):
+def update_delft3d_dep(original_dep_file,grid_shape, output_dep_file, tb_update_array, values_per_line=12):
     fileexists(original_dep_file)
 
     dep_vals = read_dep_file(original_dep_file)
-    grid_shape = infer_grid_shape_from_grd(grd_file)
-    z_matrix = dep_vals.reshape(grid_shape)
+
+    z_matrix = dep_vals.reshape(grid_shape[0], grid_shape[1]) # 2D array of depth values include ghost boundary dummy values
     z_flat = z_matrix.flatten()
 
     valid_mask = z_flat != -999.0
@@ -26,7 +26,7 @@ def update_delft3d_dep(original_dep_file, grd_file, output_dep_file, tb_update_a
         raise ValueError(f"Mismatch: tb_update ({tb_update_array.size}) vs valid .dep cells ({np.count_nonzero(valid_mask)})")
 
     z_flat[valid_mask] = tb_update_array
-    updated_matrix = z_flat.reshape(grid_shape)
+    updated_matrix = z_flat.reshape(grid_shape[0], grid_shape[1])
 
     with open(output_dep_file, 'w', encoding='utf-8') as f:
         for row in updated_matrix:
@@ -51,7 +51,7 @@ def update_delft3d_rgh(outputMEMFile, grid_shape, output_rgh_file):
     if manning_vals.size != expected_size:
         raise ValueError(f"Mismatch: {manning_vals.size} values vs grid size {expected_size}.")
 
-    manning_grid = manning_vals.reshape(grid_shape)
+    manning_grid = manning_vals.reshape(grid_shape[0], grid_shape[1])
     rgh_combined = np.vstack([manning_grid, manning_grid])
 
     with open(output_rgh_file, 'w') as f:
@@ -100,14 +100,15 @@ def postprocessing_delft(inputDepFile, inputGrdFile, inputMdfFile, outputMEMFile
     print(f"✔ Loaded MEM results: {outputMEMFile}  →  shape {df.shape}")
 
     tb_all = df['tb_update'].values
-    grid_shape = infer_grid_shape_from_grd(inputGrdFile)
+    _, nx, ny = read_grid_file(inputGrdFile)
+    grid_shape = [ny+1, nx+1]
     shutil.copy(inputDepFile, dep_out)
 
     dep_array = read_dep_file(inputDepFile)
     valid_mask = dep_array != -999.0
     tb_valid = tb_all[valid_mask]
 
-    update_delft3d_dep(inputDepFile, inputGrdFile, dep_out, tb_valid)
+    update_delft3d_dep(inputDepFile , grid_shape, dep_out, tb_valid)
     update_delft3d_rgh(outputMEMFile, grid_shape, rgh_out)
     update_delft3d_mdf(inputMdfFile, dep_out, rgh_out)
 

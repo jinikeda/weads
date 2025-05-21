@@ -18,9 +18,14 @@ def read_dep_file(dep_file):
     return np.array(values)
     
 def read_rgh_file(rgh_file):
+
     """
-    Reads a Delft3D .rgh file and returns a 1D array of Manning's n values.
-    Assumes the file has 2*N rows (M-direction + N-direction), where only one is needed.
+    Reads a Delft3D .rgh file and returns a 1D array of Manning's n values for the M-direction only.
+
+    Notes:
+    - The .rgh file has 2 blocks of data: M-direction (top) and N-direction (bottom).
+    - Each block has shape (NY+1, NX+1), so total number of values = 2 * grid_size.
+    - For preprocessing, we only use the M-direction block (first half), assuming symmetry.
     """
     values = []
     with open(rgh_file, 'r') as f:

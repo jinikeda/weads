@@ -35,6 +35,12 @@ def create_rgh_from_grd(grd_file, roughness_value=0.02):
     # Each .rgh block is (NX+1) x (NY+1)
     ncols = NX + 1
     nrows = NY + 1
+    
+    # Delft3D expects .rgh files to contain two blocks:
+    #   - The first block (M-direction roughness) and 
+    #   - The second block (N-direction roughness)
+    # Each block has shape (NY+1, NX+1), so total rows = 2 * (NY+1)
+    # Even if the values are the same, both blocks must be present or the model will throw an error.
 
     rgh_M = np.full((nrows, ncols), roughness_value)
     rgh_N = np.full((nrows, ncols), roughness_value)

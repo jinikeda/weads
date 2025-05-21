@@ -1,8 +1,6 @@
-#!/bin/bash
-
 # File: run_delft3d4_loop.sh
 # Author: Shabnam
-# Modified: April 2025
+# Modified: May 2025
 
 # Activate Delft3D environment
 source ~/miniconda3/etc/profile.d/conda.sh

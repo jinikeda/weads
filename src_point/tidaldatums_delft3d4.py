@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
 # File: src_point/tidaldatums_delft3d4.py
+# Author: Shabnam
 # Purpose: Compute MHW, MLW, and percent inundation from wide-format CSV using Delft3D-MATLAB 
-# Updated: July 2025 (Refactored grid_id assignment to use pt column)
+# Updated: May 2025 (Fix: properly match pt IDs to grid coords)
 
 import pandas as pd
 import numpy as np
@@ -26,7 +26,7 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv='grid_coords_ex
 
     print(f"Reading grid node coordinates: {coords_csv}")
     coords_df = pd.read_csv(coords_csv)
-    coords_df = coords_df.set_index('pt')
+    coords_df = coords_df.set_index('pt')  # 'pt' is assumed to be an integer
 
     results = []
     for col in water_data.columns:
@@ -47,11 +47,17 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv='grid_coords_ex
             mlw = np.mean(minima) if len(minima) >= 3 else np.nanmin(wl)
             percent_inundation = np.sum(wl > threshold) / len(wl)
 
-        x = coords_df.at[col, 'x'] if col in coords_df.index else np.nan
-        y = coords_df.at[col, 'y'] if col in coords_df.index else np.nan
+        # Fix: Convert column name 'pt1' -> 1 (int)
+        try:
+            pt_number = int(col.replace('pt', ''))
+            x = coords_df.at[pt_number, 'x']
+            y = coords_df.at[pt_number, 'y']
+        except (KeyError, ValueError):
+            x = np.nan
+            y = np.nan
 
         results.append({
-            'grid_id': col,  # using column name like pt1, pt2
+            'grid_id': col,  # keep 'pt1', 'pt2', ...
             'x': x,
             'y': y,
             'MHW': mhw,

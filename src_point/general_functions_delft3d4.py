@@ -114,7 +114,7 @@ def read_grid_file(grd_file, output_Flag = False):
 
     if output_Flag:
         # Save DataFrame to CSV
-        output_file = grd_file.replace(".grd", "_xy.csv")
+        output_file = grd_file.replace(".grd", "_xyz.csv")
         df.to_csv(output_file, index=False)
         print(f"Grid data saved to {output_file}")
 

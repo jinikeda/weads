@@ -64,36 +64,23 @@ print("\n#################################################")
 print("Running WEADS-Delft3D Coupling")
 print("#################################################\n")
 
-# # Step 1: Extract tidal datums from CSV
-# print("Calculating tidal datums from extracted CSV...")
-tidal_csv = args.wl_csv
-# calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
-
-# Step 2: Preprocessing step
+# Step 1: Preprocessing step
 if args.preprocessing:
     print("Running Preprocessing...")
     preprocessing_delft3d4.preprocessing_Delft3D(
         inputGrdFile=args.inputGrdFile,
         inputDepthFile=args.inputDepFile,
         inputRghFile=args.inputRghFile,
-        inputWaterLevelCSV=tidal_csv,
+        inputWaterLevelCSV=args.wl_csv,
         inputShapeFile=args.inputShapeFile,
         domainIOFile=args.outputMEMFile,
         inEPSG=args.inEPSG,
         outEPSG=args.outEPSG,
     )
 
-# Step 3: MEM step
+# Step 2: MEM step
 if args.mem:
     print("Running MEM Step...")
-    # MEM(
-    #     domainIOFile=args.outputMEMFile,
-    #     vegetationFile=args.inputvegetationFile,
-    #     outputMEMFile=args.outputMEMFile,
-    #     inEPSG=args.inEPSG,
-    #     outEPSG=args.outEPSG,
-    #     deltaT=args.deltaT
-    # )
     MEM(interpolateHarmonicsFile=args.outputMEMFile,
         vegetationFile=args.inputvegetationFile,
         outputMEMFile=args.outputMEMFile,
@@ -102,7 +89,7 @@ if args.mem:
         deltaT=args.deltaT
     )
 
-# Step 4: Postprocessing step
+# Step 3: Postprocessing step
 if args.postprocessing:
     print("Running Postprocessing...")
     postprocessing_delft3d4.postprocessing_delft(

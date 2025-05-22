@@ -1,5 +1,5 @@
 # File: src_point/tidaldatums_delft3d4.py
-# Author: Shabnam
+# Author: Shabnam and Jin Ikeda
 # Purpose: Compute MHW, MLW, and percent inundation from wide-format CSV using Delft3D-MATLAB 
 # Updated: May 2025 (Fix: properly match pt IDs to grid coords)
 

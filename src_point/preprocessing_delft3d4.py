@@ -48,7 +48,7 @@ def preprocessing_Delft3D(
 
     # --- Load .dep file into flat z array ---
     dep = read_dep_file(inputDepthFile)
-    z = -dep  # negative depth values (elevation is a positive direction)
+    z = -dep  # elevation is negative depth values (elevation is a positive direction)
     print(f"✔ Read {len(dep)} depth values from {inputDepthFile}")
 
     df['z'] = z
@@ -71,7 +71,7 @@ def preprocessing_Delft3D(
         print("No roughness file provided. Using default value of 0.03 for all nodes...")
 
     # --- Load tidal metrics from NetCDF or CSV ---
-    # Step 1: Extract tidal datums from CSV
+    # Extract tidal datums from CSV
     print("Calculating tidal datums from extracted CSV...")
     tidal_csv = "tidal_metrics.csv"
     coords_csv = ouptutGrdFile
@@ -144,7 +144,7 @@ def preprocessing_Delft3D(
         'node_id': df['node_id'].values,
         'x': x,
         'y': y,
-        'z': -dep,
+        'z': z,
         'mann': mannings_n,
         'hp': hp_array,
         'MLW': mlw_array,

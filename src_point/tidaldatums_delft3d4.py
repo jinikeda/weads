@@ -28,7 +28,6 @@ def calculate_tidal_metrics_from_csv(water_level_csv, coords_csv, output_csv='ti
     print(f"Reading grid node coordinates: {coords_csv}")
     coords_df = pd.read_csv(coords_csv)
     z = coords_df['z'].values.T
-    print
     # coords_df = coords_df.set_index('pt')  # 'pt' is assumed to be an integer
 
     results = []

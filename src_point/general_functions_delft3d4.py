@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import math
 import re
+import logging
 
 
 def read_grid_file(grd_file, output_Flag=False):
@@ -93,7 +94,7 @@ def read_grid_file(grd_file, output_Flag=False):
 
     # Reshape x_array and y_array to cordinate system (nx * ny, 2)
     xy_array = np.column_stack(( x_array.ravel(), y_array.ravel()))  # x first then y
-    print (xy_array[:5])
+    logging.debug(f"Preview of xy_array (first 5 rows): {xy_array[:5]}")
    
     # Reshape to 3D: (ny, nx, 2)
     xy_rows = xy_array.reshape(ny, nx, 2)

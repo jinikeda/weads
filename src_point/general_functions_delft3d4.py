@@ -5,26 +5,38 @@
 import numpy as np
 import pandas as pd
 import math
+import re
 
 
-def read_grid_file(grd_file, output_Flag = False):
+def read_grid_file(grd_file, output_Flag=False):
     """
     Reads a .grd file and returns:
-    - x_array: 2D array of x coordinates, shape (ny, nx)
-    - y_array: 2D array of y coordinates, shape (ny, nx)
+    - df: DataFrame with columns ['node_id', 'x', 'y'] (includes ghost cells if enabled)
     - nx, ny: number of grid nodes in x and y directions
+
+    Parameters:
+    - grd_file (str): Path to the .grd file
+    - output_flag (bool): Whether to output a CSV file with the parsed data
     """
+    # Read the grid file and extract metadata  
     with open(grd_file, 'r') as f:
         lines = f.readlines()
 
     if len(lines) < 7:
-        raise ValueError(f"Grid file {grd_file} is too short.")
+        raise ValueError(f"Grid file '{grd_file}' is too short to contain valid metadata.")
 
-    # Read number of nodes (not cells!)
-    nx, ny = map(int, lines[6].strip().split())
+    # Extract grid dimensions from line 7 (index 6)
+    try:
+        nx, ny = map(int, lines[6].strip().split())
+    except Exception as e:
+        raise ValueError(f"Failed to parse grid dimensions from line 7: {e}")
+
     node_count = nx * ny
+    data_lines = lines[8:]  # Skip to data section
 
-    x_data, y_data = [], []
+    # Initialize lists to store x and y data
+    x_data = []
+    y_data = []
     current_block = []
     blocks = []
     eta_ids = []
@@ -106,7 +118,6 @@ def read_grid_file(grd_file, output_Flag = False):
 
     # Create DataFrame with columns 'x' and 'y'
     df = pd.DataFrame(xy_final, columns=['x', 'y'])
-    # df = pd.DataFrame(xy_array, columns=['x', 'y'])
     df["node_id"] = df.index + 1
 
     # Reorder columns to put node_id first

@@ -1,10 +1,10 @@
 # File: WEADS_delft3d4.py
-# Author: Shabnam
+# Author: Shabnam and Jin Ikeda
 # Modified: May 2025
 
 import os
 import sys
-import time 
+import time
 import argparse
 
 # Allow importing src_point if not already on PYTHONPATH
@@ -14,10 +14,9 @@ if SRC_POINT_PATH not in sys.path:
     sys.path.insert(0, SRC_POINT_PATH)
 
 from src_point import basics
-from src_point import preprocessing_delft3d4, mem_delft3d4, postprocessing_delft3d4
-from src_point.tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
-
-
+from src_point import preprocessing_delft3d4, postprocessing_delft3d4
+from src_point.mem import mem as MEM
+# from src_point.tidaldatums_delft3d4 import calculate_tidal_metrics_from_csv
 
 startTime = time.time()
 
@@ -31,19 +30,20 @@ parser.add_argument("--postprocessing", action="store_true", help="Run postproce
 
 # Required input files
 parser.add_argument("--inputGrdFile", type=str, help="Delft3D grid file (*.grd)")
-parser.add_argument("--inputEncFile", type=str, help="Delft3D enclosure file (*.enc)")
+# parser.add_argument("--inputEncFile", type=str, help="Delft3D enclosure file (*.enc)")  # Shabnam will confirm this
 parser.add_argument("--inputDepFile", type=str, help="Delft3D depth file (*.dep)")
-parser.add_argument("--updatedRghFile", type=str, default="updated.rgh", help="Updated .rgh file name")
+parser.add_argument("--inputRghFile", type=str, help="Delft3D roughness file (*.rgh)")
 parser.add_argument("--inputMdfFile", type=str, help="Delft3D mdf config file (*.mdf)")
-parser.add_argument("--inputRghFile", type=str, default="45x45.rgh", help="Delft3D roughness file (*.rgh)")
+parser.add_argument("--wl_csv", type=str, default="water_level_extracted.csv", help="Extracted water level CSV file")  # Shabnam will confirm this
 
 # Optional input
+parser.add_argument("--inputShapeFile", type=str, default=None, help="Input domain shape file in a projected coordinate <*.shp>")
 parser.add_argument("--inputvegetationFile", type=str, default=None, help="Vegetation raster file (*.tif)")
 
 # Output
-parser.add_argument("--wl_csv", type=str, default="water_level_extracted.csv", help="Extracted water level CSV file")
 parser.add_argument("--outputMEMFile", type=str, default="ecology.csv", help="Output MEM CSV file")
 parser.add_argument("--updatedDepFile", type=str, default="updated.dep", help="Updated .dep file name")
+parser.add_argument("--updatedRghFile", type=str, default="updated.rgh", help="Updated .rgh file name")
 
 # Projection info
 parser.add_argument("--inEPSG", type=int, required=True, help="Input EPSG")
@@ -64,29 +64,24 @@ print("\n#################################################")
 print("Running WEADS-Delft3D Coupling")
 print("#################################################\n")
 
-# Step 1: Extract tidal datums from CSV
-print("Calculating tidal datums from extracted CSV...")
-tidal_csv = "tidal_metrics.csv"
-calculate_tidal_metrics_from_csv(args.wl_csv, output_csv=tidal_csv)
-
-# Step 2: Preprocessing step
+# Step 1: Preprocessing step
 if args.preprocessing:
     print("Running Preprocessing...")
     preprocessing_delft3d4.preprocessing_Delft3D(
-        inputBathymetryFile=args.inputDepFile,
-        inputWaterLevelCSV=tidal_csv,
-        inputShapeFile=None,
+        inputGrdFile=args.inputGrdFile,
+        inputDepthFile=args.inputDepFile,
+        inputRghFile=args.inputRghFile,
+        inputWaterLevelCSV=args.wl_csv,
+        inputShapeFile=args.inputShapeFile,
         domainIOFile=args.outputMEMFile,
         inEPSG=args.inEPSG,
         outEPSG=args.outEPSG,
-        inputRghFile=args.inputRghFile
     )
 
-# Step 3: MEM step
+# Step 2: MEM step
 if args.mem:
     print("Running MEM Step...")
-    mem_delft3d4.mem_delft(
-        domainIOFile=args.outputMEMFile,
+    MEM(interpolateHarmonicsFile=args.outputMEMFile,
         vegetationFile=args.inputvegetationFile,
         outputMEMFile=args.outputMEMFile,
         inEPSG=args.inEPSG,
@@ -94,12 +89,12 @@ if args.mem:
         deltaT=args.deltaT
     )
 
-# Step 4: Postprocessing step
+# Step 3: Postprocessing step
 if args.postprocessing:
     print("Running Postprocessing...")
     postprocessing_delft3d4.postprocessing_delft(
-        inputDepFile=args.inputDepFile,
         inputGrdFile=args.inputGrdFile,
+        inputDepFile=args.inputDepFile,
         inputMdfFile=args.inputMdfFile,
         outputMEMFile=args.outputMEMFile,
         dep_out=args.updatedDepFile,

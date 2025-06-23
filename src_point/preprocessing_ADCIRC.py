@@ -93,11 +93,10 @@ def preprocessing_ADCIRC(inputMeshFile, inputAttrFile, inputInundationtimeFile,
 
     if inputInundationMaxDFile is not None:
         print("   Reading a ADCIRC max inundation depth ...\n")
-        inundationdepth = read_max_inundationdepth63(inputInundationMaxDFile)
-
-        # optional to turn on the edited max inundation file including maxelevation file
-        # inputInundationMaxDFile = "maxinundepth4plot_T0.63.nc"
-        # inundationdepth = read_maxele(inputInundationMaxDFile)
+        if "maxinundepth4plot" in inputInundationMaxDFile:
+            inundationdepth = read_maxele(inputInundationMaxDFile)  # Edited max inundation depth file
+        else:
+            inundationdepth = read_max_inundationdepth63(inputInundationMaxDFile)  # general ADCIRC max inundation depth file
 
         inundationdepth_domain = inundationdepth[true_indices]
 

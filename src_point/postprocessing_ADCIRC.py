@@ -273,8 +273,8 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
         # Output tiff file lists
         csv_file_list = ['ecology.csv', 'ecology.csv', 'ecology.csv', 'ecology.csv']
         tiff_file_list = ['tide.tif', 'ecology.tif', 'Productivity.tif', 'Inundation_depth.tif']
-        target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW'],
-                           ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning','HydroClass','inundationtime'], ['bio_level'], ['inun_depth']]
+        target_str_list = [['mlw', 'msl', 'mhw', 'MLW_IDW', 'MSL_IDW', 'MHW_IDW', 'HydroClass', 'inundationtime'],
+                           ['D', 'B', 'A', 'tb_update', 'new_NWI', 'manning'], ['bio_level'], ['inun_depth']]
         idw_Flag_list = [False, False, False, False]
         dtype_list = [['gdal.GDT_Float32'],
                       ['gdal.GDT_Float32'], ['gdal.GDT_Byte'], ['gdal.GDT_Float32']]
@@ -284,7 +284,12 @@ def postprocessing_ADCIRC(inputMeshFile, inputAttrFile,
         # Output tiff file lists (save time output only max inundation depth)
         csv_file_list = ['Max_inundation_depth.csv']
         tiff_file_list = ['Max_inundation_depth.tif']
-        target_str_list = [['depth']]  # for eddited max_elevation, should be ['zeta_max']
+        if "maxinundepth4plot" in inputInundationMaxDFile:
+            # Edited max inundation depth file
+            target_str_list = [['zeta_max']]
+        else:
+            # General ADCIRC max inundation depth file
+            target_str_list = [['depth']]  # for eddited max_elevation, should be ['zeta_max']
         idw_Flag_list = [False]
         dtype_list = [['gdal.GDT_Float32']]
         nodata_value_list = [[ndv]]

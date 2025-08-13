@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/675841839.svg)](https://doi.org/10.5281/zenodo.16859802)
+
 # WEADS: Wetland Ecosystem and Accretion Dynamics Simulator
 There are two versions: **raster-based** ("src_raster") and **point-based** ("src_point") **WEADS**. \
 This software will be required to run on High-performance computers or high-spec local machines (more than 8 cores CPU or equivalent with RAM = 16 GB).
@@ -114,6 +116,7 @@ https://github.com/user-attachments/assets/8a179637-1f4e-40b4-a53c-53641dece49e
 ## Contributors
 * Jin Ikeda (LSU|Center for Computation and Technology)
 * Peter Bacopoulos (LSU|Coastal Ecosystem Design Studio)
+* Shabnam Mirheidarian (LSU|Department of Civil and Environmental Engineering)
 * [Christopher E Kees (LSU|Coastal Ecosystem Design Studio Director)](https://www.lsu.edu/ceds/) 
 
 ## Acknowledgments
@@ -121,3 +124,11 @@ https://github.com/user-attachments/assets/8a179637-1f4e-40b4-a53c-53641dece49e
 * Scott C. Hagen (emeritus LSU)
 * Karim Alizad
 * [Zachary Cobell](https://thewaterinstitute.org/our-team/zachary-cobell)
+
+## Citation
+Ikeda, J., Bacopoulos, P., Mirheidarian, S., & Kees, C. E. (2025). jinikeda/weads: Wetland ecosystem and accretion dynamics simulator (WEADS) [Computer software]. Zenodo. [https://doi.org/10.5281/zenodo.16859802]
+
+### Release history
+WEADS v1.0.0: August/2024 Release Raster-based ("src_raster") and Point-based ("src_point") Wetland Ecosystem and Accretion Dynamics Simulator (WEADS). \
+      v1.0.1: April/2025  Add the z-modify function for thin-layer placement, etc \
+      v1.1.0: August/2025 Release a Delft3D4 version (alpha version).
